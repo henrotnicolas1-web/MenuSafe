@@ -1,0 +1,22 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: #F7F7F5;
+  color: #1A1A1A;
+  -webkit-font-smoothing: antialiased;
+}
+
+input:focus {
+  outline: none;
+  border-color: #1A1A1A !important;
+  background: white !important;
+}
+
+button:hover {
+  opacity: 0.85;
+}

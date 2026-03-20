@@ -309,7 +309,7 @@ export default function UpgradePage() {
                       borderRadius: 10, cursor: loadingBtn ? "wait" : "pointer",
                       opacity: loadingBtn && loadingBtn !== trialKey ? 0.5 : 1,
                     }}>
-                    {loadingBtn === trialKey ? "Redirection..." : "Essayer 7 jours gratuitement"}
+                    {loadingBtn === trialKey ? "Redirection..." : "Essai gratuit 7 jours (CB requise)"}
                   </button>
                 </div>
 

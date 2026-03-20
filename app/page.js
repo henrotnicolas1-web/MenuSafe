@@ -140,7 +140,7 @@ export default function Home() {
               <button style={{ ...s.ctaPrimary, width: isMobile ? "100%" : "auto", textAlign: "center" }} onClick={goAuth}>
                 Créer mon compte gratuitement →
               </button>
-              <p style={s.ctaNote}>7 jours gratuits · Sans CB · Annulation en 1 clic</p>
+              <p style={s.ctaNote}>7 jours gratuits · CB requise · Annulation en 1 clic</p>
             </div>
             <div style={{ ...s.heroStats, gap: isMobile ? 16 : 28 }}>
               {[
@@ -373,7 +373,7 @@ export default function Home() {
                 missing: [],
               },
             ].map((plan, i) => (
-              <div key={i} style={{ background: "white", border: plan.badge ? "2px solid #1A1A1A" : "1px solid #E8E8E8", borderRadius: 18, padding: isMobile ? "22px" : "28px", position: "relative" }}>
+              <div key={i} style={{ background: "white", border: plan.badge ? "2px solid #1A1A1A" : "1px solid #E8E8E8", borderRadius: 18, padding: isMobile ? "22px" : "28px", position: "relative", display: "flex", flexDirection: "column" }}>
                 {plan.badge && <div style={{ position: "absolute", top: -12, left: "50%", transform: "translateX(-50%)", background: "#1A1A1A", color: "white", fontSize: 11, fontWeight: 700, padding: "4px 14px", borderRadius: 20, whiteSpace: "nowrap" }}>{plan.badge}</div>}
                 <p style={{ fontSize: 18, fontWeight: 800, color: "#1A1A1A", margin: "0 0 2px" }}>{plan.name}</p>
                 <p style={{ fontSize: 12, color: "#999", margin: "0 0 4px" }}>{plan.desc}</p>
@@ -398,7 +398,7 @@ export default function Home() {
                 <button style={{ width: "100%", padding: "12px", fontSize: 14, fontWeight: 700, background: plan.badge ? "#1A1A1A" : "white", color: plan.badge ? "white" : "#1A1A1A", border: "1.5px solid #1A1A1A", borderRadius: 10, cursor: "pointer" }} onClick={goAuth}>
                   Commencer l'essai gratuit
                 </button>
-                <p style={{ fontSize: 11, color: "#BBB", textAlign: "center", margin: "8px 0 0" }}>7 jours gratuits · Sans CB</p>
+                <p style={{ fontSize: 11, color: "#BBB", textAlign: "center", margin: "8px 0 0" }}>7 jours gratuits · CB requise</p>
               </div>
             ))}
           </div>

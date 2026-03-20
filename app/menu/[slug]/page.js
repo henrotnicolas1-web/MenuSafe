@@ -60,7 +60,7 @@ export default function MenuPage() {
   const [lang, setLang]             = useState("fr");
   const [selectedAllergens, setSel] = useState(new Set());
   const [loading, setLoading]       = useState(true);
-  const [notFound, setNotFound]     = useState(false);
+  const [notFound, setNotFound]     = useState(null); // null | true | "unavailable"
   const supabase = createClient();
 
   useEffect(() => {
@@ -74,7 +74,27 @@ export default function MenuPage() {
         .single();
 
       if (!menuData) { setNotFound(true); setLoading(false); return; }
+      setEst({ ...menuData.establishments });
       setEst(menuData.establishments);
+
+      // Récupère aussi le statut de l'abonnement
+      const { data: subData } = await supabase
+        .from("subscriptions")
+        .select("status, trial_ends_at")
+        .eq("user_id", menuData.establishments.user_id)
+        .single();
+
+      const now = new Date();
+      const trialEndsAt = subData?.trial_ends_at ? new Date(subData.trial_ends_at) : null;
+      const isTrialing = subData?.status === "trialing" && trialEndsAt && trialEndsAt > now;
+      const isActive = subData?.status === "active";
+      const isFree = !subData?.status || subData?.status === "free";
+
+      if (!isTrialing && !isActive && !isFree) {
+        setNotFound("unavailable");
+        setLoading(false);
+        return;
+      }
 
       const { data: recipesData } = await supabase
         .from("recipes")
@@ -136,12 +156,29 @@ export default function MenuPage() {
     </div>
   );
 
+  if (notFound === "unavailable") return (
+    <div style={s.loadPage}>
+      <div style={{ textAlign: "center", padding: "0 20px" }}>
+        <p style={{ fontSize: 40, marginBottom: 12 }}>🔒</p>
+        <p style={{ fontSize: 18, fontWeight: 700, color: "#1A1A1A", margin: "0 0 8px", fontFamily: "Inter, sans-serif" }}>Carte temporairement indisponible</p>
+        <p style={{ fontSize: 14, color: "#888", fontFamily: "Inter, sans-serif", lineHeight: 1.6 }}>
+          Cette carte allergènes n'est pas disponible pour le moment.<br />
+          Veuillez contacter directement le restaurant pour toute information sur les allergènes.
+        </p>
+      </div>
+    </div>
+  );
+
   if (notFound) return (
     <div style={s.loadPage}>
       <p style={{ fontSize: 48, marginBottom: 12 }}>404</p>
       <p style={{ fontSize: 14, color: "#999", fontFamily: "Inter, sans-serif" }}>{ui.notFound}</p>
     </div>
   );
+
+  // Vérifie si l'abonnement du restaurateur est actif
+  const subStatus = establishment?.sub_status;
+  const isUnavailable = subStatus === "canceled" || subStatus === "expired";
 
   return (
     <div style={s.page}>

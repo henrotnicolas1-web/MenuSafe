@@ -189,6 +189,22 @@ export default function Dashboard() {
 
       <main style={s.main}>
 
+        {/* Bandeau trial */}
+        {subscription && subscription.status === "trialing" && subscription.trial_ends_at && (() => {
+          const daysLeft = Math.max(0, Math.ceil((new Date(subscription.trial_ends_at) - new Date()) / (1000 * 60 * 60 * 24)));
+          return daysLeft <= 3 ? (
+            <div style={{ background: "#FFF8E6", border: "1px solid #FDDEA0", borderRadius: 12, padding: "12px 16px", marginBottom: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <p style={{ fontSize: 13, fontWeight: 600, color: "#7A4F00", margin: 0 }}>
+                ⏱ {daysLeft === 0 ? "Votre essai se termine aujourd'hui" : `${daysLeft} jour${daysLeft > 1 ? "s" : ""} restant${daysLeft > 1 ? "s" : ""} dans votre essai gratuit`}
+              </p>
+              <button style={{ fontSize: 12, fontWeight: 700, padding: "6px 14px", background: "#1A1A1A", color: "white", border: "none", borderRadius: 8, cursor: "pointer", whiteSpace: "nowrap" }}
+                onClick={() => router.push("/upgrade")}>
+                Choisir un plan →
+              </button>
+            </div>
+          ) : null;
+        })()}
+
         {limitError && (
           <div style={s.limitBanner}>
             <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: "#7A4F00" }}>⚠️ {limitError}</p>

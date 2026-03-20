@@ -53,6 +53,12 @@ export default function AuthPage() {
             .update({ full_name: name })
             .eq("id", data.user.id);
         }
+        // Email de bienvenue (non bloquant)
+        fetch("/api/send-welcome", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email }),
+        }).catch(() => {});
         setSuccess("Compte créé ! Vérifiez votre email pour confirmer votre inscription.");
       }
     } else {

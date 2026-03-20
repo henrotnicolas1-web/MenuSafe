@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef } from "react";
+import { useState, useRef, Suspense } from "react";
 import { createClient } from "@/lib/supabase";
 import { getPlan } from "@/lib/plans";
 import { detectAllergens, ALLERGENS } from "@/lib/allergens-db";
@@ -17,7 +17,7 @@ function Logo({ size = 24 }) {
 
 const STEPS = { upload: "upload", scanning: "scanning", review: "review", saving: "saving", done: "done" };
 
-export default function ImportPage() {
+function ImportPageInner() {
   const [step, setStep]           = useState(STEPS.upload);
   const [file, setFile]           = useState(null);
   const [preview, setPreview]     = useState(null);
@@ -480,6 +480,18 @@ export default function ImportPage() {
       </main>
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
+  );
+}
+
+export default function ImportPage() {
+  return (
+    <Suspense fallback={
+      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Inter, sans-serif" }}>
+        <p style={{ color: "#999", fontSize: 14 }}>Chargement...</p>
+      </div>
+    }>
+      <ImportPageInner />
+    </Suspense>
   );
 }
 

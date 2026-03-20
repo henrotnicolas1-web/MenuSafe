@@ -23,7 +23,7 @@ function MenuMockup({ small = false }) {
           <p style={{ fontSize: small ? 11 : 13, fontWeight: 800, color: "white", margin: 0 }}>Le Bistrot du Coin</p>
           <div style={{ display: "flex", gap: 3 }}>
             {[{c:"FR",b:"#003189"},{c:"EN",b:"#C8102E"},{c:"ES",b:"#AA151B"},{c:"DE",b:"#000"}].map((f, i) => (
-              <span key={i} style={{ fontSize: small ? 11 : 13, opacity: i === 0 ? 1 : 0.4 }}>{f}</span>
+              <span key={i} style={{ fontSize: 9, fontWeight: 800, color: "white", background: i === 0 ? f.b : "rgba(255,255,255,0.15)", padding: "2px 4px", borderRadius: 4, opacity: i === 0 ? 1 : 0.6 }}>{f.c}</span>
             ))}
           </div>
         </div>

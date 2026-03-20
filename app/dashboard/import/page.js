@@ -38,9 +38,9 @@ function ImportPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Navigation sécurisée — fonctionne même pendant le chargement
+  // Navigation vers le dashboard
   function goToDashboard() {
-    goToDashboard();
+    router.push("/dashboard");
   }
   const supabase = createClient();
 

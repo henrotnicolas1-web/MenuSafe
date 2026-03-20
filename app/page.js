@@ -140,7 +140,7 @@ export default function Home() {
               <button style={{ ...s.ctaPrimary, width: isMobile ? "100%" : "auto", textAlign: "center" }} onClick={goAuth}>
                 Créer mon compte gratuitement →
               </button>
-              <p style={s.ctaNote}>7 jours gratuits · CB requise · Annulation en 1 clic</p>
+              <p style={s.ctaNote}>Sans frais pendant 7 jours · Annulation en 1 clic</p>
             </div>
             <div style={{ ...s.heroStats, gap: isMobile ? 16 : 28 }}>
               {[
@@ -373,7 +373,7 @@ export default function Home() {
                 missing: [],
               },
             ].map((plan, i) => (
-              <div key={i} style={{ background: "white", border: plan.badge ? "2px solid #1A1A1A" : "1px solid #E8E8E8", borderRadius: 18, padding: isMobile ? "22px" : "28px", position: "relative", display: "flex", flexDirection: "column" }}>
+              <div key={i} style={{ background: "white", border: plan.badge ? "2px solid #1A1A1A" : "1px solid #E8E8E8", borderRadius: 18, padding: isMobile ? "22px" : "28px", position: "relative", display: "flex", flexDirection: "column", minHeight: isMobile ? "auto" : 520 }}>
                 {plan.badge && <div style={{ position: "absolute", top: -12, left: "50%", transform: "translateX(-50%)", background: "#1A1A1A", color: "white", fontSize: 11, fontWeight: 700, padding: "4px 14px", borderRadius: 20, whiteSpace: "nowrap" }}>{plan.badge}</div>}
                 <p style={{ fontSize: 18, fontWeight: 800, color: "#1A1A1A", margin: "0 0 2px" }}>{plan.name}</p>
                 <p style={{ fontSize: 12, color: "#999", margin: "0 0 4px" }}>{plan.desc}</p>
@@ -398,7 +398,7 @@ export default function Home() {
                 <button style={{ width: "100%", padding: "12px", fontSize: 14, fontWeight: 700, background: plan.badge ? "#1A1A1A" : "white", color: plan.badge ? "white" : "#1A1A1A", border: "1.5px solid #1A1A1A", borderRadius: 10, cursor: "pointer" }} onClick={goAuth}>
                   Commencer l'essai gratuit
                 </button>
-                <p style={{ fontSize: 11, color: "#BBB", textAlign: "center", margin: "8px 0 0" }}>7 jours gratuits · CB requise</p>
+                <p style={{ fontSize: 11, color: "#BBB", textAlign: "center", margin: "8px 0 0" }}>Sans frais pendant 7 jours</p>
               </div>
             ))}
           </div>
@@ -447,15 +447,80 @@ export default function Home() {
       </section>
 
       {/* ── Footer ── */}
-      <footer style={{ background: "#080808", padding: "24px 20px" }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", flexDirection: isMobile ? "column" : "row", justifyContent: "space-between", alignItems: isMobile ? "flex-start" : "center", gap: 8 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <Logo size={18} light />
-            <p style={{ fontSize: 13, fontWeight: 700, color: "rgba(255,255,255,0.4)", margin: 0 }}>MenuSafe</p>
+      <footer style={{ background: "#080808", padding: "48px 20px 28px" }}>
+        <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+          {/* Footer top — colonnes */}
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "2fr 1fr 1fr 1fr", gap: isMobile ? 32 : 48, marginBottom: 40 }}>
+            {/* Colonne marque */}
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+                <Logo size={20} light />
+                <span style={{ fontSize: 14, fontWeight: 800, color: "white", letterSpacing: "-0.02em" }}>MenuSafe</span>
+              </div>
+              <p style={{ fontSize: 12, color: "rgba(255,255,255,0.4)", lineHeight: 1.7, margin: "0 0 16px", maxWidth: 220 }}>
+                La solution allergènes pour les professionnels de la restauration. Conforme règlement INCO UE n°1169/2011.
+              </p>
+              <a href="mailto:contact@menusafe.fr" style={{ fontSize: 12, color: "rgba(255,255,255,0.4)", textDecoration: "none" }}>
+                contact@menusafe.fr
+              </a>
+            </div>
+            {/* Produit */}
+            <div>
+              <p style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.3)", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 14px" }}>Produit</p>
+              {[
+                { label: "Fonctionnalités", href: "/#features" },
+                { label: "Tarifs", href: "/#pricing" },
+                { label: "FAQ", href: "/#faq" },
+                { label: "Se connecter", href: "/auth" },
+              ].map((l, i) => (
+                <a key={i} href={l.href} style={{ display: "block", fontSize: 13, color: "rgba(255,255,255,0.5)", textDecoration: "none", marginBottom: 8 }}
+                  onMouseEnter={e => e.target.style.color="white"}
+                  onMouseLeave={e => e.target.style.color="rgba(255,255,255,0.5)"}>
+                  {l.label}
+                </a>
+              ))}
+            </div>
+            {/* Légal */}
+            <div>
+              <p style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.3)", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 14px" }}>Légal</p>
+              {[
+                { label: "Conditions générales", href: "/cgu" },
+                { label: "Politique de confidentialité", href: "/confidentialite" },
+                { label: "Mentions légales", href: "/mentions-legales" },
+                { label: "Gestion des cookies", href: "#cookies" },
+              ].map((l, i) => (
+                <a key={i} href={l.href} style={{ display: "block", fontSize: 13, color: "rgba(255,255,255,0.5)", textDecoration: "none", marginBottom: 8 }}
+                  onMouseEnter={e => e.target.style.color="white"}
+                  onMouseLeave={e => e.target.style.color="rgba(255,255,255,0.5)"}>
+                  {l.label}
+                </a>
+              ))}
+            </div>
+            {/* Contact */}
+            <div>
+              <p style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.3)", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 14px" }}>Contact</p>
+              {[
+                { label: "Support client", href: "mailto:contact@menusafe.fr" },
+                { label: "Signaler un bug", href: "mailto:bugs@menusafe.fr" },
+                { label: "Partenariats", href: "mailto:partenariats@menusafe.fr" },
+              ].map((l, i) => (
+                <a key={i} href={l.href} style={{ display: "block", fontSize: 13, color: "rgba(255,255,255,0.5)", textDecoration: "none", marginBottom: 8 }}
+                  onMouseEnter={e => e.target.style.color="white"}
+                  onMouseLeave={e => e.target.style.color="rgba(255,255,255,0.5)"}>
+                  {l.label}
+                </a>
+              ))}
+            </div>
           </div>
-          <p style={{ fontSize: 11, color: "rgba(255,255,255,0.2)", margin: 0 }}>
-            © 2026 MenuSafe · Conforme INCO UE n°1169/2011 · contact@menusafe.fr
-          </p>
+          {/* Footer bottom */}
+          <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: 20, display: "flex", flexDirection: isMobile ? "column" : "row", justifyContent: "space-between", alignItems: isMobile ? "flex-start" : "center", gap: 8 }}>
+            <p style={{ fontSize: 11, color: "rgba(255,255,255,0.2)", margin: 0 }}>
+              © 2026 MenuSafe · Tous droits réservés
+            </p>
+            <p style={{ fontSize: 11, color: "rgba(255,255,255,0.2)", margin: 0 }}>
+              Conforme règlement INCO UE n°1169/2011 · Paiement sécurisé par Stripe
+            </p>
+          </div>
         </div>
       </footer>
     </div>

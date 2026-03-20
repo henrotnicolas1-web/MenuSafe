@@ -56,9 +56,29 @@ export default function AuthPage() {
         setSuccess("Compte créé ! Vérifiez votre email pour confirmer votre inscription.");
       }
     } else {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) setError("Email ou mot de passe incorrect.");
-      else router.push("/dashboard");
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        setError("Email ou mot de passe incorrect.");
+      } else {
+        // Vérifie si l'utilisateur a un abonnement actif
+        const { data: sub } = await supabase
+          .from("subscriptions")
+          .select("status, plan, trial_ends_at")
+          .eq("user_id", data.user.id)
+          .single();
+        
+        const now = new Date();
+        const trialEndsAt = sub?.trial_ends_at ? new Date(sub.trial_ends_at) : null;
+        const isTrialing = sub?.status === "trialing" && trialEndsAt && trialEndsAt > now;
+        const isActive = sub?.status === "active";
+        
+        // Nouveau compte sans abonnement → upgrade
+        if (!isTrialing && !isActive) {
+          router.push("/upgrade");
+        } else {
+          router.push("/dashboard");
+        }
+      }
     }
     setLoading(false);
   }

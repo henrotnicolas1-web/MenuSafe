@@ -5,17 +5,18 @@ import { createClient } from "@supabase/supabase-js";
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 const PRICE_IDS = {
-  solo:   process.env.STRIPE_PRICE_SOLO,
-  pro:    process.env.STRIPE_PRICE_PRO,
-  reseau: process.env.STRIPE_PRICE_RESEAU,
+  solo:         { monthly: process.env.STRIPE_PRICE_SOLO,        yearly: process.env.STRIPE_PRICE_SOLO_YEAR },
+  pro:          { monthly: process.env.STRIPE_PRICE_PRO,         yearly: process.env.STRIPE_PRICE_PRO_YEAR },
+  reseau:       { monthly: process.env.STRIPE_PRICE_RESEAU,      yearly: process.env.STRIPE_PRICE_RESEAU_YEAR },
 };
 
 export async function POST(request) {
   try {
-    const { plan, userId, userEmail } = await request.json();
+    const { plan, billing = "monthly", withTrial = true, userId, userEmail } = await request.json();
 
-    if (!PRICE_IDS[plan]) {
-      return NextResponse.json({ error: "Plan invalide" }, { status: 400 });
+    const priceId = PRICE_IDS[plan]?.[billing];
+    if (!priceId) {
+      return NextResponse.json({ error: `Plan ou période invalide: ${plan}/${billing}` }, { status: 400 });
     }
 
     const supabase = createClient(
@@ -45,21 +46,30 @@ export async function POST(request) {
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://menu-safe-one.vercel.app";
 
-    const session = await stripe.checkout.sessions.create({
+    const sessionParams = {
       customer: customerId,
       payment_method_types: ["card"],
-      line_items: [{ price: PRICE_IDS[plan], quantity: 1 }],
+      line_items: [{ price: priceId, quantity: 1 }],
       mode: "subscription",
-      subscription_data: {
-        trial_period_days: 7,
-        metadata: { userId, plan },
-      },
       success_url: `${appUrl}/dashboard?checkout=success&plan=${plan}`,
-      cancel_url: `${appUrl}/dashboard?checkout=canceled`,
-      metadata: { userId, plan },
+      cancel_url: `${appUrl}/upgrade`,
+      metadata: { userId, plan, billing },
       locale: "fr",
-    });
+    };
 
+    // Ajout du trial seulement si demandé
+    if (withTrial) {
+      sessionParams.subscription_data = {
+        trial_period_days: 7,
+        metadata: { userId, plan, billing },
+      };
+    } else {
+      sessionParams.subscription_data = {
+        metadata: { userId, plan, billing },
+      };
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionParams);
     return NextResponse.json({ url: session.url });
   } catch (err) {
     console.error("Checkout error:", err);

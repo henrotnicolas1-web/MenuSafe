@@ -285,7 +285,7 @@ export default function Dashboard() {
                 <p style={s.importBannerSub}>Photographiez votre carte — l'IA extrait tous vos plats et allergènes automatiquement.</p>
               </div>
             </div>
-            <button style={s.btnImport} onClick={() => router.push("/dashboard/import")}>Importer →</button>
+            <button style={s.btnImport} onClick={() => router.push(`/dashboard/import?est=${activeEst}`)}>Importer →</button>
           </div>
         )}
 
@@ -307,7 +307,7 @@ export default function Dashboard() {
               </p>
               <div style={{ display: "flex", gap: 8 }}>
                 {canImport && (
-                  <button style={s.btnImportSmall} onClick={() => router.push("/dashboard/import")}>📸</button>
+                  <button style={s.btnImportSmall} onClick={() => router.push(`/dashboard/import?est=${activeEst}`)}>📸</button>
                 )}
                 <button
                   style={canAddRecipe(plan, recipes.length) ? s.btnPrimary : s.btnLocked}

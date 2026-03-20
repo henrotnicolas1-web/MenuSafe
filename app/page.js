@@ -1,5 +1,6 @@
 "use client";
 import { useRouter } from "next/navigation";
+import DemoSection from "@/components/DemoSection";
 
 function Logo({ size = 28, light = false }) {
   return (
@@ -153,6 +154,8 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      <DemoSection />
 
       {/* Section carte interactive focus */}
       <section style={{ ...s.section, background: "#0F0F0F", padding: "80px 20px" }}>

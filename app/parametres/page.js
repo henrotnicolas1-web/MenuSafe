@@ -243,48 +243,140 @@ export default function ParamatresPage() {
 
         {/* ── Abonnement ── */}
         {activeTab === "abonnement" && (
-          <div style={s.section}>
-            <h2 style={s.sectionTitle}>Mon abonnement</h2>
-            <div style={s.infoRow}>
-              <span style={s.infoLabel}>Plan actuel</span>
-              <span style={{ ...s.infoValue, fontWeight: 700, textTransform: "capitalize" }}>{sub?.plan || "free"}</span>
-            </div>
-            <div style={s.infoRow}>
-              <span style={s.infoLabel}>Statut</span>
-              <span style={{ ...s.infoValue, color: sub?.status === "active" ? "#38A169" : sub?.status === "trialing" ? "#D69E2E" : "#E53E3E", fontWeight: 600 }}>
-                {sub?.status === "active" ? "Actif" : sub?.status === "trialing" ? "Période d'essai" : sub?.status === "past_due" ? "Paiement en retard" : "Inactif"}
-              </span>
-            </div>
-            {sub?.trial_ends_at && sub.status === "trialing" && (
-              <div style={s.infoRow}>
-                <span style={s.infoLabel}>Fin d'essai</span>
-                <span style={s.infoValue}>{new Date(sub.trial_ends_at).toLocaleDateString("fr-FR")}</span>
-              </div>
-            )}
-            {sub?.current_period_ends_at && sub.status === "active" && (
-              <div style={s.infoRow}>
-                <span style={s.infoLabel}>Prochain renouvellement</span>
-                <span style={s.infoValue}>{new Date(sub.current_period_ends_at).toLocaleDateString("fr-FR")}</span>
-              </div>
-            )}
-            <div style={{ marginTop: 20, display: "flex", gap: 10 }}>
-              <button onClick={() => router.push("/upgrade")}
-                style={s.btnPrimary}>
-                Changer de formule →
-              </button>
-              {sub?.status === "active" && (
-                <a href="https://billing.stripe.com/p/login/test_00g00000000000" target="_blank" rel="noopener noreferrer"
-                  style={{ ...s.btnSm, background: "white", color: "#555", border: "1px solid #E0E0E0", textDecoration: "none", display: "flex", alignItems: "center" }}>
-                  Gérer via Stripe
-                </a>
-              )}
-            </div>
-            <p style={{ fontSize: 12, color: "#BBB", marginTop: 12 }}>
-              Pour annuler votre abonnement ou obtenir un remboursement, contactez-nous via le <a href="/support" style={{ color: "#888" }}>formulaire de support</a>.
-            </p>
-          </div>
+          <AbonnementTab user={user} sub={sub} router={router} />
         )}
       </main>
+    </div>
+  );
+}
+
+function AbonnementTab({ user, sub, router }) {
+  const [loadingPortal, setLoadingPortal] = useState(false);
+  const [cancelConfirm, setCancelConfirm] = useState(false);
+  const [canceling, setCanceling] = useState(false);
+  const [cancelDone, setCancelDone] = useState(false);
+  const [error, setError] = useState("");
+
+  const isTrialing = sub?.status === "trialing";
+  const isActive = sub?.status === "active";
+  const hasStripe = !!sub?.stripe_subscription_id || !!sub?.stripe_customer_id;
+
+  async function openPortal() {
+    setLoadingPortal(true);
+    setError("");
+    try {
+      const res = await fetch("/api/customer-portal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user.id }),
+      });
+      const data = await res.json();
+      if (data.url) window.location.href = data.url;
+      else setError(data.error || "Erreur lors de l'ouverture du portail");
+    } catch (err) {
+      setError(err.message);
+    }
+    setLoadingPortal(false);
+  }
+
+  return (
+    <div style={s.section}>
+      <h2 style={s.sectionTitle}>Mon abonnement</h2>
+      {error && <div style={s.error}>{error}</div>}
+      {cancelDone && (
+        <div style={s.success}>
+          Votre abonnement a bien été annulé. Vous conservez l'accès jusqu'à la fin de la période en cours.
+        </div>
+      )}
+
+      <div style={s.infoRow}>
+        <span style={s.infoLabel}>Plan actuel</span>
+        <span style={{ ...s.infoValue, fontWeight: 700, textTransform: "capitalize" }}>
+          {sub?.plan === "free" ? "Gratuit" : sub?.plan === "solo" ? "Solo" : sub?.plan === "pro" ? "Pro" : sub?.plan === "reseau" ? "Réseau" : "Gratuit"}
+        </span>
+      </div>
+      <div style={s.infoRow}>
+        <span style={s.infoLabel}>Statut</span>
+        <span style={{ ...s.infoValue, fontWeight: 600,
+          color: isActive ? "#38A169" : isTrialing ? "#D69E2E" : sub?.status === "past_due" ? "#E53E3E" : "#888" }}>
+          {isActive ? "Actif" : isTrialing ? "Période d'essai" : sub?.status === "past_due" ? "Paiement en retard" : "Inactif"}
+        </span>
+      </div>
+      {sub?.trial_ends_at && isTrialing && (
+        <div style={s.infoRow}>
+          <span style={s.infoLabel}>Fin de l'essai gratuit</span>
+          <span style={s.infoValue}>{new Date(sub.trial_ends_at).toLocaleDateString("fr-FR")}</span>
+        </div>
+      )}
+      {sub?.current_period_ends_at && isActive && (
+        <div style={s.infoRow}>
+          <span style={s.infoLabel}>Prochain renouvellement</span>
+          <span style={s.infoValue}>{new Date(sub.current_period_ends_at).toLocaleDateString("fr-FR")}</span>
+        </div>
+      )}
+
+      {/* Actions principales */}
+      <div style={{ marginTop: 20, display: "flex", gap: 10, flexWrap: "wrap" }}>
+        <button onClick={() => router.push("/upgrade")} style={s.btnPrimary}>
+          Changer de formule →
+        </button>
+        {hasStripe && (isActive || isTrialing) && (
+          <button onClick={openPortal} disabled={loadingPortal}
+            style={{ ...s.btnSm, background: "white", color: "#555", border: "1px solid #E0E0E0" }}>
+            {loadingPortal ? "Chargement..." : "Gérer le paiement"}
+          </button>
+        )}
+      </div>
+
+      {/* Annulation */}
+      {(isActive || isTrialing) && !cancelDone && (
+        <>
+          <div style={s.divider} />
+          {!cancelConfirm ? (
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div>
+                <p style={{ fontSize: 14, fontWeight: 600, color: "#1A1A1A", margin: "0 0 3px" }}>
+                  {isTrialing ? "Annuler l'essai gratuit" : "Annuler l'abonnement"}
+                </p>
+                <p style={{ fontSize: 12, color: "#888", margin: 0 }}>
+                  {isTrialing
+                    ? "Vous repasserez au plan gratuit à la fin des 7 jours. Aucun débit."
+                    : "Accès maintenu jusqu'à la fin de la période payée. Aucun remboursement partiel."}
+                </p>
+              </div>
+              <button onClick={() => setCancelConfirm(true)}
+                style={{ fontSize: 12, fontWeight: 600, padding: "7px 14px", background: "white", color: "#888", border: "1px solid #E0E0E0", borderRadius: 8, cursor: "pointer", whiteSpace: "nowrap", marginLeft: 12 }}>
+                Annuler
+              </button>
+            </div>
+          ) : (
+            <div style={{ background: "#FFF8E6", border: "1px solid #FDDEA0", borderRadius: 12, padding: "16px 20px" }}>
+              <p style={{ fontSize: 14, fontWeight: 700, color: "#7A4F00", margin: "0 0 8px" }}>
+                Confirmer l'annulation ?
+              </p>
+              <p style={{ fontSize: 13, color: "#7A4F00", margin: "0 0 14px", lineHeight: 1.6 }}>
+                {isTrialing
+                  ? "Votre essai sera annulé immédiatement. Vous repasserez au plan gratuit (3 recettes max). Vos données seront conservées."
+                  : "Votre abonnement sera annulé. Vous conservez l'accès jusqu'au " + (sub?.current_period_ends_at ? new Date(sub.current_period_ends_at).toLocaleDateString("fr-FR") : "la fin de la période") + "."}
+              </p>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button onClick={openPortal} disabled={canceling}
+                  style={{ fontSize: 13, fontWeight: 700, padding: "9px 18px", background: "#CC0000", color: "white", border: "none", borderRadius: 9, cursor: canceling ? "wait" : "pointer" }}>
+                  {canceling ? "Annulation..." : "Confirmer l'annulation"}
+                </button>
+                <button onClick={() => setCancelConfirm(false)}
+                  style={{ fontSize: 13, fontWeight: 600, padding: "9px 18px", background: "white", color: "#555", border: "1px solid #E0E0E0", borderRadius: 9, cursor: "pointer" }}>
+                  Garder mon abonnement
+                </button>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
+      <p style={{ fontSize: 12, color: "#BBB", marginTop: 16 }}>
+        Une question ? <a href="/support" style={{ color: "#888" }}>Contactez notre support</a>
+      </p>
     </div>
   );
 }

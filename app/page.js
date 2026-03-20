@@ -487,6 +487,7 @@ export default function Home() {
                 { label: "Conditions générales", href: "/cgu" },
                 { label: "Politique de confidentialité", href: "/confidentialite" },
                 { label: "Mentions légales", href: "/mentions-legales" },
+                { label: "Gestion des cookies", href: "/cookies" },
               ].map((l, i) => (
                 <a key={i} href={l.href} style={{ display: "block", fontSize: 13, color: "rgba(255,255,255,0.5)", textDecoration: "none", marginBottom: 8 }}
                   onMouseEnter={e => e.target.style.color="white"}

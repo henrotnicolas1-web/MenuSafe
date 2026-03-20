@@ -179,6 +179,7 @@ export default function Dashboard() {
           {!isMobile && (
             <div style={s.navRight}>
               <div style={s.planBadge}>{planInfo.name}</div>
+              <button style={s.btnSettings} onClick={() => router.push("/parametres")} title="Paramètres">⚙️</button>
               <button style={s.btnLogout} onClick={async () => { await supabase.auth.signOut(); router.push("/"); }}>
                 Déconnexion
               </button>
@@ -373,6 +374,7 @@ const s = {
   navRight: { display: "flex", alignItems: "center", gap: 8, flexShrink: 0 },
   planBadge: { background: "#F5F5F3", border: "1px solid #E8E8E8", borderRadius: 8, padding: "4px 10px", color: "#555", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" },
   btnLogout: { fontSize: 12, padding: "6px 12px", background: "white", color: "#888", border: "1px solid #E8E8E8", borderRadius: 8, cursor: "pointer" },
+  btnSettings: { fontSize: 14, padding: "5px 8px", background: "white", border: "1px solid #E8E8E8", borderRadius: 8, cursor: "pointer" },
   main: { maxWidth: 900, margin: "0 auto", padding: "16px 16px" },
   limitBanner: { background: "#FFF8E6", border: "1px solid #FDDEA0", borderRadius: 12, padding: "12px 16px", marginBottom: 16, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 },
   upgradeBtn: { fontSize: 12, fontWeight: 700, padding: "6px 14px", background: "#1A1A1A", color: "white", border: "none", borderRadius: 8, cursor: "pointer", whiteSpace: "nowrap" },

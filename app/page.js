@@ -487,7 +487,6 @@ export default function Home() {
                 { label: "Conditions générales", href: "/cgu" },
                 { label: "Politique de confidentialité", href: "/confidentialite" },
                 { label: "Mentions légales", href: "/mentions-legales" },
-                { label: "Gestion des cookies", href: "#cookies" },
               ].map((l, i) => (
                 <a key={i} href={l.href} style={{ display: "block", fontSize: 13, color: "rgba(255,255,255,0.5)", textDecoration: "none", marginBottom: 8 }}
                   onMouseEnter={e => e.target.style.color="white"}
@@ -500,9 +499,9 @@ export default function Home() {
             <div>
               <p style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.3)", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 14px" }}>Contact</p>
               {[
-                { label: "Support client", href: "mailto:contact@menusafe.fr" },
-                { label: "Signaler un bug", href: "mailto:bugs@menusafe.fr" },
-                { label: "Partenariats", href: "mailto:partenariats@menusafe.fr" },
+                { label: "Formulaire de contact", href: "/support" },
+                { label: "Email direct", href: "mailto:contact@menusafe.fr" },
+                { label: "Mon compte", href: "/parametres" },
               ].map((l, i) => (
                 <a key={i} href={l.href} style={{ display: "block", fontSize: 13, color: "rgba(255,255,255,0.5)", textDecoration: "none", marginBottom: 8 }}
                   onMouseEnter={e => e.target.style.color="white"}

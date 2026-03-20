@@ -122,7 +122,14 @@ export default function AuthPage() {
           </div>
 
           <div style={s.field}>
-            <label style={s.label}>Mot de passe</label>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+              <label style={{ ...s.label, margin: 0 }}>Mot de passe</label>
+              {mode === "login" && (
+                <a href="/reset-password" style={{ fontSize: 12, color: "#888", textDecoration: "none" }}>
+                  Mot de passe oublié ?
+                </a>
+              )}
+            </div>
             <input style={s.input} type="password"
               placeholder={mode === "signup" ? "8 caractères minimum" : "••••••••"}
               value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} />

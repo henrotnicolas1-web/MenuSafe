@@ -60,6 +60,133 @@ function MenuMockup({ small = false }) {
   );
 }
 
+
+const LANDING_PLANS = [
+  {
+    id: "solo", name: "Solo", badge: null, desc: "Pour 1 établissement",
+    note: "Saisie manuelle des recettes",
+    monthly: 29, yearly: 290,
+    features: ["Jusqu'à 3 recettes (gratuit)", "50 recettes max", "PDF conformes INCO", "QR code carte (en français)", "Filtrage allergènes client", "1 établissement", "Support email"],
+    missing: ["Import IA depuis photo", "Carte multilingue 8 langues"],
+  },
+  {
+    id: "pro", name: "Pro", badge: "Plus populaire", desc: "Jusqu'à 3 établissements",
+    note: null,
+    monthly: 59, yearly: 590,
+    features: ["Recettes illimitées", "3 établissements", "Import IA depuis photo", "Carte multilingue 8 langues", "PDF carte complète", "Gestion équipe (3 membres)", "Export CSV", "Support prioritaire"],
+    missing: [],
+  },
+  {
+    id: "reseau", name: "Réseau", badge: null, desc: "4+ établissements / franchises",
+    note: null,
+    monthly: 149, yearly: 1490,
+    features: ["Tout Pro inclus", "Établissements illimités", "Membres illimités", "Accès API", "Account manager dédié", "Contrat annuel possible"],
+    missing: [],
+  },
+];
+
+function LandingPricing({ isMobile, goAuth }) {
+  const [billing, setBilling] = useState("monthly");
+  return (
+    <div>
+      {/* Toggle */}
+      <div style={{ display: "flex", justifyContent: "center", marginBottom: 32 }}>
+        <div style={{ display: "inline-flex", background: "#F0F0F0", borderRadius: 12, padding: 4, gap: 4 }}>
+          <button onClick={() => setBilling("monthly")}
+            style={{ padding: "8px 20px", fontSize: 13, fontWeight: 600, borderRadius: 9, border: "none", cursor: "pointer",
+              background: billing === "monthly" ? "#1A1A1A" : "transparent",
+              color: billing === "monthly" ? "white" : "#555" }}>
+            Mensuel
+          </button>
+          <button onClick={() => setBilling("yearly")}
+            style={{ padding: "8px 20px", fontSize: 13, fontWeight: 600, borderRadius: 9, border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 7,
+              background: billing === "yearly" ? "#1A1A1A" : "transparent",
+              color: billing === "yearly" ? "white" : "#555" }}>
+            Annuel
+            <span style={{ fontSize: 11, fontWeight: 700, background: "#D4EDDA", color: "#155724", padding: "2px 7px", borderRadius: 20 }}>−17%</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Cards — grid avec hauteur égale par row */}
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)", gap: isMobile ? 14 : 20, maxWidth: 960, margin: "0 auto", alignItems: "stretch" }}>
+        {LANDING_PLANS.map((plan) => {
+          const price = billing === "yearly" ? plan.yearly : plan.monthly;
+          const perMonth = billing === "yearly" ? Math.round(plan.yearly / 12) : plan.monthly;
+          return (
+            <div key={plan.id} style={{ background: "white", border: plan.badge ? "2px solid #1A1A1A" : "1px solid #E8E8E8", borderRadius: 18, padding: isMobile ? "22px" : "26px", position: "relative", display: "flex", flexDirection: "column" }}>
+              {plan.badge && (
+                <div style={{ position: "absolute", top: -12, left: "50%", transform: "translateX(-50%)", background: "#1A1A1A", color: "white", fontSize: 11, fontWeight: 700, padding: "4px 14px", borderRadius: 20, whiteSpace: "nowrap" }}>
+                  {plan.badge}
+                </div>
+              )}
+              {/* Header — hauteur fixe */}
+              <div style={{ marginBottom: 14 }}>
+                <p style={{ fontSize: 18, fontWeight: 800, color: "#1A1A1A", margin: "0 0 2px" }}>{plan.name}</p>
+                <p style={{ fontSize: 12, color: "#999", margin: "0 0 4px" }}>{plan.desc}</p>
+                {plan.note
+                  ? <p style={{ fontSize: 11, color: "#BBB", margin: 0, fontStyle: "italic" }}>{plan.note}</p>
+                  : <p style={{ fontSize: 11, margin: 0 }}>&nbsp;</p>
+                }
+              </div>
+              {/* Prix — hauteur fixe */}
+              <div style={{ marginBottom: 18 }}>
+                {billing === "yearly" ? (
+                  <>
+                    <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
+                      <span style={{ fontSize: 34, fontWeight: 800, color: "#1A1A1A", letterSpacing: "-0.02em" }}>{price}€</span>
+                      <span style={{ fontSize: 13, color: "#999" }}>/an</span>
+                    </div>
+                    <p style={{ fontSize: 12, color: "#888", margin: "2px 0 0" }}>
+                      soit <strong style={{ color: "#1A1A1A" }}>{perMonth}€/mois</strong>
+                      <span style={{ color: "#38A169", fontWeight: 600 }}> · 2 mois offerts</span>
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
+                      <span style={{ fontSize: 34, fontWeight: 800, color: "#1A1A1A", letterSpacing: "-0.02em" }}>{price}€</span>
+                      <span style={{ fontSize: 13, color: "#999" }}>/mois</span>
+                    </div>
+                    <p style={{ fontSize: 12, color: "#888", margin: "2px 0 0" }}>
+                      ou <span style={{ color: "#38A169", fontWeight: 600 }}>{plan.yearly}€/an</span>
+                      <span style={{ color: "#38A169" }}> (2 mois offerts)</span>
+                    </p>
+                  </>
+                )}
+              </div>
+              {/* Features — flex:1 pour pousser le bouton en bas */}
+              <ul style={{ listStyle: "none", padding: 0, margin: "0 0 20px", flex: 1 }}>
+                {plan.features.map((f, j) => (
+                  <li key={j} style={{ fontSize: 13, color: "#444", padding: "4px 0", display: "flex", gap: 8, alignItems: "flex-start" }}>
+                    <span style={{ color: "#38A169", flexShrink: 0 }}>✓</span>{f}
+                  </li>
+                ))}
+                {plan.missing.map((f, j) => (
+                  <li key={"m"+j} style={{ fontSize: 13, color: "#CCC", padding: "4px 0", display: "flex", gap: 8 }}>
+                    <span style={{ flexShrink: 0 }}>—</span>{f}
+                  </li>
+                ))}
+              </ul>
+              {/* Bouton — toujours en bas */}
+              <button onClick={goAuth}
+                style={{ width: "100%", padding: "12px", fontSize: 14, fontWeight: 700,
+                  background: plan.badge ? "#1A1A1A" : "white",
+                  color: plan.badge ? "white" : "#1A1A1A",
+                  border: "1.5px solid #1A1A1A", borderRadius: 10, cursor: "pointer" }}>
+                Commencer l'essai gratuit
+              </button>
+              <p style={{ fontSize: 11, color: "#BBB", textAlign: "center", margin: "8px 0 0" }}>
+                Sans frais pendant 7 jours
+              </p>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export default function Home() {
   const router = useRouter();
   const { isMobile, isTablet } = useWindowSize();
@@ -352,56 +479,7 @@ export default function Home() {
           <p style={{ textAlign: "center", fontSize: isMobile ? 13 : 15, color: "#666", marginBottom: 36, marginTop: -16 }}>
             Une amende DGCCRF coûte 1 500€. Le plan Solo annuel MenuSafe coûte 290€.
           </p>
-          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fit, minmax(260px, 1fr))", gap: isMobile ? 14 : 20, maxWidth: 960, margin: "0 auto" }}>
-            {[
-              {
-                name: "Solo", price: "29", badge: null, desc: "Pour 1 établissement",
-                note: "Saisie manuelle des recettes",
-                features: ["Jusqu'à 3 recettes (gratuit)", "50 recettes max", "PDF conformes INCO par plat", "QR code carte (en français)", "Filtrage allergènes pour vos clients", "1 établissement", "Support email"],
-                missing: ["Import IA depuis photo", "Traductions multilingues"],
-              },
-              {
-                name: "Pro", price: "59", badge: "Plus populaire", desc: "Jusqu'à 3 établissements",
-                note: null,
-                features: ["Recettes illimitées", "3 établissements", "Import IA depuis photo", "Carte interactive multilingue (8 langues)", "PDF carte complète", "Gestion équipe (3 membres)", "Export CSV", "Support prioritaire"],
-                missing: [],
-              },
-              {
-                name: "Réseau", price: "149", badge: null, desc: "4+ établissements / franchises",
-                note: null,
-                features: ["Tout Pro inclus", "Établissements illimités", "Membres illimités", "Accès API", "Account manager dédié", "Contrat annuel possible"],
-                missing: [],
-              },
-            ].map((plan, i) => (
-              <div key={i} style={{ background: "white", border: plan.badge ? "2px solid #1A1A1A" : "1px solid #E8E8E8", borderRadius: 18, padding: isMobile ? "22px" : "28px", position: "relative", display: "flex", flexDirection: "column", minHeight: isMobile ? "auto" : 520 }}>
-                {plan.badge && <div style={{ position: "absolute", top: -12, left: "50%", transform: "translateX(-50%)", background: "#1A1A1A", color: "white", fontSize: 11, fontWeight: 700, padding: "4px 14px", borderRadius: 20, whiteSpace: "nowrap" }}>{plan.badge}</div>}
-                <p style={{ fontSize: 18, fontWeight: 800, color: "#1A1A1A", margin: "0 0 2px" }}>{plan.name}</p>
-                <p style={{ fontSize: 12, color: "#999", margin: "0 0 4px" }}>{plan.desc}</p>
-                {plan.note && <p style={{ fontSize: 11, color: "#AAA", margin: "0 0 10px", fontStyle: "italic" }}>{plan.note}</p>}
-                <div style={{ display: "flex", alignItems: "baseline", gap: 4, margin: plan.note ? "0 0 4px" : "12px 0 4px" }}>
-                  <span style={{ fontSize: 36, fontWeight: 800, color: "#1A1A1A", letterSpacing: "-0.02em" }}>{plan.price}€</span>
-                  <span style={{ fontSize: 14, color: "#999" }}>/mois</span>
-                </div>
-                <p style={{ fontSize: 12, color: "#888", margin: "0 0 18px" }}>ou {plan.price * 10}€/an <span style={{ color: "#38A169", fontWeight: 600 }}>(2 mois offerts)</span></p>
-                <ul style={{ listStyle: "none", padding: 0, margin: "0 0 20px" }}>
-                  {plan.features.map((f, j) => (
-                    <li key={j} style={{ fontSize: 13, color: "#444", padding: "5px 0", display: "flex", gap: 8 }}>
-                      <span style={{ color: "#38A169" }}>✓</span>{f}
-                    </li>
-                  ))}
-                  {plan.missing.map((f, j) => (
-                    <li key={`m${j}`} style={{ fontSize: 13, color: "#CCC", padding: "5px 0", display: "flex", gap: 8 }}>
-                      <span>—</span>{f}
-                    </li>
-                  ))}
-                </ul>
-                <button style={{ width: "100%", padding: "12px", fontSize: 14, fontWeight: 700, background: plan.badge ? "#1A1A1A" : "white", color: plan.badge ? "white" : "#1A1A1A", border: "1.5px solid #1A1A1A", borderRadius: 10, cursor: "pointer" }} onClick={goAuth}>
-                  Commencer l'essai gratuit
-                </button>
-                <p style={{ fontSize: 11, color: "#BBB", textAlign: "center", margin: "8px 0 0" }}>Sans frais pendant 7 jours</p>
-              </div>
-            ))}
-          </div>
+          <LandingPricing isMobile={isMobile} goAuth={goAuth} />
         </div>
       </section>
 
@@ -412,7 +490,7 @@ export default function Home() {
           <h2 style={{ ...s.h2, fontSize: isMobile ? 24 : 32 }}>Questions fréquentes</h2>
           {[
             { q: "Est-ce vraiment obligatoire ?", a: "Oui. Le règlement UE n°1169/2011 (INCO), entré en vigueur en France en décembre 2014, oblige tous les établissements de restauration commerciale à déclarer les 14 allergènes majeurs. L'absence d'information est passible d'une amende allant jusqu'à 1 500€ par infraction." },
-            { q: "La carte fonctionne dans quelles langues ?", a: "Français, anglais, espagnol, allemand, italien, néerlandais, japonais et mandarin. Les traductions sont générées lors de l'import IA et stockées — changement de langue instantané, sans délai. Disponible en plans Pro et Réseau." },
+            { q: "La carte multilingue fonctionne dans quelles langues ?", a: "Français, anglais, espagnol, allemand, italien, néerlandais, japonais et mandarin (8 langues). Les traductions sont générées lors de l'import IA (plans Pro et Réseau) et stockées définitivement — le changement de langue est instantané, sans aucun appel API supplémentaire." },
             { q: "Que se passe-t-il si je change une recette ?", a: "La carte interactive se met à jour instantanément. Le QR code que vous avez imprimé ne change jamais — vous n'avez rien à réimprimer." },
             { q: "Comment fonctionne l'import par photo ?", a: "Vous photographiez votre carte ou uploadez un PDF. L'IA lit les plats, génère les traductions en 8 langues et détecte les allergènes en une seule analyse (60 à 90 secondes). Vous validez chaque plat avant l'import. Disponible en plans Pro et Réseau." },
             { q: "Puis-je gérer plusieurs restaurants ?", a: "Oui. Le plan Pro permet jusqu'à 3 établissements, le plan Réseau est illimité. Chaque établissement a sa propre carte et son propre QR code." },

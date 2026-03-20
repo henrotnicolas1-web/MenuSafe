@@ -17,6 +17,7 @@ function Logo({ size = 24 }) {
 
 const STEPS = { upload: "upload", scanning: "scanning", review: "review", saving: "saving", done: "done" };
 
+// Composant interne qui utilise useSearchParams — doit être wrappé dans Suspense
 function ImportPageInner() {
   const [step, setStep]           = useState(STEPS.upload);
   const [file, setFile]           = useState(null);
@@ -31,12 +32,17 @@ function ImportPageInner() {
   const [user, setUser]           = useState(null);
   const [subscription, setSub]    = useState(null);
   const [estId, setEstId]         = useState(null);
+  const [estName, setEstName]     = useState("");
   const [checkDone, setCheckDone] = useState(false);
   const fileRef = useRef(null);
   const router = useRouter();
-  const supabase = createClient();
-
   const searchParams = useSearchParams();
+
+  // Navigation sécurisée — fonctionne même pendant le chargement
+  function goToDashboard() {
+    goToDashboard();
+  }
+  const supabase = createClient();
 
   useState(() => {
     (async () => {
@@ -50,10 +56,12 @@ function ImportPageInner() {
       ]);
       setSub(sub);
 
-      // Priorité : estId depuis l'URL (?est=xxx), sinon premier établissement
+      // Lit l'établissement depuis l'URL (?est=xxx)
       const estFromUrl = searchParams?.get("est");
-      const matchedEst = ests?.find((e) => e.id === estFromUrl);
-      setEstId(matchedEst?.id ?? ests?.[0]?.id ?? null);
+      const matched = ests?.find((e) => e.id === estFromUrl);
+      const target = matched ?? ests?.[0];
+      setEstId(target?.id ?? null);
+      setEstName(target?.name ?? "");
       setCheckDone(true);
     })();
   }, []);
@@ -159,11 +167,12 @@ function ImportPageInner() {
     }
   }
 
+  // Page de blocage plan insuffisant
   if (checkDone && !hasAccess) {
     return (
       <div style={s.page}>
         <nav style={s.nav}><div style={s.navInner}>
-          <div style={s.logo} onClick={() => router.push("/dashboard")}><Logo /><p style={s.logoName}>MenuSafe</p></div>
+          <div style={s.logo} onClick={() => goToDashboard()}><Logo /><p style={s.logoName}>MenuSafe</p></div>
         </div></nav>
         <div style={s.center}>
           <div style={s.lockCard}>
@@ -171,12 +180,12 @@ function ImportPageInner() {
             <p style={s.lockTitle}>Fonctionnalité Pro & Réseau</p>
             <p style={s.lockSub}>L'import par photo est disponible à partir du plan <strong>Pro (59€/mois)</strong>.</p>
             <div style={s.lockFeatures}>
-              {["Photo, image ou PDF de carte","Traductions 8 langues générées en une seule analyse","Ingrédients lus ou suggérés par l'IA","Détection allergènes automatique","Validation plat par plat"].map((f, i) => (
+              {["Photo, image ou PDF de carte","Traductions 8 langues en une analyse","Ingrédients lus ou suggérés par l'IA","Détection allergènes automatique","Validation plat par plat"].map((f, i) => (
                 <p key={i} style={s.lockFeature}><span style={{ color: "#4ADE80" }}>✓</span> {f}</p>
               ))}
             </div>
             <button style={s.btnPrimary} onClick={() => router.push("/#pricing")}>Passer au plan Pro →</button>
-            <button style={{ ...s.btnSecondary, marginTop: 8, width: "100%" }} onClick={() => router.push("/dashboard")}>← Retour</button>
+            <button style={{ ...s.btnSecondary, marginTop: 8, width: "100%" }} onClick={() => goToDashboard()}>← Retour</button>
           </div>
         </div>
       </div>
@@ -185,15 +194,14 @@ function ImportPageInner() {
 
   const platActuel = plats[current];
   const isAISuggestion = platActuel?.source === "suggestion_ia";
-  const hasTranslations = platActuel?.translations && Object.keys(platActuel.translations).length > 0;
 
   return (
     <div style={s.page}>
       <nav style={s.nav}>
         <div style={s.navInner}>
-          <div style={s.logo} onClick={() => router.push("/dashboard")} role="button"><Logo /><p style={s.logoName}>MenuSafe</p></div>
-          <p style={s.navTitle}>Import par photo de carte</p>
-          <button style={s.btnSecondary} onClick={() => router.push("/dashboard")}>← Dashboard</button>
+          <div style={s.logo} onClick={() => goToDashboard()} role="button"><Logo /><p style={s.logoName}>MenuSafe</p></div>
+          <p style={s.navTitle}>Import · {estName || "..."}</p>
+          <button style={s.btnSecondary} onClick={() => goToDashboard()}>← Dashboard</button>
         </div>
       </nav>
 
@@ -206,6 +214,7 @@ function ImportPageInner() {
               <span style={s.stepBadge}>Étape 1 / 3</span>
               <h1 style={s.uploadTitle}>Photographiez votre carte</h1>
               <p style={s.uploadSub}>L'IA analyse la carte, extrait tous les plats et génère les traductions en 8 langues en une seule passe. Zéro coût supplémentaire par la suite.</p>
+              {estName && <p style={{ fontSize: 13, color: "#4ADE80", fontWeight: 600, marginTop: 8 }}>→ Import vers : {estName}</p>}
             </div>
 
             <div style={{ ...s.dropzone, ...(file ? s.dropzoneHasFile : {}) }}
@@ -213,7 +222,7 @@ function ImportPageInner() {
               onDragOver={(e) => e.preventDefault()}
               onClick={() => fileRef.current?.click()}>
               <input ref={fileRef} type="file" accept="image/*,.pdf" style={{ display: "none" }}
-                onChange={(e) => handleFile(e.target.files[0])} capture="environment" />
+                onChange={(e) => handleFile(e.target.files[0])} />
               {preview ? (
                 <img src={preview} alt="Aperçu" style={s.preview} />
               ) : file ? (
@@ -242,20 +251,19 @@ function ImportPageInner() {
 
             <div style={s.aiExplain}>
               <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
-                <div style={{ flex: 1 }}>
-                  <p style={{ fontSize: 13, fontWeight: 700, color: "#1A1A1A", margin: "0 0 4px" }}>📋 Ingrédients sur la carte</p>
-                  <p style={{ fontSize: 12, color: "#888", margin: 0 }}>Lus directement. Précision maximale.</p>
-                </div>
-                <div style={{ width: 1, background: "#F0F0F0", alignSelf: "stretch" }} />
-                <div style={{ flex: 1 }}>
-                  <p style={{ fontSize: 13, fontWeight: 700, color: "#1A1A1A", margin: "0 0 4px" }}>🧠 Aucun ingrédient listé</p>
-                  <p style={{ fontSize: 12, color: "#888", margin: 0 }}>Recette traditionnelle proposée. Vous validez.</p>
-                </div>
-                <div style={{ width: 1, background: "#F0F0F0", alignSelf: "stretch" }} />
-                <div style={{ flex: 1 }}>
-                  <p style={{ fontSize: 13, fontWeight: 700, color: "#1A1A1A", margin: "0 0 4px" }}>🌍 8 langues générées</p>
-                  <p style={{ fontSize: 12, color: "#888", margin: 0 }}>FR, EN, ES, DE, IT, NL, JA, ZH — en une seule analyse.</p>
-                </div>
+                {[
+                  ["📋", "Ingrédients sur la carte", "Lus directement. Précision maximale."],
+                  ["🧠", "Aucun ingrédient listé", "Recette traditionnelle proposée. Vous validez."],
+                  ["🌍", "8 langues générées", "FR, EN, ES, DE, IT, NL, JA, ZH — en une seule analyse."],
+                ].map(([icon, title, desc], i, arr) => (
+                  <div key={i} style={{ flex: 1, display: "flex", gap: 8 }}>
+                    {i > 0 && <div style={{ width: 1, background: "#F0F0F0", alignSelf: "stretch", flexShrink: 0 }} />}
+                    <div style={{ flex: 1 }}>
+                      <p style={{ fontSize: 13, fontWeight: 700, color: "#1A1A1A", margin: "0 0 3px" }}>{icon} {title}</p>
+                      <p style={{ fontSize: 12, color: "#888", margin: 0 }}>{desc}</p>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
@@ -268,7 +276,7 @@ function ImportPageInner() {
               <div style={s.spinner} />
               <p style={s.scanTitle}>Analyse en cours...</p>
               <p style={s.scanSub}>L'IA lit votre carte, extrait les plats, génère les traductions en 8 langues et détecte les allergènes.</p>
-              <p style={s.scanSub2}>Comptez environ 45 à 90 secondes — traductions 8 langues incluses. C'est la seule fois que l'IA est appelée.</p>
+              <p style={s.scanSub2}>Comptez environ 45 à 90 secondes — c'est la seule fois que l'IA est appelée.</p>
             </div>
           </div>
         )}
@@ -282,9 +290,7 @@ function ImportPageInner() {
                   <strong>{scanStats.total} plats détectés</strong>
                   {scanStats.depuis_carte > 0 && <span style={s.tagCarte}>{scanStats.depuis_carte} lus depuis la carte</span>}
                   {scanStats.suggestions_ia > 0 && <span style={s.tagIA}>{scanStats.suggestions_ia} complétés par l'IA</span>}
-                  <span style={{ fontSize: 11, background: "#D4EDDA", color: "#155724", padding: "3px 8px", borderRadius: 20, fontWeight: 600 }}>
-                    🌍 8 langues stockées
-                  </span>
+                  <span style={{ fontSize: 11, background: "#D4EDDA", color: "#155724", padding: "3px 8px", borderRadius: 20, fontWeight: 600 }}>🌍 8 langues stockées</span>
                 </p>
               </div>
             )}
@@ -310,10 +316,8 @@ function ImportPageInner() {
                     ? <div style={s.badgeAI}><span>🧠</span><span>Recette proposée par l'IA</span></div>
                     : <div style={s.badgeCarte}><span>📋</span><span>Lu depuis votre carte</span></div>
                   }
-                  {hasTranslations && (
-                    <div style={{ fontSize: 10, fontWeight: 600, background: "#D4EDDA", color: "#155724", padding: "2px 8px", borderRadius: 20 }}>
-                      🌍 8 langues prêtes
-                    </div>
+                  {platActuel.translations && Object.keys(platActuel.translations).length > 0 && (
+                    <div style={{ fontSize: 10, fontWeight: 600, background: "#D4EDDA", color: "#155724", padding: "2px 8px", borderRadius: 20 }}>🌍 8 langues prêtes</div>
                   )}
                   {platActuel.allergens.length > 0
                     ? <span style={s.allergenCount}>{platActuel.allergens.length} allergène{platActuel.allergens.length > 1 ? "s" : ""}</span>
@@ -329,7 +333,7 @@ function ImportPageInner() {
                 </div>
               )}
 
-              {/* Catégorie — corrigeable */}
+              {/* Catégorie corrigeable */}
               <div style={{ marginBottom: 14 }}>
                 <p style={s.ingLabel}>Catégorie</p>
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
@@ -357,6 +361,7 @@ function ImportPageInner() {
                 </div>
               </div>
 
+              {/* Ingrédients éditables */}
               <div style={{ marginBottom: 14 }}>
                 <p style={s.ingLabel}>Ingrédients <span style={{ fontSize: 10, fontWeight: 400, color: "#CCC" }}>— cliquez pour modifier</span></p>
                 <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
@@ -370,6 +375,7 @@ function ImportPageInner() {
                 </div>
               </div>
 
+              {/* Allergènes supprimables */}
               <div style={{ marginBottom: 16, paddingTop: 14, borderTop: "1px solid #F0F0F0" }}>
                 <p style={s.ingLabel}>Allergènes détectés <span style={{ fontSize: 10, fontWeight: 400, color: "#CCC" }}>— cliquez × pour retirer</span></p>
                 {platActuel.allergens.length === 0 ? (
@@ -382,36 +388,27 @@ function ImportPageInner() {
                       return (
                         <div key={id} style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12, fontWeight: 600, padding: "4px 6px 4px 10px", borderRadius: 20, background: a.color, color: a.text }}>
                           <span>{a.icon} {a.label}</span>
-                          <button
-                            onClick={() => setPlats((prev) => {
-                              const updated = [...prev];
-                              updated[current] = { ...updated[current], allergens: updated[current].allergens.filter((x) => x !== id) };
-                              return updated;
-                            })}
-                            style={{ background: "rgba(0,0,0,0.15)", border: "none", borderRadius: "50%", width: 16, height: 16, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, color: a.text, fontWeight: 700, flexShrink: 0, padding: 0 }}
-                          >×</button>
+                          <button onClick={() => setPlats((prev) => {
+                            const updated = [...prev];
+                            updated[current] = { ...updated[current], allergens: updated[current].allergens.filter((x) => x !== id) };
+                            return updated;
+                          })} style={{ background: "rgba(0,0,0,0.15)", border: "none", borderRadius: "50%", width: 16, height: 16, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, color: a.text, fontWeight: 700, padding: 0 }}>×</button>
                         </div>
                       );
                     })}
                   </div>
                 )}
-                <select
-                  onChange={(e) => {
-                    const id = e.target.value;
-                    if (!id) return;
-                    setPlats((prev) => {
-                      const updated = [...prev];
-                      const curr = updated[current];
-                      if (!curr.allergens.includes(id)) {
-                        updated[current] = { ...curr, allergens: [...curr.allergens, id] };
-                      }
-                      return updated;
-                    });
-                    e.target.value = "";
-                  }}
-                  style={{ fontSize: 12, color: "#555", background: "white", border: "1px dashed #CCC", borderRadius: 8, padding: "5px 10px", cursor: "pointer" }}
-                  defaultValue=""
-                >
+                <select onChange={(e) => {
+                  const id = e.target.value;
+                  if (!id) return;
+                  setPlats((prev) => {
+                    const updated = [...prev];
+                    const curr = updated[current];
+                    if (!curr.allergens.includes(id)) updated[current] = { ...curr, allergens: [...curr.allergens, id] };
+                    return updated;
+                  });
+                  e.target.value = "";
+                }} style={{ fontSize: 12, color: "#555", background: "white", border: "1px dashed #CCC", borderRadius: 8, padding: "5px 10px", cursor: "pointer" }} defaultValue="">
                   <option value="" disabled>+ Ajouter un allergène manquant</option>
                   {ALLERGENS.filter((a) => !platActuel.allergens.includes(a.id)).map((a) => (
                     <option key={a.id} value={a.id}>{a.label}</option>
@@ -449,12 +446,13 @@ function ImportPageInner() {
           <div style={s.center}>
             <div style={s.doneCard}>
               <p style={{ fontSize: 56, marginBottom: 16 }}>🎉</p>
-              <p style={{ fontSize: 24, fontWeight: 800, color: "#1A1A1A", marginBottom: 20, letterSpacing: "-0.02em" }}>Import terminé !</p>
+              <p style={{ fontSize: 24, fontWeight: 800, color: "#1A1A1A", marginBottom: 8, letterSpacing: "-0.02em" }}>Import terminé !</p>
+              <p style={{ fontSize: 13, color: "#888", marginBottom: 20 }}>Recettes importées dans : <strong>{estName}</strong></p>
               <div style={{ display: "flex", alignItems: "center", background: "#F7F7F5", borderRadius: 14, padding: 16, marginBottom: 16 }}>
                 {[
-                  { val: saved.length, label: `Recette${saved.length > 1 ? "s" : ""} importée${saved.length > 1 ? "s" : ""}` },
-                  { val: "8", label: "Langues stockées" },
-                  { val: new Set(saved.flatMap((p) => p.allergens)).size, label: "Allergènes uniques" },
+                  { val: saved.length, label: `Recette${saved.length > 1 ? "s" : ""}` },
+                  { val: "8", label: "Langues" },
+                  { val: new Set(saved.flatMap((p) => p.allergens)).size, label: "Allergènes" },
                 ].map((st, i, arr) => (
                   <div key={i} style={{ display: "flex", flex: 1, alignItems: "center" }}>
                     <div style={{ flex: 1, textAlign: "center" }}>
@@ -467,9 +465,9 @@ function ImportPageInner() {
               </div>
               <div style={{ background: "#D4EDDA", borderRadius: 10, padding: "10px 14px", marginBottom: 20 }}>
                 <p style={{ fontSize: 12, color: "#155724", fontWeight: 600, margin: "0 0 2px" }}>🌍 Traductions stockées en base</p>
-                <p style={{ fontSize: 11, color: "#276749", margin: 0 }}>La carte interactive multilingue ne fera plus aucun appel API. Changement de langue instantané.</p>
+                <p style={{ fontSize: 11, color: "#276749", margin: 0 }}>Changement de langue instantané, aucun appel API futur.</p>
               </div>
-              <button style={s.btnPrimary} onClick={() => router.push("/dashboard")}>Voir mes recettes →</button>
+              <button style={s.btnPrimary} onClick={() => goToDashboard()}>Voir mes recettes →</button>
               <button style={{ ...s.btnSecondary, marginTop: 8, width: "100%" }}
                 onClick={() => { setStep(STEPS.upload); setFile(null); setPreview(null); setPlats([]); setSaved([]); setSkipped([]); }}>
                 Faire un autre import
@@ -483,11 +481,13 @@ function ImportPageInner() {
   );
 }
 
+// Export principal wrappé dans Suspense — obligatoire pour useSearchParams avec Next.js
 export default function ImportPage() {
   return (
     <Suspense fallback={
-      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Inter, sans-serif" }}>
-        <p style={{ color: "#999", fontSize: 14 }}>Chargement...</p>
+      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#F7F7F5" }}>
+        <div style={{ width: 32, height: 32, border: "3px solid #F0F0F0", borderTop: "3px solid #1A1A1A", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     }>
       <ImportPageInner />
@@ -547,7 +547,7 @@ const s = {
   lockTitle: { fontSize: 22, fontWeight: 800, color: "#1A1A1A", marginBottom: 12, letterSpacing: "-0.02em" },
   lockSub: { fontSize: 14, color: "#666", lineHeight: 1.7, marginBottom: 20 },
   lockFeatures: { background: "#F7F7F5", borderRadius: 12, padding: "16px 20px", marginBottom: 24, textAlign: "left" },
-  lockFeature: { fontSize: 13, color: "#444", marginBottom: 6, display: "flex", gap: 8, alignItems: "center" },
+  lockFeature: { fontSize: 13, color: "#444", marginBottom: 6, display: "flex", gap: 8 },
   doneCard: { background: "white", border: "1px solid #EBEBEB", borderRadius: 20, padding: "48px 40px", maxWidth: 480, textAlign: "center" },
   btnPrimary: { width: "100%", padding: "13px", fontSize: 14, fontWeight: 700, background: "#1A1A1A", color: "white", border: "none", borderRadius: 12, cursor: "pointer" },
   btnSecondary: { fontSize: 13, fontWeight: 600, padding: "8px 14px", background: "white", color: "#555", border: "1px solid #E0E0E0", borderRadius: 9, cursor: "pointer" },

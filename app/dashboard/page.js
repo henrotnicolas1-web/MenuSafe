@@ -1,15 +1,11 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useRef, Suspense } from "react";
 import { createClient } from "@/lib/supabase";
-import { getPlan, canAddRecipe, canAddEstablishment, getLimitMessage } from "@/lib/plans";
-import { generateAllergenPDF } from "@/lib/pdf-generator";
-import { generateMenuPDF } from "@/lib/pdf-menu";
-import RecipeForm from "@/components/RecipeForm";
-import RecipeList from "@/components/RecipeList";
-import { QRCodeSVG } from "qrcode.react";
-import { useRouter } from "next/navigation";
+import { getPlan } from "@/lib/plans";
+import { detectAllergens, ALLERGENS } from "@/lib/allergens-db";
+import { useRouter, useSearchParams } from "next/navigation";
 
-function Logo({ size = 28 }) {
+function Logo({ size = 24 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 32 32" fill="none">
       <path d="M16 2L4 7V17C4 23.5 9.5 29.2 16 31C22.5 29.2 28 23.5 28 17V7L16 2Z" fill="#1A1A1A"/>
@@ -19,376 +15,535 @@ function Logo({ size = 28 }) {
   );
 }
 
-export default function Dashboard() {
-  const [user, setUser]                   = useState(null);
-  const [subscription, setSub]            = useState(null);
-  const [establishments, setEsts]         = useState([]);
-  const [recipes, setRecipes]             = useState([]);
-  const [activeEst, setActiveEst]         = useState(null);
-  const [menuSlug, setMenuSlug]           = useState(null);
-  const [view, setView]                   = useState("list");
-  const [loading, setLoading]             = useState(true);
-  const [limitError, setLimitError]       = useState("");
-  const [showMenuQR, setShowMenuQR]       = useState(false);
-  const [generatingPDF, setGeneratingPDF] = useState(false);
+const STEPS = { upload: "upload", scanning: "scanning", review: "review", saving: "saving", done: "done" };
+
+// Composant interne qui utilise useSearchParams — doit être wrappé dans Suspense
+function ImportPageInner() {
+  const [step, setStep]           = useState(STEPS.upload);
+  const [file, setFile]           = useState(null);
+  const [preview, setPreview]     = useState(null);
+  const [plats, setPlats]         = useState([]);
+  const [current, setCurrent]     = useState(0);
+  const [saved, setSaved]         = useState([]);
+  const [skipped, setSkipped]     = useState([]);
+  const [error, setError]         = useState("");
+  const [scanStats, setScanStats] = useState(null);
+  const [scanNote, setScanNote]   = useState("");
+  const [user, setUser]           = useState(null);
+  const [subscription, setSub]    = useState(null);
+  const [estId, setEstId]         = useState(null);
+  const [estName, setEstName]     = useState("");
+  const [checkDone, setCheckDone] = useState(false);
+  const fileRef = useRef(null);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const supabase = createClient();
 
-  const plan = subscription?.plan ?? "free";
-  const planInfo = getPlan(plan);
-  const canImport = plan === "pro" || plan === "reseau";
+  useState(() => {
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { router.push("/auth"); return; }
+      setUser(user);
 
-  const loadData = useCallback(async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) { router.push("/auth"); return; }
-    setUser(user);
+      const [{ data: sub }, { data: ests }] = await Promise.all([
+        supabase.from("subscriptions").select("*").eq("user_id", user.id).single(),
+        supabase.from("establishments").select("id, name").eq("user_id", user.id),
+      ]);
+      setSub(sub);
 
-    const [{ data: sub }, { data: ests }] = await Promise.all([
-      supabase.from("subscriptions").select("*").eq("user_id", user.id).single(),
-      supabase.from("establishments").select("*").eq("user_id", user.id).order("created_at"),
-    ]);
-
-    setSub(sub);
-    setEsts(ests ?? []);
-    const firstEst = ests?.[0];
-    if (firstEst) {
-      setActiveEst(firstEst.id);
-      await loadEstData(firstEst.id, user.id);
-    }
-    setLoading(false);
+      // Lit l'établissement depuis l'URL (?est=xxx)
+      const estFromUrl = searchParams?.get("est");
+      const matched = ests?.find((e) => e.id === estFromUrl);
+      const target = matched ?? ests?.[0];
+      setEstId(target?.id ?? null);
+      setEstName(target?.name ?? "");
+      setCheckDone(true);
+    })();
   }, []);
 
-  async function loadEstData(estId, userId) {
-    const [{ data: recs }, { data: menu }] = await Promise.all([
-      supabase.from("recipes").select("*")
-        .eq("user_id", userId ?? user?.id)
-        .eq("establishment_id", estId)
-        .order("category").order("dish_name"),
-      supabase.from("menus").select("slug").eq("establishment_id", estId).single(),
-    ]);
-    setRecipes(recs ?? []);
-    setMenuSlug(menu?.slug ?? null);
+  const plan = subscription?.plan ?? "free";
+  const hasAccess = plan === "pro" || plan === "reseau";
+
+  function handleFile(f) {
+    if (!f) return;
+    if (f.size > 20 * 1024 * 1024) { setError("Fichier trop lourd (max 20MB)."); return; }
+    setError("");
+    setFile(f);
+    if (f.type !== "application/pdf") setPreview(URL.createObjectURL(f));
+    else setPreview(null);
   }
 
-  useEffect(() => { loadData(); }, [loadData]);
-
-  async function switchEst(estId) {
-    setActiveEst(estId);
-    setShowMenuQR(false);
-    await loadEstData(estId);
-    setView("list");
-  }
-
-  async function handleSave(recipe) {
-    setLimitError("");
-    if (!canAddRecipe(plan, recipes.length)) {
-      setLimitError(getLimitMessage("recipes", plan));
-      return;
+  async function handleScan() {
+    if (!file) return;
+    setStep(STEPS.scanning);
+    setError("");
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/scan-menu", { method: "POST", body: fd });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Erreur serveur");
+      if (!data.plats || data.plats.length === 0) {
+        setError("Aucun plat détecté. Essayez avec une image plus nette.");
+        setStep(STEPS.upload);
+        return;
+      }
+      const enriched = data.plats.map((plat) => ({
+        ...plat,
+        allergens: [...detectAllergens(plat.ingredients)],
+        category: plat.categorie || "plat",
+      }));
+      setPlats(enriched);
+      setScanStats(data.stats ?? null);
+      setScanNote(data.note ?? "");
+      setCurrent(0);
+      setSaved([]);
+      setSkipped([]);
+      setStep(STEPS.review);
+    } catch (err) {
+      setError(`Erreur lors du scan : ${err.message}`);
+      setStep(STEPS.upload);
     }
-    const { data, error } = await supabase.from("recipes").insert({
-      user_id: user.id, establishment_id: activeEst,
-      dish_name: recipe.dishName, category: recipe.category,
-      ingredients: recipe.ingredients, allergens: recipe.allergens,
-    }).select().single();
-    if (!error && data) {
-      setRecipes((p) => [...p, data].sort((a,b) => a.category.localeCompare(b.category)));
-      setView("list");
+  }
+
+  function handleEditIngredient(idx, value) {
+    setPlats((prev) => {
+      const updated = [...prev];
+      const ing = [...updated[current].ingredients];
+      ing[idx] = value;
+      updated[current] = { ...updated[current], ingredients: ing, allergens: [...detectAllergens(ing)] };
+      return updated;
+    });
+  }
+
+  function handleRemoveIngredient(idx) {
+    setPlats((prev) => {
+      const updated = [...prev];
+      const ing = updated[current].ingredients.filter((_, i) => i !== idx);
+      updated[current] = { ...updated[current], ingredients: ing, allergens: [...detectAllergens(ing)] };
+      return updated;
+    });
+  }
+
+  function handleAddIngredient() {
+    const val = prompt("Ajouter un ingrédient :");
+    if (!val) return;
+    setPlats((prev) => {
+      const updated = [...prev];
+      const ing = [...updated[current].ingredients, val.trim().toLowerCase()];
+      updated[current] = { ...updated[current], ingredients: ing, allergens: [...detectAllergens(ing)] };
+      return updated;
+    });
+  }
+
+  async function goNext(action) {
+    if (action === "save") setSaved((p) => [...p, plats[current]]);
+    else setSkipped((p) => [...p, plats[current]]);
+
+    if (current < plats.length - 1) {
+      setCurrent((c) => c + 1);
+    } else {
+      setStep(STEPS.saving);
+      const toSave = action === "save" ? [...saved, plats[current]] : saved;
+      if (user && estId && toSave.length > 0) {
+        const rows = toSave.map((p) => ({
+          user_id: user.id,
+          establishment_id: estId,
+          dish_name: p.nom,
+          category: p.category || "plat",
+          ingredients: p.ingredients,
+          allergens: p.allergens,
+          translations_cache: p.translations ?? {},
+        }));
+        await supabase.from("recipes").insert(rows);
+      }
+      setSaved(action === "save" ? [...saved, plats[current]] : saved);
+      setStep(STEPS.done);
     }
   }
 
-  async function handleDelete(id) {
-    if (!confirm("Supprimer cette recette ?")) return;
-    await supabase.from("recipes").delete().eq("id", id);
-    setRecipes((p) => p.filter((r) => r.id !== id));
+  // Page de blocage plan insuffisant
+  if (checkDone && !hasAccess) {
+    return (
+      <div style={s.page}>
+        <nav style={s.nav}><div style={s.navInner}>
+          <div style={s.logo} onClick={() => router.push("/dashboard")}><Logo /><p style={s.logoName}>MenuSafe</p></div>
+        </div></nav>
+        <div style={s.center}>
+          <div style={s.lockCard}>
+            <p style={{ fontSize: 48, margin: "0 0 16px" }}>🔒</p>
+            <p style={s.lockTitle}>Fonctionnalité Pro & Réseau</p>
+            <p style={s.lockSub}>L'import par photo est disponible à partir du plan <strong>Pro (59€/mois)</strong>.</p>
+            <div style={s.lockFeatures}>
+              {["Photo, image ou PDF de carte","Traductions 8 langues en une analyse","Ingrédients lus ou suggérés par l'IA","Détection allergènes automatique","Validation plat par plat"].map((f, i) => (
+                <p key={i} style={s.lockFeature}><span style={{ color: "#4ADE80" }}>✓</span> {f}</p>
+              ))}
+            </div>
+            <button style={s.btnPrimary} onClick={() => router.push("/#pricing")}>Passer au plan Pro →</button>
+            <button style={{ ...s.btnSecondary, marginTop: 8, width: "100%" }} onClick={() => router.push("/dashboard")}>← Retour</button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
-  async function handleAddEst() {
-    if (!canAddEstablishment(plan, establishments.length)) {
-      setLimitError(getLimitMessage("establishments", plan));
-      return;
-    }
-    const name = prompt("Nom du nouvel établissement :");
-    if (!name) return;
-    const { data } = await supabase.from("establishments")
-      .insert({ user_id: user.id, name }).select().single();
-    if (data) { setEsts((p) => [...p, data]); switchEst(data.id); }
-  }
-
-  async function handleGenerateMenuPDF() {
-    if (!recipes.length) { alert("Aucune recette à exporter."); return; }
-    setGeneratingPDF(true);
-    const estName = establishments.find((e) => e.id === activeEst)?.name ?? "MenuSafe";
-    const menuUrl = menuSlug ? `${window.location.origin}/menu/${menuSlug}` : null;
-    await generateMenuPDF(estName, recipes, menuUrl);
-    setGeneratingPDF(false);
-  }
-
-  function formatRecipes(rawRecipes) {
-    return rawRecipes.map((r) => ({
-      id: r.id, dishName: r.dish_name, category: r.category,
-      ingredients: r.ingredients ?? [], allergens: r.allergens ?? [],
-      createdAt: r.created_at,
-    }));
-  }
-
-  if (loading) return (
-    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#F7F7F5" }}>
-      <p style={{ color: "#999", fontSize: 14, fontFamily: "Inter, sans-serif" }}>Chargement...</p>
-    </div>
-  );
-
-  const activeEstName = establishments.find((e) => e.id === activeEst)?.name ?? "Mon établissement";
-  const menuUrl = menuSlug ? `${typeof window !== "undefined" ? window.location.origin : ""}/menu/${menuSlug}` : null;
-  const formattedRecipes = formatRecipes(recipes);
+  const platActuel = plats[current];
+  const isAISuggestion = platActuel?.source === "suggestion_ia";
 
   return (
     <div style={s.page}>
-      {/* Navbar */}
       <nav style={s.nav}>
         <div style={s.navInner}>
-          <div style={s.logo} onClick={() => router.push("/")} role="button">
-            <Logo size={26} /><p style={s.logoName}>MenuSafe</p>
-          </div>
-          <div style={s.estTabs}>
-            {establishments.map((est) => (
-              <button key={est.id}
-                style={{ ...s.estTab, ...(activeEst === est.id ? s.estTabActive : {}) }}
-                onClick={() => switchEst(est.id)}>
-                🏪 {est.name}
-              </button>
-            ))}
-            {canAddEstablishment(plan, establishments.length)
-              ? <button style={s.estTabAdd} onClick={handleAddEst}>+ Ajouter</button>
-              : <button style={s.estTabLocked} onClick={() => setLimitError(getLimitMessage("establishments", plan))}>
-                  🔒 {planInfo.maxEstablishments === 1 ? "1 max" : `${planInfo.maxEstablishments} max`}
-                </button>
-            }
-          </div>
-          <div style={s.navRight}>
-            <div style={s.planBadge}>{planInfo.name}</div>
-            <button style={s.btnLogout} onClick={async () => { await supabase.auth.signOut(); router.push("/"); }}>
-              Déconnexion
-            </button>
-          </div>
+          <div style={s.logo} onClick={() => router.push("/dashboard")} role="button"><Logo /><p style={s.logoName}>MenuSafe</p></div>
+          <p style={s.navTitle}>Import · {estName || "..."}</p>
+          <button style={s.btnSecondary} onClick={() => router.push("/dashboard")}>← Dashboard</button>
         </div>
       </nav>
 
       <main style={s.main}>
 
-        {limitError && (
-          <div style={s.limitBanner}>
-            <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: "#7A4F00" }}>⚠️ {limitError}</p>
-            <div style={{ display: "flex", gap: 8 }}>
-              <button style={s.upgradeBtn} onClick={() => router.push("/#pricing")}>Changer de formule →</button>
-              <button style={s.closeBanner} onClick={() => setLimitError("")}>✕</button>
-            </div>
-          </div>
-        )}
-
-        {/* Stats */}
-        <div style={s.statsBar}>
-          {[
-            { val: recipes.length, label: planInfo.maxRecipes === Infinity ? "Recettes" : `Recettes (max ${planInfo.maxRecipes})` },
-            { val: new Set(recipes.flatMap((r) => r.allergens ?? [])).size, label: "Allergènes uniques" },
-            { val: establishments.length, label: `Établissement${establishments.length > 1 ? "s" : ""}` },
-            { val: planInfo.name, label: "Formule" },
-          ].map((st, i, arr) => (
-            <div key={i} style={{ display: "flex", flex: 1, alignItems: "center" }}>
-              <div style={s.stat}>
-                <span style={{ ...s.statVal, fontSize: typeof st.val === "string" ? 13 : 20 }}>{st.val}</span>
-                <span style={s.statLabel}>{st.label}</span>
-              </div>
-              {i < arr.length - 1 && <div style={s.statDiv} />}
-            </div>
-          ))}
-        </div>
-
-        {/* Barre progression */}
-        {planInfo.maxRecipes !== Infinity && (
-          <div style={s.progressWrap}>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
-              <span style={s.progressLabel}>Recettes utilisées</span>
-              <span style={s.progressLabel}>{recipes.length} / {planInfo.maxRecipes}</span>
-            </div>
-            <div style={s.progressBg}>
-              <div style={{ ...s.progressBar, width: `${Math.min(100, (recipes.length / planInfo.maxRecipes) * 100)}%`, background: recipes.length >= planInfo.maxRecipes ? "#E53E3E" : "#1A1A1A" }} />
-            </div>
-          </div>
-        )}
-
-        {/* Panneau QR Code Carte + PDF carte */}
-        {view === "list" && recipes.length > 0 && (
-          <div style={s.toolsPanel}>
-            {/* QR Code établissement */}
-            <div style={s.toolCard}>
-              <div style={s.toolCardLeft}>
-                <p style={s.toolIcon}>📱</p>
-                <div>
-                  <p style={s.toolTitle}>QR Code de la carte interactive</p>
-                  <p style={s.toolSub}>À imprimer sur chaque table. Les clients scannent, choisissent leur langue et cochent leurs allergies. La carte se filtre automatiquement.</p>
-                </div>
-              </div>
-              <div style={s.toolActions}>
-                <button style={s.btnTool} onClick={() => setShowMenuQR((v) => !v)}>
-                  {showMenuQR ? "Masquer" : "Voir le QR"}
-                </button>
-              </div>
+        {/* UPLOAD */}
+        {step === STEPS.upload && (
+          <div style={s.uploadWrap}>
+            <div style={s.uploadHeader}>
+              <span style={s.stepBadge}>Étape 1 / 3</span>
+              <h1 style={s.uploadTitle}>Photographiez votre carte</h1>
+              <p style={s.uploadSub}>L'IA analyse la carte, extrait tous les plats et génère les traductions en 8 langues en une seule passe. Zéro coût supplémentaire par la suite.</p>
+              {estName && <p style={{ fontSize: 13, color: "#4ADE80", fontWeight: 600, marginTop: 8 }}>→ Import vers : {estName}</p>}
             </div>
 
-            {showMenuQR && menuUrl && (
-              <div style={s.qrExpanded}>
-                <div style={s.qrExpandedBox}>
-                  <QRCodeSVG value={menuUrl} size={140} level="M" includeMargin={false} />
-                  <p style={s.qrUrlText}>{menuUrl}</p>
-                </div>
-                <div style={s.qrExpandedInfo}>
-                  <p style={s.qrExpandedTitle}>Ce QR code est unique pour {activeEstName}</p>
-                  <p style={s.qrExpandedSub}>Il ne change jamais — imprimez-le une seule fois et plastifiez-le sur vos tables. La carte se met à jour automatiquement quand vous modifiez vos recettes.</p>
-                  <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 6 }}>
-                    {["🌍 Disponible en 8 langues", "⚠️ Filtrage allergènes en temps réel", "🔄 Mise à jour automatique", "📱 Optimisé mobile"].map((f, i) => (
-                      <p key={i} style={{ fontSize: 12, color: "#555", margin: 0 }}>{f}</p>
+            <div style={{ ...s.dropzone, ...(file ? s.dropzoneHasFile : {}) }}
+              onDrop={(e) => { e.preventDefault(); handleFile(e.dataTransfer.files[0]); }}
+              onDragOver={(e) => e.preventDefault()}
+              onClick={() => fileRef.current?.click()}>
+              <input ref={fileRef} type="file" accept="image/*,.pdf" style={{ display: "none" }}
+                onChange={(e) => handleFile(e.target.files[0])} />
+              {preview ? (
+                <img src={preview} alt="Aperçu" style={s.preview} />
+              ) : file ? (
+                <div style={{ textAlign: "center" }}><p style={{ fontSize: 40 }}>📄</p><p style={{ fontSize: 14, fontWeight: 600, color: "#1A1A1A" }}>{file.name}</p></div>
+              ) : (
+                <div style={s.dropContent}>
+                  <p style={{ fontSize: 44, marginBottom: 12 }}>📸</p>
+                  <p style={s.dropTitle}>Glissez une image ou cliquez pour choisir</p>
+                  <p style={s.dropSub}>JPG, PNG, WEBP, HEIC ou PDF · Max 20MB</p>
+                  <div style={s.dropTags}>
+                    {["Carte imprimée", "Recette manuscrite", "Document PDF"].map((t, i) => (
+                      <span key={i} style={s.dropTag}>✓ {t}</span>
                     ))}
                   </div>
-                  <a href={menuUrl} target="_blank" rel="noopener noreferrer"
-                    style={{ display: "inline-block", marginTop: 12, fontSize: 13, fontWeight: 600, color: "#1A1A1A" }}>
-                    Voir la carte client →
-                  </a>
                 </div>
+              )}
+            </div>
+
+            {file && (
+              <div style={s.fileActions}>
+                <button style={s.btnSecondary} onClick={() => { setFile(null); setPreview(null); }}>Changer de fichier</button>
+                <button style={s.btnPrimary} onClick={handleScan}>Analyser avec l'IA →</button>
+              </div>
+            )}
+            {error && <div style={s.errorBox}>{error}</div>}
+
+            <div style={s.aiExplain}>
+              <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
+                {[
+                  ["📋", "Ingrédients sur la carte", "Lus directement. Précision maximale."],
+                  ["🧠", "Aucun ingrédient listé", "Recette traditionnelle proposée. Vous validez."],
+                  ["🌍", "8 langues générées", "FR, EN, ES, DE, IT, NL, JA, ZH — en une seule analyse."],
+                ].map(([icon, title, desc], i, arr) => (
+                  <div key={i} style={{ flex: 1, display: "flex", gap: 8 }}>
+                    {i > 0 && <div style={{ width: 1, background: "#F0F0F0", alignSelf: "stretch", flexShrink: 0 }} />}
+                    <div style={{ flex: 1 }}>
+                      <p style={{ fontSize: 13, fontWeight: 700, color: "#1A1A1A", margin: "0 0 3px" }}>{icon} {title}</p>
+                      <p style={{ fontSize: 12, color: "#888", margin: 0 }}>{desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* SCANNING */}
+        {step === STEPS.scanning && (
+          <div style={s.center}>
+            <div style={s.scanCard}>
+              <div style={s.spinner} />
+              <p style={s.scanTitle}>Analyse en cours...</p>
+              <p style={s.scanSub}>L'IA lit votre carte, extrait les plats, génère les traductions en 8 langues et détecte les allergènes.</p>
+              <p style={s.scanSub2}>Comptez environ 45 à 90 secondes — c'est la seule fois que l'IA est appelée.</p>
+            </div>
+          </div>
+        )}
+
+        {/* REVIEW */}
+        {step === STEPS.review && platActuel && (
+          <div style={s.reviewWrap}>
+            {scanStats && (
+              <div style={s.scanSummary}>
+                <p style={{ fontSize: 13, color: "#555", margin: 0, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                  <strong>{scanStats.total} plats détectés</strong>
+                  {scanStats.depuis_carte > 0 && <span style={s.tagCarte}>{scanStats.depuis_carte} lus depuis la carte</span>}
+                  {scanStats.suggestions_ia > 0 && <span style={s.tagIA}>{scanStats.suggestions_ia} complétés par l'IA</span>}
+                  <span style={{ fontSize: 11, background: "#D4EDDA", color: "#155724", padding: "3px 8px", borderRadius: 20, fontWeight: 600 }}>🌍 8 langues stockées</span>
+                </p>
               </div>
             )}
 
-            {/* PDF Carte complète */}
-            <div style={{ ...s.toolCard, borderTop: "1px solid #F0F0F0" }}>
-              <div style={s.toolCardLeft}>
-                <p style={s.toolIcon}>📄</p>
+            <div style={s.progressWrap}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+                <span style={s.stepBadge}>Étape 2 / 3 · Validation</span>
+                <span style={{ fontSize: 13, fontWeight: 600, color: "#1A1A1A" }}>{current + 1} / {plats.length}</span>
+              </div>
+              <div style={{ background: "#F0F0F0", borderRadius: 6, height: 6, overflow: "hidden" }}>
+                <div style={{ height: 6, borderRadius: 6, background: "#1A1A1A", width: `${(current / plats.length) * 100}%`, transition: "width 0.3s ease" }} />
+              </div>
+            </div>
+
+            <div style={{ ...s.platCard, ...(isAISuggestion ? s.platCardAI : {}) }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
                 <div>
-                  <p style={s.toolTitle}>PDF carte allergènes complète</p>
-                  <p style={s.toolSub}>Un seul document A4 paysage avec tous vos plats, organisés par catégorie, avec les allergènes de chaque plat. À afficher dans votre établissement.</p>
+                  <p style={{ fontSize: 20, fontWeight: 800, color: "#1A1A1A", margin: "0 0 4px", letterSpacing: "-0.02em" }}>{platActuel.nom}</p>
+                  <p style={{ fontSize: 12, color: "#999", margin: 0 }}>{platActuel.ingredients.length} ingrédient{platActuel.ingredients.length > 1 ? "s" : ""}</p>
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
+                  {isAISuggestion
+                    ? <div style={s.badgeAI}><span>🧠</span><span>Recette proposée par l'IA</span></div>
+                    : <div style={s.badgeCarte}><span>📋</span><span>Lu depuis votre carte</span></div>
+                  }
+                  {platActuel.translations && Object.keys(platActuel.translations).length > 0 && (
+                    <div style={{ fontSize: 10, fontWeight: 600, background: "#D4EDDA", color: "#155724", padding: "2px 8px", borderRadius: 20 }}>🌍 8 langues prêtes</div>
+                  )}
+                  {platActuel.allergens.length > 0
+                    ? <span style={s.allergenCount}>{platActuel.allergens.length} allergène{platActuel.allergens.length > 1 ? "s" : ""}</span>
+                    : <span style={s.noAllergen}>Aucun allergène</span>
+                  }
                 </div>
               </div>
-              <div style={s.toolActions}>
-                <button style={s.btnTool} onClick={handleGenerateMenuPDF} disabled={generatingPDF}>
-                  {generatingPDF ? "Génération..." : "Télécharger le PDF"}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
 
-        {/* Bannière import IA */}
-        {canImport && view === "list" && (
-          <div style={s.importBanner}>
-            <div style={s.importBannerLeft}>
-              <p style={s.importBannerIcon}>📸</p>
-              <div>
-                <p style={s.importBannerTitle}>Import par photo de carte</p>
-                <p style={s.importBannerSub}>Photographiez votre carte — l'IA extrait tous vos plats et allergènes automatiquement.</p>
-              </div>
-            </div>
-            <button style={s.btnImport} onClick={() => router.push(`/dashboard/import?est=${activeEst}`)}>Importer →</button>
-          </div>
-        )}
+              {isAISuggestion && (
+                <div style={s.aiNotice}>
+                  <p style={{ fontSize: 13, fontWeight: 700, color: "#5A2D8E", margin: "0 0 4px" }}>🧠 Ingrédients non détaillés sur la carte</p>
+                  <p style={{ fontSize: 12, color: "#7A4F9E", lineHeight: 1.6, margin: 0 }}>L'IA a reconstitué la recette traditionnelle. Vérifiez et modifiez si votre préparation diffère.</p>
+                </div>
+              )}
 
-        {/* Contenu */}
-        {view === "create" ? (
-          <div>
-            <div style={s.viewHeader}>
-              <p style={s.viewTitle}>Nouvelle recette · {activeEstName}</p>
-              <button style={s.btnBack} onClick={() => setView("list")}>← Retour</button>
-            </div>
-            <RecipeForm onSave={handleSave} />
-          </div>
-        ) : (
-          <div>
-            <div style={s.listHeader}>
-              <p style={s.viewTitle}>
-                Mes recettes · {activeEstName}
-                {recipes.length > 0 && <span style={s.pill}>{recipes.length}</span>}
-              </p>
-              <div style={{ display: "flex", gap: 8 }}>
-                {canImport && (
-                  <button style={s.btnImportSmall} onClick={() => router.push(`/dashboard/import?est=${activeEst}`)}>📸</button>
+              {/* Catégorie corrigeable */}
+              <div style={{ marginBottom: 14 }}>
+                <p style={s.ingLabel}>Catégorie</p>
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  {[
+                    { value: "entree",  label: "🥗 Entrée" },
+                    { value: "plat",    label: "🍽️ Plat" },
+                    { value: "dessert", label: "🍰 Dessert" },
+                    { value: "boisson", label: "🥤 Boisson" },
+                    { value: "autre",   label: "📋 Autre" },
+                  ].map((cat) => (
+                    <button key={cat.value}
+                      onClick={() => setPlats((prev) => {
+                        const updated = [...prev];
+                        updated[current] = { ...updated[current], category: cat.value };
+                        return updated;
+                      })}
+                      style={{ fontSize: 12, fontWeight: 500, padding: "6px 12px", borderRadius: 20, border: "1px solid", cursor: "pointer",
+                        background: platActuel.category === cat.value ? "#1A1A1A" : "white",
+                        color: platActuel.category === cat.value ? "white" : "#555",
+                        borderColor: platActuel.category === cat.value ? "#1A1A1A" : "#E0E0E0",
+                      }}>
+                      {cat.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Ingrédients éditables */}
+              <div style={{ marginBottom: 14 }}>
+                <p style={s.ingLabel}>Ingrédients <span style={{ fontSize: 10, fontWeight: 400, color: "#CCC" }}>— cliquez pour modifier</span></p>
+                <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+                  {platActuel.ingredients.map((ing, i) => (
+                    <div key={i} style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                      <input style={s.ingInput} value={ing} onChange={(e) => handleEditIngredient(i, e.target.value)} />
+                      <button style={s.ingRemove} onClick={() => handleRemoveIngredient(i)}>×</button>
+                    </div>
+                  ))}
+                  <button style={s.ingAdd} onClick={handleAddIngredient}>+ Ajouter un ingrédient</button>
+                </div>
+              </div>
+
+              {/* Allergènes supprimables */}
+              <div style={{ marginBottom: 16, paddingTop: 14, borderTop: "1px solid #F0F0F0" }}>
+                <p style={s.ingLabel}>Allergènes détectés <span style={{ fontSize: 10, fontWeight: 400, color: "#CCC" }}>— cliquez × pour retirer</span></p>
+                {platActuel.allergens.length === 0 ? (
+                  <p style={{ fontSize: 12, color: "#BBB", fontStyle: "italic", margin: "0 0 8px" }}>Aucun allergène détecté</p>
+                ) : (
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
+                    {platActuel.allergens.map((id) => {
+                      const a = ALLERGENS.find((x) => x.id === id);
+                      if (!a) return null;
+                      return (
+                        <div key={id} style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12, fontWeight: 600, padding: "4px 6px 4px 10px", borderRadius: 20, background: a.color, color: a.text }}>
+                          <span>{a.icon} {a.label}</span>
+                          <button onClick={() => setPlats((prev) => {
+                            const updated = [...prev];
+                            updated[current] = { ...updated[current], allergens: updated[current].allergens.filter((x) => x !== id) };
+                            return updated;
+                          })} style={{ background: "rgba(0,0,0,0.15)", border: "none", borderRadius: "50%", width: 16, height: 16, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, color: a.text, fontWeight: 700, padding: 0 }}>×</button>
+                        </div>
+                      );
+                    })}
+                  </div>
                 )}
-                <button
-                  style={canAddRecipe(plan, recipes.length) ? s.btnPrimary : s.btnLocked}
-                  onClick={() => { if (!canAddRecipe(plan, recipes.length)) { setLimitError(getLimitMessage("recipes", plan)); return; } setView("create"); }}>
-                  {canAddRecipe(plan, recipes.length) ? "+ Nouvelle recette" : "🔒 Limite"}
+                <select onChange={(e) => {
+                  const id = e.target.value;
+                  if (!id) return;
+                  setPlats((prev) => {
+                    const updated = [...prev];
+                    const curr = updated[current];
+                    if (!curr.allergens.includes(id)) updated[current] = { ...curr, allergens: [...curr.allergens, id] };
+                    return updated;
+                  });
+                  e.target.value = "";
+                }} style={{ fontSize: 12, color: "#555", background: "white", border: "1px dashed #CCC", borderRadius: 8, padding: "5px 10px", cursor: "pointer" }} defaultValue="">
+                  <option value="" disabled>+ Ajouter un allergène manquant</option>
+                  {ALLERGENS.filter((a) => !platActuel.allergens.includes(a.id)).map((a) => (
+                    <option key={a.id} value={a.id}>{a.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div style={{ display: "flex", gap: 10, paddingTop: 14, borderTop: "1px solid #F0F0F0" }}>
+                <button style={s.btnSkip} onClick={() => goNext("skip")}>Ignorer ce plat</button>
+                <button style={s.btnValidate} onClick={() => goNext("save")}>
+                  {isAISuggestion ? "✓ Confirmer et importer" : "✓ Valider et importer"}
                 </button>
               </div>
             </div>
-            <RecipeList
-              recipes={formattedRecipes}
-              onDelete={handleDelete}
-              onGeneratePDF={generateAllergenPDF}
-              menuUrl={menuUrl}
-            />
+
+            <div style={{ display: "flex", gap: 20, justifyContent: "center" }}>
+              <p style={{ fontSize: 13, color: "#888" }}><span style={{ color: "#38A169", fontWeight: 700 }}>{saved.length}</span> validé{saved.length > 1 ? "s" : ""}</p>
+              <p style={{ fontSize: 13, color: "#888" }}><span style={{ color: "#888", fontWeight: 700 }}>{skipped.length}</span> ignoré{skipped.length > 1 ? "s" : ""}</p>
+              <p style={{ fontSize: 13, color: "#888" }}><span style={{ color: "#1A1A1A", fontWeight: 700 }}>{plats.length - current - 1}</span> restant{plats.length - current - 1 !== 1 ? "s" : ""}</p>
+            </div>
+          </div>
+        )}
+
+        {step === STEPS.saving && (
+          <div style={s.center}>
+            <div style={s.scanCard}>
+              <div style={s.spinner} />
+              <p style={s.scanTitle}>Sauvegarde en cours...</p>
+              <p style={s.scanSub}>Import de {saved.length} recette{saved.length > 1 ? "s" : ""} avec traductions en 8 langues.</p>
+            </div>
+          </div>
+        )}
+
+        {step === STEPS.done && (
+          <div style={s.center}>
+            <div style={s.doneCard}>
+              <p style={{ fontSize: 56, marginBottom: 16 }}>🎉</p>
+              <p style={{ fontSize: 24, fontWeight: 800, color: "#1A1A1A", marginBottom: 8, letterSpacing: "-0.02em" }}>Import terminé !</p>
+              <p style={{ fontSize: 13, color: "#888", marginBottom: 20 }}>Recettes importées dans : <strong>{estName}</strong></p>
+              <div style={{ display: "flex", alignItems: "center", background: "#F7F7F5", borderRadius: 14, padding: 16, marginBottom: 16 }}>
+                {[
+                  { val: saved.length, label: `Recette${saved.length > 1 ? "s" : ""}` },
+                  { val: "8", label: "Langues" },
+                  { val: new Set(saved.flatMap((p) => p.allergens)).size, label: "Allergènes" },
+                ].map((st, i, arr) => (
+                  <div key={i} style={{ display: "flex", flex: 1, alignItems: "center" }}>
+                    <div style={{ flex: 1, textAlign: "center" }}>
+                      <span style={{ display: "block", fontSize: 28, fontWeight: 800, color: "#1A1A1A", letterSpacing: "-0.02em" }}>{st.val}</span>
+                      <span style={{ display: "block", fontSize: 11, color: "#999", marginTop: 2 }}>{st.label}</span>
+                    </div>
+                    {i < arr.length - 1 && <div style={{ width: 1, height: 32, background: "#E0E0E0" }} />}
+                  </div>
+                ))}
+              </div>
+              <div style={{ background: "#D4EDDA", borderRadius: 10, padding: "10px 14px", marginBottom: 20 }}>
+                <p style={{ fontSize: 12, color: "#155724", fontWeight: 600, margin: "0 0 2px" }}>🌍 Traductions stockées en base</p>
+                <p style={{ fontSize: 11, color: "#276749", margin: 0 }}>Changement de langue instantané, aucun appel API futur.</p>
+              </div>
+              <button style={s.btnPrimary} onClick={() => router.push("/dashboard")}>Voir mes recettes →</button>
+              <button style={{ ...s.btnSecondary, marginTop: 8, width: "100%" }}
+                onClick={() => { setStep(STEPS.upload); setFile(null); setPreview(null); setPlats([]); setSaved([]); setSkipped([]); }}>
+                Faire un autre import
+              </button>
+            </div>
           </div>
         )}
       </main>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
+  );
+}
+
+// Export principal wrappé dans Suspense — obligatoire pour useSearchParams avec Next.js
+export default function ImportPage() {
+  return (
+    <Suspense fallback={
+      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#F7F7F5" }}>
+        <div style={{ width: 32, height: 32, border: "3px solid #F0F0F0", borderTop: "3px solid #1A1A1A", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    }>
+      <ImportPageInner />
+    </Suspense>
   );
 }
 
 const s = {
   page: { minHeight: "100vh", background: "#F7F7F5", fontFamily: "'Inter', -apple-system, sans-serif" },
   nav: { background: "white", borderBottom: "1px solid #EBEBEB", position: "sticky", top: 0, zIndex: 100 },
-  navInner: { maxWidth: 900, margin: "0 auto", padding: "10px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 },
+  navInner: { maxWidth: 800, margin: "0 auto", padding: "12px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 },
   logo: { display: "flex", alignItems: "center", gap: 8, cursor: "pointer", flexShrink: 0 },
   logoName: { fontSize: 15, fontWeight: 800, color: "#1A1A1A", margin: 0, letterSpacing: "-0.02em" },
-  estTabs: { display: "flex", gap: 6, flex: 1, overflowX: "auto", padding: "2px 0" },
-  estTab: { fontSize: 12, fontWeight: 500, padding: "6px 12px", background: "transparent", color: "#888", border: "1px solid #E8E8E8", borderRadius: 8, cursor: "pointer", whiteSpace: "nowrap" },
-  estTabActive: { background: "#1A1A1A", color: "white", border: "1px solid #1A1A1A" },
-  estTabAdd: { fontSize: 12, fontWeight: 600, padding: "6px 12px", background: "#F5F5F3", color: "#555", border: "1px dashed #CCC", borderRadius: 8, cursor: "pointer", whiteSpace: "nowrap" },
-  estTabLocked: { fontSize: 12, fontWeight: 500, padding: "6px 12px", background: "#FFF8E6", color: "#9A6700", border: "1px solid #FDDEA0", borderRadius: 8, cursor: "pointer", whiteSpace: "nowrap" },
-  navRight: { display: "flex", alignItems: "center", gap: 8, flexShrink: 0 },
-  planBadge: { background: "#F5F5F3", border: "1px solid #E8E8E8", borderRadius: 8, padding: "4px 10px", color: "#555", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" },
-  btnLogout: { fontSize: 12, padding: "6px 12px", background: "white", color: "#888", border: "1px solid #E8E8E8", borderRadius: 8, cursor: "pointer" },
-  main: { maxWidth: 900, margin: "0 auto", padding: "24px 20px" },
-  limitBanner: { background: "#FFF8E6", border: "1px solid #FDDEA0", borderRadius: 12, padding: "12px 16px", marginBottom: 16, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 },
-  upgradeBtn: { fontSize: 12, fontWeight: 700, padding: "6px 14px", background: "#1A1A1A", color: "white", border: "none", borderRadius: 8, cursor: "pointer", whiteSpace: "nowrap" },
-  closeBanner: { background: "none", border: "none", color: "#AAA", cursor: "pointer", fontSize: 14 },
-  statsBar: { display: "flex", alignItems: "center", background: "white", border: "1px solid #EBEBEB", borderRadius: 14, padding: "14px 20px", marginBottom: 16 },
-  stat: { flex: 1, textAlign: "center" },
-  statVal: { display: "block", fontWeight: 700, color: "#1A1A1A", letterSpacing: "-0.02em" },
-  statLabel: { display: "block", fontSize: 11, color: "#999", marginTop: 2 },
-  statDiv: { width: 1, height: 28, background: "#EBEBEB" },
-  progressWrap: { background: "white", border: "1px solid #EBEBEB", borderRadius: 12, padding: "12px 16px", marginBottom: 16 },
-  progressLabel: { fontSize: 12, color: "#888" },
-  progressBg: { background: "#F0F0F0", borderRadius: 6, height: 6, overflow: "hidden" },
-  progressBar: { height: 6, borderRadius: 6, transition: "width 0.3s ease" },
-
-  // Outils (QR + PDF)
-  toolsPanel: { background: "white", border: "1.5px solid #1A1A1A", borderRadius: 14, marginBottom: 16, overflow: "hidden" },
-  toolCard: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 16px", gap: 16 },
-  toolCardLeft: { display: "flex", alignItems: "flex-start", gap: 12, flex: 1 },
-  toolIcon: { fontSize: 24, margin: 0, flexShrink: 0 },
-  toolTitle: { fontSize: 13, fontWeight: 700, color: "#1A1A1A", margin: "0 0 3px" },
-  toolSub: { fontSize: 12, color: "#666", margin: 0, lineHeight: 1.5 },
-  toolActions: { flexShrink: 0 },
-  btnTool: { fontSize: 13, fontWeight: 600, padding: "8px 16px", background: "#1A1A1A", color: "white", border: "none", borderRadius: 9, cursor: "pointer", whiteSpace: "nowrap" },
-
-  // QR expanded
-  qrExpanded: { display: "flex", gap: 20, padding: "16px", background: "#F7F7F5", borderTop: "1px solid #EBEBEB", alignItems: "flex-start" },
-  qrExpandedBox: { display: "flex", flexDirection: "column", alignItems: "center", gap: 8, flexShrink: 0, background: "white", borderRadius: 12, padding: 12, border: "1px solid #EBEBEB" },
-  qrUrlText: { fontSize: 10, color: "#888", textAlign: "center", margin: 0, wordBreak: "break-all", maxWidth: 140 },
-  qrExpandedInfo: { flex: 1 },
-  qrExpandedTitle: { fontSize: 14, fontWeight: 700, color: "#1A1A1A", margin: "0 0 6px" },
-  qrExpandedSub: { fontSize: 13, color: "#666", lineHeight: 1.6, margin: 0 },
-
-  // Import
-  importBanner: { background: "white", border: "1px solid #E8E8E8", borderRadius: 12, padding: "12px 16px", marginBottom: 16, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 },
-  importBannerLeft: { display: "flex", alignItems: "center", gap: 12 },
-  importBannerIcon: { fontSize: 22, margin: 0, flexShrink: 0 },
-  importBannerTitle: { fontSize: 13, fontWeight: 700, color: "#1A1A1A", margin: "0 0 2px" },
-  importBannerSub: { fontSize: 12, color: "#888", margin: 0 },
-  btnImport: { fontSize: 13, fontWeight: 700, padding: "8px 16px", background: "#1A1A1A", color: "white", border: "none", borderRadius: 9, cursor: "pointer", whiteSpace: "nowrap" },
-  btnImportSmall: { fontSize: 13, padding: "8px 10px", background: "#F0FFF4", color: "#155724", border: "1px solid #C6F6D5", borderRadius: 9, cursor: "pointer" },
-
-  viewHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 },
-  viewTitle: { fontSize: 16, fontWeight: 700, color: "#1A1A1A", letterSpacing: "-0.02em", display: "flex", alignItems: "center", gap: 8, margin: 0 },
-  pill: { fontSize: 11, fontWeight: 700, background: "#1A1A1A", color: "white", padding: "2px 7px", borderRadius: 20 },
-  listHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 },
-  btnPrimary: { fontSize: 13, fontWeight: 600, padding: "8px 16px", background: "#1A1A1A", color: "white", border: "none", borderRadius: 10, cursor: "pointer" },
-  btnLocked: { fontSize: 13, fontWeight: 600, padding: "8px 16px", background: "#FFF8E6", color: "#9A6700", border: "1px solid #FDDEA0", borderRadius: 10, cursor: "pointer" },
-  btnBack: { fontSize: 13, padding: "7px 14px", background: "white", color: "#555", border: "1px solid #E8E8E8", borderRadius: 9, cursor: "pointer" },
+  navTitle: { fontSize: 13, color: "#888", margin: 0, flex: 1, textAlign: "center" },
+  main: { maxWidth: 700, margin: "0 auto", padding: "32px 20px" },
+  center: { display: "flex", justifyContent: "center", alignItems: "center", minHeight: "60vh" },
+  uploadWrap: { maxWidth: 600, margin: "0 auto" },
+  uploadHeader: { textAlign: "center", marginBottom: 24 },
+  stepBadge: { display: "inline-block", fontSize: 11, fontWeight: 700, background: "#F0F0F0", color: "#666", padding: "4px 10px", borderRadius: 20, marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.05em" },
+  uploadTitle: { fontSize: 26, fontWeight: 800, color: "#1A1A1A", margin: "0 0 8px", letterSpacing: "-0.02em" },
+  uploadSub: { fontSize: 14, color: "#666", lineHeight: 1.65, margin: 0 },
+  dropzone: { border: "2px dashed #E0E0E0", borderRadius: 16, padding: "2rem", cursor: "pointer", background: "white", minHeight: 200, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 14 },
+  dropzoneHasFile: { border: "2px dashed #1A1A1A" },
+  dropContent: { textAlign: "center" },
+  dropTitle: { fontSize: 15, fontWeight: 600, color: "#1A1A1A", marginBottom: 6 },
+  dropSub: { fontSize: 13, color: "#999", marginBottom: 14 },
+  dropTags: { display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center" },
+  dropTag: { fontSize: 12, background: "#F0F0F0", color: "#555", padding: "4px 10px", borderRadius: 20 },
+  preview: { maxWidth: "100%", maxHeight: 280, borderRadius: 10, objectFit: "contain" },
+  fileActions: { display: "flex", gap: 10, marginBottom: 16 },
+  errorBox: { background: "#FFF0F0", border: "1px solid #FFD0D0", borderRadius: 10, padding: "12px 16px", fontSize: 13, color: "#CC0000", marginBottom: 16 },
+  aiExplain: { background: "white", border: "1px solid #EBEBEB", borderRadius: 14, padding: "16px 20px" },
+  scanCard: { background: "white", border: "1px solid #EBEBEB", borderRadius: 20, padding: "48px 40px", textAlign: "center", maxWidth: 420 },
+  spinner: { width: 40, height: 40, border: "3px solid #F0F0F0", borderTop: "3px solid #1A1A1A", borderRadius: "50%", margin: "0 auto 20px", animation: "spin 0.8s linear infinite" },
+  scanTitle: { fontSize: 18, fontWeight: 700, color: "#1A1A1A", marginBottom: 8 },
+  scanSub: { fontSize: 13, color: "#666", lineHeight: 1.6, marginBottom: 4 },
+  scanSub2: { fontSize: 12, color: "#4ADE80", fontWeight: 600 },
+  reviewWrap: { maxWidth: 620, margin: "0 auto" },
+  scanSummary: { background: "white", border: "1px solid #EBEBEB", borderRadius: 12, padding: "12px 16px", marginBottom: 14 },
+  tagCarte: { fontSize: 11, fontWeight: 600, background: "#E6F1FB", color: "#084298", padding: "3px 8px", borderRadius: 20 },
+  tagIA: { fontSize: 11, fontWeight: 600, background: "#F0E6FF", color: "#5A2D8E", padding: "3px 8px", borderRadius: 20 },
+  progressWrap: { marginBottom: 16 },
+  platCard: { background: "white", border: "1px solid #EBEBEB", borderRadius: 16, padding: "1.5rem", marginBottom: 14 },
+  platCardAI: { border: "1.5px solid #E8D5FF", background: "#FDFAFF" },
+  badgeAI: { display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11, fontWeight: 600, background: "#F0E6FF", color: "#5A2D8E", padding: "4px 10px", borderRadius: 20 },
+  badgeCarte: { display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11, fontWeight: 600, background: "#E6F1FB", color: "#084298", padding: "4px 10px", borderRadius: 20 },
+  allergenCount: { fontSize: 11, fontWeight: 600, background: "#FFF3CD", color: "#856404", padding: "3px 9px", borderRadius: 20 },
+  noAllergen: { fontSize: 11, fontWeight: 600, background: "#D4EDDA", color: "#155724", padding: "3px 9px", borderRadius: 20 },
+  aiNotice: { background: "#F5EEFF", border: "1px solid #DEC5FF", borderRadius: 10, padding: "12px 14px", marginBottom: 16 },
+  ingLabel: { fontSize: 11, fontWeight: 700, color: "#888", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 },
+  ingInput: { flex: 1, padding: "7px 10px", fontSize: 13, border: "1px solid #E8E8E8", borderRadius: 8, outline: "none", color: "#1A1A1A", background: "#FAFAFA" },
+  ingRemove: { background: "#FFF0F0", border: "none", color: "#CC0000", borderRadius: 6, width: 28, height: 28, cursor: "pointer", fontSize: 14, flexShrink: 0 },
+  ingAdd: { fontSize: 12, fontWeight: 600, color: "#555", background: "none", border: "1px dashed #CCC", borderRadius: 8, padding: "6px 12px", cursor: "pointer", textAlign: "left" },
+  btnSkip: { flex: 1, padding: "11px", fontSize: 13, fontWeight: 600, background: "white", color: "#888", border: "1px solid #E0E0E0", borderRadius: 10, cursor: "pointer" },
+  btnValidate: { flex: 2, padding: "11px", fontSize: 14, fontWeight: 700, background: "#1A1A1A", color: "white", border: "none", borderRadius: 10, cursor: "pointer" },
+  lockCard: { background: "white", border: "1px solid #EBEBEB", borderRadius: 20, padding: "40px", maxWidth: 480, textAlign: "center" },
+  lockTitle: { fontSize: 22, fontWeight: 800, color: "#1A1A1A", marginBottom: 12, letterSpacing: "-0.02em" },
+  lockSub: { fontSize: 14, color: "#666", lineHeight: 1.7, marginBottom: 20 },
+  lockFeatures: { background: "#F7F7F5", borderRadius: 12, padding: "16px 20px", marginBottom: 24, textAlign: "left" },
+  lockFeature: { fontSize: 13, color: "#444", marginBottom: 6, display: "flex", gap: 8 },
+  doneCard: { background: "white", border: "1px solid #EBEBEB", borderRadius: 20, padding: "48px 40px", maxWidth: 480, textAlign: "center" },
+  btnPrimary: { width: "100%", padding: "13px", fontSize: 14, fontWeight: 700, background: "#1A1A1A", color: "white", border: "none", borderRadius: 12, cursor: "pointer" },
+  btnSecondary: { fontSize: 13, fontWeight: 600, padding: "8px 14px", background: "white", color: "#555", border: "1px solid #E0E0E0", borderRadius: 9, cursor: "pointer" },
 };

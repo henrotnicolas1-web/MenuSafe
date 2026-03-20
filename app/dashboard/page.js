@@ -166,13 +166,13 @@ export default function Dashboard() {
               <button key={est.id}
                 style={{ ...s.estTab, ...(activeEst === est.id ? s.estTabActive : {}), fontSize: isMobile ? 11 : 12 }}
                 onClick={() => switchEst(est.id)}>
-                🏪 {est.name}
+                {est.name}
               </button>
             ))}
             {canAddEstablishment(plan, establishments.length)
               ? <button style={s.estTabAdd} onClick={handleAddEst}>+ Ajouter</button>
               : <button style={s.estTabLocked} onClick={() => setLimitError(getLimitMessage("establishments", plan))}>
-                  🔒 {planInfo.maxEstablishments === 1 ? "1 max" : `${planInfo.maxEstablishments} max`}
+                  {planInfo.maxEstablishments === 1 ? "1 max" : `${planInfo.maxEstablishments} max`}
                 </button>
             }
           </div>
@@ -343,7 +343,7 @@ export default function Dashboard() {
                 <button
                   style={canAddRecipe(plan, recipes.length) ? s.btnPrimary : s.btnLocked}
                   onClick={() => { if (!canAddRecipe(plan, recipes.length)) { setLimitError(getLimitMessage("recipes", plan)); return; } setView("create"); }}>
-                  {canAddRecipe(plan, recipes.length) ? "+ Nouvelle recette" : "🔒 Limite"}
+                  {canAddRecipe(plan, recipes.length) ? "+ Nouvelle recette" : "Limite"}
                 </button>
               </div>
             </div>

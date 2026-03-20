@@ -1,18 +1,18 @@
 "use client";
 import { useState, useEffect, useMemo } from "react";
 import { createClient } from "@/lib/supabase";
-import { ALLERGENS } from "@/lib/allergens-db";
+import { ALLERGENS, AllergenIcon } from "@/lib/allergens-db";
 import { useParams } from "next/navigation";
 
 const LANGUAGES = {
-  fr: { label: "Français",    flag: "🇫🇷" },
-  en: { label: "English",     flag: "🇬🇧" },
-  es: { label: "Español",     flag: "🇪🇸" },
-  de: { label: "Deutsch",     flag: "🇩🇪" },
-  it: { label: "Italiano",    flag: "🇮🇹" },
-  nl: { label: "Nederlands",  flag: "🇳🇱" },
-  ja: { label: "日本語",       flag: "🇯🇵" },
-  zh: { label: "中文",         flag: "🇨🇳" },
+  fr: { label: "Français",    code: "FR", bg: "#003189", color: "white" },
+  en: { label: "English",     code: "EN", bg: "#C8102E", color: "white" },
+  es: { label: "Español",     code: "ES", bg: "#AA151B", color: "white" },
+  de: { label: "Deutsch",     code: "DE", bg: "#000000", color: "#FFD700" },
+  it: { label: "Italiano",    code: "IT", bg: "#009246", color: "white" },
+  nl: { label: "Nederlands",  code: "NL", bg: "#AE1C28", color: "white" },
+  ja: { label: "日本語",       code: "JP", bg: "#BC002D", color: "white" },
+  zh: { label: "中文",         code: "ZH", bg: "#DE2910", color: "#FFDE00" },
 };
 
 // ── Noms d'allergènes traduits en dur — zéro appel API ────────────────────────
@@ -188,9 +188,17 @@ export default function MenuPage() {
         <div style={s.langRow}>
           {Object.entries(LANGUAGES).map(([code, info]) => (
             <button key={code}
-              style={{ ...s.langBtn, ...(lang === code ? s.langBtnActive : {}) }}
-              onClick={() => setLang(code)} title={info.label}>
-              <span style={{ fontSize: 18 }}>{info.flag}</span>
+              onClick={() => setLang(code)}
+              title={info.label}
+              style={{
+                width: 34, height: 34, borderRadius: 8,
+                background: lang === code ? info.bg : "rgba(255,255,255,0.1)",
+                color: lang === code ? info.color : "rgba(255,255,255,0.5)",
+                border: lang === code ? `2px solid ${info.bg}` : "2px solid transparent",
+                cursor: "pointer", fontSize: 10, fontWeight: 800,
+                fontFamily: "'Inter', sans-serif", letterSpacing: "0.02em",
+              }}>
+              {info.code}
             </button>
           ))}
         </div>
@@ -205,11 +213,10 @@ export default function MenuPage() {
             const active = selectedAllergens.has(a.id);
             return (
               <button key={a.id}
-                style={{ ...s.allergenBtn, ...(active ? { background: a.color, borderColor: a.text, borderWidth: "1.5px", color: a.text } : {}) }}
+                style={{ ...s.allergenBtn, ...(active ? { background: a.color, borderColor: a.text, borderWidth: "1.5px" } : {}) }}
                 onClick={() => toggleAllergen(a.id)}>
-                <span style={{ fontSize: 18 }}>{a.icon}</span>
-                {/* Nom traduit depuis la constante — aucun API call */}
-                <span style={{ fontSize: 10, fontWeight: 600, textAlign: "center", lineHeight: 1.3, color: active ? a.text : "#555" }}>
+                <AllergenIcon id={a.id} size={18} color={active ? a.text : "#888"} />
+                <span style={{ fontSize: 9, fontWeight: 600, textAlign: "center", lineHeight: 1.3, color: active ? a.text : "#777" }}>
                   {allergenNames[a.id] || a.label}
                 </span>
               </button>
@@ -266,8 +273,10 @@ export default function MenuPage() {
                               color: mine ? "#842029" : a.text,
                               border: mine ? "1px solid #FF9999" : "none",
                               fontWeight: mine ? 700 : 500,
+                              display: "inline-flex", alignItems: "center", gap: 4,
                             }}>
-                              {a.icon} {allergenNames[id] || a.label}
+                              <AllergenIcon id={id} size={11} color={mine ? "#842029" : a.text} />
+                              {allergenNames[id] || a.label}
                             </span>
                           );
                         })}

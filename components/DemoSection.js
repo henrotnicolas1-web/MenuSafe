@@ -9,7 +9,7 @@ const STEPS = [
   { num: "4", label: "Vue client" },
 ];
 
-const LANGS = ["🇫🇷","🇬🇧","🇪🇸","🇩🇪","🇯🇵"];
+const LANGS = [{ code: "FR", bg: "#003189" }, { code: "EN", bg: "#C8102E" }, { code: "ES", bg: "#AA151B" }, { code: "DE", bg: "#000" }, { code: "JP", bg: "#BC002D" }];
 const LANG_KEYS = ["fr","en","es","de","ja"];
 const TRANSLATIONS = {
   fr: { title:"Mes allergies", cat:"Plats", sole:"Sole meunière", magret:"Magret de canard", blanquette:"Blanquette de veau", is:"sole, beurre, farine, citron", im:"canard, miel, thym, orange", ib:"veau, crème, beurre, carottes" },
@@ -41,7 +41,10 @@ function PhoneMockup() {
         <p style={{ fontSize: 12, fontWeight: 700, color: "white", margin: "0 0 5px" }}>Le Bistrot du Coin</p>
         <div style={{ display: "flex", gap: 4 }}>
           {LANGS.map((f, i) => (
-            <button key={i} onClick={() => setLang(i)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 14, opacity: i === lang ? 1 : 0.3, padding: 0 }}>{f}</button>
+            <button key={i} onClick={() => setLang(i)}
+              style={{ background: i === lang ? f.bg : "rgba(255,255,255,0.1)", border: "none", cursor: "pointer", fontSize: 9, fontWeight: 800, color: "white", padding: "3px 5px", borderRadius: 5, minWidth: 24, fontFamily: "'Inter',sans-serif" }}>
+              {f.code}
+            </button>
           ))}
         </div>
       </div>

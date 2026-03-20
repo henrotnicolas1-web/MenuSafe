@@ -22,7 +22,7 @@ function MenuMockup({ small = false }) {
         <div style={{ background: "#1A1A1A", padding: "10px 14px 8px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <p style={{ fontSize: small ? 11 : 13, fontWeight: 800, color: "white", margin: 0 }}>Le Bistrot du Coin</p>
           <div style={{ display: "flex", gap: 3 }}>
-            {["🇫🇷","🇬🇧","🇪🇸","🇩🇪"].map((f, i) => (
+            {[{c:"FR",b:"#003189"},{c:"EN",b:"#C8102E"},{c:"ES",b:"#AA151B"},{c:"DE",b:"#000"}].map((f, i) => (
               <span key={i} style={{ fontSize: small ? 11 : 13, opacity: i === 0 ? 1 : 0.4 }}>{f}</span>
             ))}
           </div>
@@ -254,7 +254,7 @@ export default function Home() {
       <section style={{ ...s.hero, padding: isMobile ? "48px 20px 40px" : "72px 20px 80px" }}>
         <div style={{ maxWidth: 1100, margin: "0 auto", display: "grid", gridTemplateColumns: isSmall ? "1fr" : "1fr 1fr", gap: isSmall ? 40 : 56, alignItems: "center" }}>
           <div>
-            <div style={s.heroBadge}>✅ Conforme loi INCO · 14 allergènes légaux</div>
+            <div style={s.heroBadge}>✓ Conforme loi INCO · 14 allergènes légaux</div>
             <h1 style={{ ...s.h1, fontSize: isMobile ? 30 : 40 }}>
               Vos fiches allergènes,<br />
               votre carte interactive,<br />
@@ -298,12 +298,12 @@ export default function Home() {
           <h2 style={{ ...s.h2, fontSize: isMobile ? 24 : 32 }}>Tout ce qu'il faut, rien de superflu</h2>
           <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fit, minmax(280px, 1fr))", gap: isMobile ? 12 : 20 }}>
             {[
-              { icon: "🔍", title: "Détection allergènes en temps réel", desc: "Base de 900+ ingrédients. Tapez un ingrédient, les 14 allergènes légaux s'affichent instantanément." },
-              { icon: "📱", title: "Carte interactive multilingue", desc: "Un QR code par table. Vos clients scannent, choisissent leur langue (8 disponibles) et cochent leurs allergies." },
-              { icon: "📄", title: "PDF carte complète", desc: "Document A4 paysage avec tous vos plats par catégorie et les allergènes de chaque plat. À plastifier." },
-              { icon: "🧠", title: "Import IA depuis une photo", desc: "Photographiez votre carte. L'IA extrait les plats, génère 8 langues et détecte les allergènes en une passe." },
-              { icon: "🏪", title: "Multi-établissements", desc: "Gérez plusieurs adresses depuis un seul compte. Chaque établissement a son propre QR code." },
-              { icon: "🔄", title: "Mise à jour instantanée", desc: "Modifiez une recette, la carte se met à jour immédiatement. Le QR code ne change jamais." },
+              { icon: "◎", title: "Détection allergènes en temps réel", desc: "Base de 900+ ingrédients. Tapez un ingrédient, les 14 allergènes légaux s'affichent instantanément." },
+              { icon: "▣", title: "Carte interactive multilingue", desc: "Un QR code par table. Vos clients scannent, choisissent leur langue (8 disponibles) et cochent leurs allergies." },
+              { icon: "☰", title: "PDF carte complète", desc: "Document A4 paysage avec tous vos plats par catégorie et les allergènes de chaque plat. À plastifier." },
+              { icon: "◈", title: "Import IA depuis une photo", desc: "Photographiez votre carte. L'IA extrait les plats, génère 8 langues et détecte les allergènes en une passe." },
+              { icon: "⊞", title: "Multi-établissements", desc: "Gérez plusieurs adresses depuis un seul compte. Chaque établissement a son propre QR code." },
+              { icon: "↻", title: "Mise à jour instantanée", desc: "Modifiez une recette, la carte se met à jour immédiatement. Le QR code ne change jamais." },
             ].map((f, i) => (
               <div key={i} style={{ background: "white", border: "1px solid #EBEBEB", borderRadius: 14, padding: isMobile ? "16px" : "24px", display: isMobile ? "flex" : "block", gap: 14, alignItems: "flex-start" }}>
                 <span style={{ fontSize: isMobile ? 22 : 24, display: "block", marginBottom: isMobile ? 0 : 12, flexShrink: 0 }}>{f.icon}</span>
@@ -334,7 +334,7 @@ export default function Home() {
             <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 24 }}>
               {[
                 ["🌍", "8 langues — traductions stockées, changement instantané"],
-                ["⚠️", "Filtrage allergènes en temps réel"],
+                ["!", "Filtrage allergènes en temps réel"],
                 ["🔄", "Mise à jour auto quand vous modifiez vos recettes"],
                 ["📱", "100% mobile — aucune app à télécharger"],
                 ["🖨️", "QR code permanent — imprimez-le une seule fois"],
@@ -414,14 +414,14 @@ export default function Home() {
           <h2 style={{ ...s.h2, fontSize: isMobile ? 24 : 32 }}>Une amende qui se justifie en 3 secondes</h2>
           <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fit, minmax(280px, 1fr))", gap: isMobile ? 12 : 20, maxWidth: 760, margin: "0 auto" }}>
             {[
-              { icon: "⚠️", title: "Sans MenuSafe", bordered: false, items: [
+              { icon: "!", title: "Sans MenuSafe", bordered: false, items: [
                 ["✗","#E53E3E","Amende DGCCRF : jusqu'à 1 500€"],
                 ["✗","#E53E3E","Publication sur Alim'Confiance (Google)"],
                 ["✗","#E53E3E","Fermeture temporaire en récidive"],
                 ["✗","#E53E3E","Classeur papier toujours périmé"],
                 ["✗","#E53E3E","3-4h/mois de mise à jour manuelle"],
               ]},
-              { icon: "✅", title: "Avec MenuSafe", bordered: true, items: [
+              { icon: "✓", title: "Avec MenuSafe", bordered: true, items: [
                 ["✓","#38A169","Conformité garantie en 5 minutes"],
                 ["✓","#38A169","PDF légal en 1 clic"],
                 ["✓","#38A169","Carte interactive multilingue"],

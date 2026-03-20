@@ -2,7 +2,7 @@
 import { useState, useRef, Suspense } from "react";
 import { createClient } from "@/lib/supabase";
 import { getPlan } from "@/lib/plans";
-import { detectAllergens, ALLERGENS } from "@/lib/allergens-db";
+import { detectAllergens, ALLERGENS, AllergenIcon } from "@/lib/allergens-db";
 import { useRouter, useSearchParams } from "next/navigation";
 
 function Logo({ size = 24 }) {
@@ -229,7 +229,7 @@ function ImportPageInner() {
                 <div style={{ textAlign: "center" }}><p style={{ fontSize: 40 }}>📄</p><p style={{ fontSize: 14, fontWeight: 600, color: "#1A1A1A" }}>{file.name}</p></div>
               ) : (
                 <div style={s.dropContent}>
-                  <p style={{ fontSize: 44, marginBottom: 12 }}>📸</p>
+                  <p style={{ fontSize: 32, marginBottom: 12, color: "#555" }}>↑</p>
                   <p style={s.dropTitle}>Glissez une image ou cliquez pour choisir</p>
                   <p style={s.dropSub}>JPG, PNG, WEBP, HEIC ou PDF · Max 20MB</p>
                   <div style={s.dropTags}>

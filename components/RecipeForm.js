@@ -55,7 +55,7 @@ export default function RecipeForm({ onSave, initialData }) {
   const [isVegetarian, setIsVegetarian] = useState(initialData?.isVegetarian ?? false);
   const [meatCert, setMeatCert]       = useState(initialData?.meatCertification ?? "");
   const inputRef = useRef(null);
-  const detectedAllergens = detectAllergens(ingredients);
+  const detectedAllergens = new Set(detectAllergens(ingredients));
 
   // Auto-détection régimes et viandes
   const MEAT_KW = ["bœuf","veau","agneau","porc","poulet","canard","dinde","jambon","lardons","bacon","saucisse","chorizo","merguez","foie","lapin","caille","pintade","gibier"];
@@ -63,7 +63,7 @@ export default function RecipeForm({ onSave, initialData }) {
   const hasMeat = ingredients.some(i => MEAT_KW.some(k => i.toLowerCase().includes(k)));
   const hasAnimal = ingredients.some(i => ANIMAL_KW.some(k => i.toLowerCase().includes(k)));
   const canBeVegetarian = !hasAnimal;
-  const canBeVegan = !hasAnimal && !detectedAllergens.includes("lait") && !detectedAllergens.includes("oeufs");
+  const canBeVegan = !hasAnimal && !detectedAllergens.has("lait") && !detectedAllergens.has("oeufs");
 
   useEffect(() => {
     // Autocomplete local — filtre dans la liste des ingrédients connus
@@ -101,6 +101,9 @@ export default function RecipeForm({ onSave, initialData }) {
       category,
       ingredients,
       allergens: [...detectedAllergens],
+      isVegan,
+      isVegetarian,
+      meatCertification: meatCert || null,
       createdAt: initialData?.createdAt ?? new Date().toISOString(),
     };
     if (typeof onSave === "function") onSave(recipe);

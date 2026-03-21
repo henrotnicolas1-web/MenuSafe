@@ -91,6 +91,9 @@ export default function Dashboard() {
       user_id: user.id, establishment_id: activeEst,
       dish_name: recipe.dishName, category: recipe.category,
       ingredients: recipe.ingredients, allergens: recipe.allergens,
+      is_vegan: recipe.isVegan ?? false,
+      is_vegetarian: recipe.isVegetarian ?? false,
+      meat_certification: recipe.meatCertification ?? null,
     }).select().single();
     if (!error && data) {
       setRecipes((p) => [...p, data].sort((a,b) => a.category.localeCompare(b.category)));

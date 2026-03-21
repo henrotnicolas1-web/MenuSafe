@@ -59,6 +59,7 @@ export default function MenuPage() {
   const [recipes, setRecipes]       = useState([]);
   const [lang, setLang]             = useState("fr");
   const [selectedAllergens, setSel] = useState(new Set());
+  const [dietFilter, setDietFilter] = useState("all"); // "all" | "vegetarian" | "vegan"
   const [loading, setLoading]       = useState(true);
   const [notFound, setNotFound]     = useState(null); // null | true | "unavailable"
   const supabase = createClient();
@@ -136,12 +137,14 @@ export default function MenuPage() {
     const groups = {};
     CATEGORY_ORDER.forEach((cat) => { groups[cat] = []; });
     recipes.forEach((r) => {
+      if (dietFilter === "vegetarian" && !r.is_vegetarian && !r.is_vegan) return;
+      if (dietFilter === "vegan" && !r.is_vegan) return;
       const cat = r.category || "plat";
       if (!groups[cat]) groups[cat] = [];
       groups[cat].push(r);
     });
     return groups;
-  }, [recipes]);
+  }, [recipes, dietFilter]);
 
   const ui = UI_TEXT[lang] || UI_TEXT.fr;
   const catLabels = CATEGORY_LABELS[lang] || CATEGORY_LABELS.fr;
@@ -228,6 +231,26 @@ export default function MenuPage() {
           <button style={s.clearBtn} onClick={() => setSel(new Set())}>
             × {ui.clearFilters}
           </button>
+        )}
+
+        {/* Filtre régime alimentaire */}
+        {recipes.some(r => r.is_vegetarian || r.is_vegan) && (
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 10 }}>
+            {[
+              { key: "all", label: "Tous les plats" },
+              { key: "vegetarian", label: "Végétarien" },
+              { key: "vegan", label: "Vegan" },
+            ].map(({ key, label }) => (
+              <button key={key} onClick={() => setDietFilter(key)}
+                style={{ fontSize: 11, fontWeight: 700, padding: "5px 12px", borderRadius: 20, cursor: "pointer", transition: "all 0.15s",
+                  background: dietFilter === key ? "#1A1A1A" : "white",
+                  color: dietFilter === key ? "white" : "#666",
+                  border: dietFilter === key ? "1.5px solid #1A1A1A" : "1.5px solid #E0E0E0",
+                }}>
+                {label}
+              </button>
+            ))}
+          </div>
         )}
       </div>
 

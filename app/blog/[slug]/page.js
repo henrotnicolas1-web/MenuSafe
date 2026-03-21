@@ -1,3 +1,4 @@
+import React from "react";
 import { notFound } from "next/navigation";
 
 const ARTICLES = {
@@ -514,7 +515,8 @@ export async function generateStaticParams() {
 }
 
 export async function generateMetadata({ params }) {
-  const article = ARTICLES[params.slug];
+  const { slug } = await params;
+  const article = ARTICLES[slug];
   if (!article) return { title: "Article introuvable — MenuSafe" };
   return {
     title: `${article.title} — MenuSafe`,
@@ -523,8 +525,9 @@ export async function generateMetadata({ params }) {
   };
 }
 
-export default function ArticlePage({ params }) {
-  const article = ARTICLES[params.slug];
+export default async function ArticlePage({ params }) {
+  const { slug } = await params;
+  const article = ARTICLES[slug];
   if (!article) notFound();
 
   const CAT_COLORS = {

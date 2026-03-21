@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { ALLERGENS } from "@/lib/allergens-db";
+import { ALLERGENS, AllergenIcon } from "@/lib/allergens-db";
 import { QRCodeSVG } from "qrcode.react";
 
 const CATEGORY_ORDER = ["entree", "plat", "dessert", "boisson", "autre"];
@@ -84,14 +84,31 @@ export default function RecipeList({ recipes, onDelete, onGeneratePDF, menuUrl }
           ))}
         </div>
 
+        {/* Pastilles vegan / végétarien / certification */}
+        {(recipe.isVegan || recipe.isVegetarian || recipe.meatCertification) && (
+          <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginBottom: 6 }}>
+            {(recipe.isVegan || recipe.is_vegan) && (
+              <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 20, background: "#F0FFF4", color: "#155724", border: "1px solid #C6F6D5" }}>Vegan</span>
+            )}
+            {(recipe.isVegetarian || recipe.is_vegetarian) && !(recipe.isVegan || recipe.is_vegan) && (
+              <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 20, background: "#F0FFF4", color: "#155724", border: "1px solid #C6F6D5" }}>Végétarien</span>
+            )}
+            {(recipe.meatCertification || recipe.meat_certification) && (
+              <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 20, background: "#F7F7F5", color: "#555", border: "1px solid #E0E0E0" }}>
+                {(recipe.meatCertification || recipe.meat_certification) === "halal" ? "Halal" : (recipe.meatCertification || recipe.meat_certification) === "casher" ? "Casher" : (recipe.meatCertification || recipe.meat_certification) === "label_rouge" ? "Label Rouge" : "Bio"}
+              </span>
+            )}
+          </div>
+        )}
+
         {recipe.allergens.length > 0 && (
           <div style={styles.allergenRow}>
             {recipe.allergens.map((id) => {
               const a = ALLERGENS.find((x) => x.id === id);
               if (!a) return null;
               return (
-                <span key={id} style={{ ...styles.allergenBadge, background: a.color, color: a.text }}>
-                  {a.icon} {a.label}
+                <span key={id} style={{ ...styles.allergenBadge, background: a.color, color: a.text, display: "inline-flex", alignItems: "center", gap: 4 }}>
+                  <AllergenIcon id={id} size={12} color={a.text} />{a.label}
                 </span>
               );
             })}

@@ -191,12 +191,13 @@ export default function MenuPage() {
               onClick={() => setLang(code)}
               title={info.label}
               style={{
-                width: 34, height: 34, borderRadius: 8,
-                background: lang === code ? info.bg : "rgba(255,255,255,0.1)",
-                color: lang === code ? info.color : "rgba(255,255,255,0.5)",
-                border: lang === code ? `2px solid ${info.bg}` : "2px solid transparent",
-                cursor: "pointer", fontSize: 10, fontWeight: 800,
-                fontFamily: "'Inter', sans-serif", letterSpacing: "0.02em",
+                width: 38, height: 38, borderRadius: 9,
+                background: lang === code ? info.bg : "rgba(255,255,255,0.12)",
+                color: lang === code ? info.color : "rgba(255,255,255,0.6)",
+                border: lang === code ? `2px solid ${info.bg}` : "1.5px solid rgba(255,255,255,0.15)",
+                cursor: "pointer", fontSize: 11, fontWeight: 800,
+                fontFamily: "'Inter', sans-serif", letterSpacing: "0.03em",
+                transition: "all 0.15s",
               }}>
               {info.code}
             </button>
@@ -215,8 +216,8 @@ export default function MenuPage() {
               <button key={a.id}
                 style={{ ...s.allergenBtn, ...(active ? { background: a.color, borderColor: a.text, borderWidth: "1.5px" } : {}) }}
                 onClick={() => toggleAllergen(a.id)}>
-                <AllergenIcon id={a.id} size={18} color={active ? a.text : "#888"} />
-                <span style={{ fontSize: 9, fontWeight: 600, textAlign: "center", lineHeight: 1.3, color: active ? a.text : "#777" }}>
+                <AllergenIcon id={a.id} size={22} color={active ? a.text : "#999"} />
+                <span style={{ fontSize: 9, fontWeight: 700, textAlign: "center", lineHeight: 1.3, color: active ? a.text : "#777" }}>
                   {allergenNames[a.id] || a.label}
                 </span>
               </button>
@@ -313,8 +314,8 @@ const s = {
   allergenSection: { background: "white", padding: "16px", borderBottom: "1px solid #EBEBEB" },
   allergenTitle: { fontSize: 15, fontWeight: 700, color: "#1A1A1A", margin: "0 0 4px" },
   allergenSub: { fontSize: 12, color: "#888", margin: "0 0 12px", lineHeight: 1.4 },
-  allergenGrid: { display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 6 },
-  allergenBtn: { display: "flex", flexDirection: "column", alignItems: "center", gap: 4, padding: "8px 4px", borderRadius: 10, border: "1px solid #E8E8E8", background: "white", cursor: "pointer", transition: "all 0.15s" },
+  allergenGrid: { display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 8 },
+  allergenBtn: { display: "flex", flexDirection: "column", alignItems: "center", gap: 5, padding: "10px 4px", borderRadius: 12, border: "1px solid #E8E8E8", background: "white", cursor: "pointer", transition: "all 0.15s" },
   clearBtn: { marginTop: 10, fontSize: 12, fontWeight: 600, color: "#888", background: "none", border: "none", cursor: "pointer", padding: 0 },
   menuBody: { padding: "12px 16px 32px" },
   category: { marginBottom: 24 },

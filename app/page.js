@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useWindowSize } from "@/lib/useWindowSize";
 import DemoSection from "@/components/DemoSection";
+import { Search, Smartphone, FileText, Camera, Building2, RefreshCw, Shield, AlertTriangle, Check } from "lucide-react";
 
 function Logo({ size = 28, light = false }) {
   return (
@@ -56,6 +57,70 @@ function MenuMockup({ small = false }) {
         </div>
         <p style={{ fontSize: 8, color: "#CCC", textAlign: "center", paddingBottom: 6, margin: 0 }}>Propulsé par MenuSafe</p>
       </div>
+    </div>
+  );
+}
+
+
+function FeatureGrid({ isMobile }) {
+  const features = [
+    {
+      Icon: Search,
+      title: "Détection allergènes en temps réel",
+      desc: "Base de 900+ ingrédients. Tapez un ingrédient, les 14 allergènes légaux s'affichent instantanément. Autocomplétion intelligente.",
+      color: "#F0F7FF",
+      iconColor: "#2563EB",
+    },
+    {
+      Icon: Smartphone,
+      title: "Carte interactive multilingue",
+      desc: "Un QR code par table. Vos clients scannent, choisissent leur langue (8 disponibles) et cochent leurs allergies. Les plats incompatibles sont grisés.",
+      color: "#F0FFF4",
+      iconColor: "#16A34A",
+    },
+    {
+      Icon: FileText,
+      title: "PDF carte complète",
+      desc: "Document A4 paysage avec tous vos plats par catégorie et les allergènes de chaque plat. À plastifier sur vos tables.",
+      color: "#FFF7F0",
+      iconColor: "#EA580C",
+    },
+    {
+      Icon: Camera,
+      title: "Import IA depuis une photo",
+      desc: "Photographiez votre carte. L'IA extrait les plats, génère les traductions en 8 langues et détecte les allergènes en une seule analyse.",
+      color: "#FDF4FF",
+      iconColor: "#9333EA",
+    },
+    {
+      Icon: Building2,
+      title: "Multi-établissements",
+      desc: "Gérez plusieurs adresses depuis un seul compte avec navigation par onglets. Chaque établissement a son propre QR code et sa propre carte.",
+      color: "#F0F7FF",
+      iconColor: "#2563EB",
+    },
+    {
+      Icon: RefreshCw,
+      title: "Mise à jour instantanée",
+      desc: "Modifiez une recette et la carte interactive se met à jour immédiatement. Le QR code ne change jamais — imprimez-le une seule fois.",
+      color: "#F0FFF4",
+      iconColor: "#16A34A",
+    },
+  ];
+
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fit, minmax(280px, 1fr))", gap: isMobile ? 12 : 20 }}>
+      {features.map(({ Icon, title, desc, color, iconColor }, i) => (
+        <div key={i} style={{ background: "white", border: "1px solid #EBEBEB", borderRadius: 16, padding: isMobile ? "16px" : "24px", display: isMobile ? "flex" : "block", gap: 14, alignItems: "flex-start" }}>
+          <div style={{ width: 44, height: 44, borderRadius: 12, background: color, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginBottom: isMobile ? 0 : 16 }}>
+            <Icon size={22} color={iconColor} strokeWidth={1.75} />
+          </div>
+          <div>
+            <p style={{ fontSize: 14, fontWeight: 700, color: "#1A1A1A", margin: "0 0 6px" }}>{title}</p>
+            <p style={{ fontSize: 13, color: "#666", lineHeight: 1.65, margin: 0 }}>{desc}</p>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
@@ -296,24 +361,7 @@ export default function Home() {
         <div style={s.sectionInner}>
           <p style={s.eyebrow}>Fonctionnalités</p>
           <h2 style={{ ...s.h2, fontSize: isMobile ? 24 : 32 }}>Tout ce qu'il faut, rien de superflu</h2>
-          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fit, minmax(280px, 1fr))", gap: isMobile ? 12 : 20 }}>
-            {[
-              { icon: "◎", title: "Détection allergènes en temps réel", desc: "Base de 900+ ingrédients. Tapez un ingrédient, les 14 allergènes légaux s'affichent instantanément." },
-              { icon: "▣", title: "Carte interactive multilingue", desc: "Un QR code par table. Vos clients scannent, choisissent leur langue (8 disponibles) et cochent leurs allergies." },
-              { icon: "☰", title: "PDF carte complète", desc: "Document A4 paysage avec tous vos plats par catégorie et les allergènes de chaque plat. À plastifier." },
-              { icon: "◈", title: "Import IA depuis une photo", desc: "Photographiez votre carte. L'IA extrait les plats, génère 8 langues et détecte les allergènes en une passe." },
-              { icon: "⊞", title: "Multi-établissements", desc: "Gérez plusieurs adresses depuis un seul compte. Chaque établissement a son propre QR code." },
-              { icon: "↻", title: "Mise à jour instantanée", desc: "Modifiez une recette, la carte se met à jour immédiatement. Le QR code ne change jamais." },
-            ].map((f, i) => (
-              <div key={i} style={{ background: "white", border: "1px solid #EBEBEB", borderRadius: 14, padding: isMobile ? "16px" : "24px", display: isMobile ? "flex" : "block", gap: 14, alignItems: "flex-start" }}>
-                <span style={{ fontSize: isMobile ? 22 : 24, display: "block", marginBottom: isMobile ? 0 : 12, flexShrink: 0 }}>{f.icon}</span>
-                <div>
-                  <p style={{ fontSize: 14, fontWeight: 700, color: "#1A1A1A", margin: "0 0 4px" }}>{f.title}</p>
-                  <p style={{ fontSize: 13, color: "#666", lineHeight: 1.6, margin: 0 }}>{f.desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
+          <FeatureGrid isMobile={isMobile} />
         </div>
       </section>
 

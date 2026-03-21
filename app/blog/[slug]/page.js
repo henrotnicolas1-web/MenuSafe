@@ -500,6 +500,19 @@ function formatContent(content) {
   }).filter(Boolean);
 }
 
+
+export async function generateStaticParams() {
+  return [
+    "obligation-allergenes-restaurant-france",
+    "amende-dgccrf-allergenes-restauration",
+    "carte-allergenes-qr-code-restaurant",
+    "menu-multilingue-restaurant-touristes",
+    "14-allergenes-liste-complete-restauration",
+    "import-ia-menu-restaurant-allergenes",
+    "alim-confiance-restaurant-mauvaise-note",
+  ].map(slug => ({ slug }));
+}
+
 export async function generateMetadata({ params }) {
   const article = ARTICLES[params.slug];
   if (!article) return { title: "Article introuvable — MenuSafe" };

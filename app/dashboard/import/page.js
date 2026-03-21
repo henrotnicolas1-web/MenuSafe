@@ -21,6 +21,10 @@ const STEPS = { upload: "upload", scanning: "scanning", review: "review", saving
 function ImportPageInner() {
   const [step, setStep]           = useState(STEPS.upload);
   const [file, setFile]           = useState(null);
+  const [importOptions, setImportOptions] = useState({
+    detectVegan: false,
+    detectCertif: false,
+  });
   const [preview, setPreview]     = useState(null);
   const [plats, setPlats]         = useState([]);
   const [current, setCurrent]     = useState(0);
@@ -85,6 +89,7 @@ function ImportPageInner() {
     try {
       const fd = new FormData();
       fd.append("file", file);
+      fd.append("options", JSON.stringify(importOptions));
       const res = await fetch("/api/scan-menu", { method: "POST", body: fd });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Erreur serveur");
@@ -97,6 +102,10 @@ function ImportPageInner() {
         ...plat,
         allergens: [...detectAllergens(plat.ingredients)],
         category: plat.categorie || "plat",
+        isVegetarian: plat.isVegetarian ?? false,
+        isVegan: plat.isVegan ?? false,
+        meatCertification: null, // à choisir lors de la validation si hasMeat
+        _hasMeat: plat.hasMeat ?? false, // signal interne de l'IA
       }));
       setPlats(enriched);
       setScanStats(data.stats ?? null);
@@ -159,6 +168,9 @@ function ImportPageInner() {
           ingredients: p.ingredients,
           allergens: p.allergens,
           translations_cache: p.translations ?? {},
+          is_vegan: p.isVegan ?? false,
+          is_vegetarian: p.isVegetarian ?? false,
+          meat_certification: p.meatCertification ?? null,
         }));
         await supabase.from("recipes").insert(rows);
       }
@@ -242,9 +254,37 @@ function ImportPageInner() {
             </div>
 
             {file && (
-              <div style={s.fileActions}>
-                <button style={s.btnSecondary} onClick={() => { setFile(null); setPreview(null); }}>Changer de fichier</button>
-                <button style={s.btnPrimary} onClick={handleScan}>Analyser avec l'IA →</button>
+              <div>
+                {/* Options d'analyse */}
+                <div style={{ background: "#F7F7F5", border: "1px solid #EBEBEB", borderRadius: 12, padding: "14px 16px", marginBottom: 12 }}>
+                  <p style={{ fontSize: 11, fontWeight: 700, color: "#888", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 10px" }}>
+                    Options d'analyse (optionnel)
+                  </p>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    {[
+                      { key: "detectVegan", label: "Détecter les plats végétariens / vegan", desc: "L'IA analyse les ingrédients et propose automatiquement les labels végétarien et vegan." },
+                      { key: "detectCertif", label: "Détecter les certifications viande", desc: "L'IA signale les plats contenant de la viande pour que vous puissiez ajouter Halal, Casher, Label Rouge ou Bio." },
+                    ].map(({ key, label, desc }) => (
+                      <label key={key} style={{ display: "flex", gap: 10, alignItems: "flex-start", cursor: "pointer" }}>
+                        <input
+                          type="checkbox"
+                          checked={importOptions[key]}
+                          onChange={e => setImportOptions(o => ({ ...o, [key]: e.target.checked }))}
+                          style={{ marginTop: 2, width: 15, height: 15, flexShrink: 0, accentColor: "#1A1A1A", cursor: "pointer" }}
+                        />
+                        <div>
+                          <p style={{ fontSize: 13, fontWeight: 600, color: "#1A1A1A", margin: "0 0 1px" }}>{label}</p>
+                          <p style={{ fontSize: 11, color: "#888", margin: 0, lineHeight: 1.4 }}>{desc}</p>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div style={s.fileActions}>
+                  <button style={s.btnSecondary} onClick={() => { setFile(null); setPreview(null); }}>Changer de fichier</button>
+                  <button style={s.btnPrimary} onClick={handleScan}>Analyser avec l'IA →</button>
+                </div>
               </div>
             )}
             {error && <div style={s.errorBox}>{error}</div>}
@@ -415,6 +455,50 @@ function ImportPageInner() {
                   ))}
                 </select>
               </div>
+
+              {/* ── Labels & certifications — visible seulement si options cochées ── */}
+              {(importOptions.detectVegan || importOptions.detectCertif) && (
+              <div style={{ paddingTop: 12, borderTop: "1px solid #F5F5F5" }}>
+                <p style={{ fontSize: 11, fontWeight: 700, color: "#888", textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 10px" }}>Labels (optionnel)</p>
+
+                {/* Vegan / Végétarien */}
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 10 }}>
+                  {[
+                    { key: "isVegetarian", label: "Végétarien" },
+                    { key: "isVegan", label: "Vegan" },
+                  ].map(({ key, label }) => {
+                    const active = platActuel[key] || false;
+                    return (
+                      <button key={key}
+                        onClick={() => setPlats(p => { const u = [...p]; u[current] = { ...u[current], [key]: !active, ...(key === "isVegan" && !active ? { isVegetarian: true } : {}) }; return u; })}
+                        style={{ display: "flex", alignItems: "center", gap: 5, padding: "6px 12px", borderRadius: 20, border: `1.5px solid ${active ? "#155724" : "#E0E0E0"}`, background: active ? "#F0FFF4" : "white", color: active ? "#155724" : "#888", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
+                        <span style={{ width: 7, height: 7, borderRadius: "50%", background: active ? "#38A169" : "#CCC" }} />
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Certification viande — si ingrédient viande détecté */}
+                {(platActuel._hasMeat || platActuel.ingredients?.some(i => ["bœuf","veau","agneau","porc","poulet","canard","dinde","jambon","lardons","bacon","saucisse","merguez","chorizo"].some(k => i.toLowerCase().includes(k)))) && (
+                  <div>
+                    <p style={{ fontSize: 11, color: "#AAA", margin: "0 0 6px" }}>Certification viande</p>
+                    <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
+                      {["halal", "casher", "label_rouge", "bio"].map(cert => {
+                        const active = platActuel.meatCertification === cert;
+                        return (
+                          <button key={cert}
+                            onClick={() => setPlats(p => { const u = [...p]; u[current] = { ...u[current], meatCertification: active ? null : cert }; return u; })}
+                            style={{ padding: "5px 10px", borderRadius: 20, border: `1.5px solid ${active ? "#1A1A1A" : "#E0E0E0"}`, background: active ? "#1A1A1A" : "white", color: active ? "white" : "#888", fontSize: 11, fontWeight: 600, cursor: "pointer" }}>
+                            {cert === "halal" ? "Halal" : cert === "casher" ? "Casher" : cert === "label_rouge" ? "Label Rouge" : "Bio"}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+              )}
 
               <div style={{ display: "flex", gap: 10, paddingTop: 14, borderTop: "1px solid #F0F0F0" }}>
                 <button style={s.btnSkip} onClick={() => goNext("skip")}>Ignorer ce plat</button>

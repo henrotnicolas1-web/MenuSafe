@@ -1,10 +1,9 @@
 import { NextResponse } from "next/server";
 
 // Rate limiting en mémoire — par IP
-// Max 5 scans par heure par IP (largement suffisant même pour 20 pages de menu)
 const rateLimitMap = new Map();
 const LIMIT_PER_HOUR = 5;
-const WINDOW_MS = 60 * 60 * 1000; // 1 heure
+const WINDOW_MS = 60 * 60 * 1000;
 
 function checkRateLimit(ip) {
   const now = Date.now();
@@ -21,7 +20,6 @@ function checkRateLimit(ip) {
   return { allowed: true, remaining: LIMIT_PER_HOUR - entry.count };
 }
 
-// Nettoyage périodique pour éviter les fuites mémoire
 setInterval(() => {
   const now = Date.now();
   for (const [ip, entry] of rateLimitMap.entries()) {
@@ -30,7 +28,6 @@ setInterval(() => {
 }, WINDOW_MS);
 
 export async function POST(request) {
-  // Rate limiting
   const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
     || request.headers.get("x-real-ip")
     || "unknown";
@@ -41,15 +38,39 @@ export async function POST(request) {
       { status: 429 }
     );
   }
+
   try {
     const formData = await request.formData();
     const file = formData.get("file");
     if (!file) return NextResponse.json({ error: "Aucun fichier reçu" }, { status: 400 });
 
+    const optionsRaw = formData.get("options");
+    const options = optionsRaw ? JSON.parse(optionsRaw) : { detectVegan: false, detectCertif: false };
+
     const bytes = await file.arrayBuffer();
     const base64 = Buffer.from(bytes).toString("base64");
     const mimeType = file.type || "image/jpeg";
     const isPDF = mimeType === "application/pdf";
+
+    const optionsInstructions = [];
+    if (options.detectVegan) {
+      optionsInstructions.push(`
+LABELS VÉGÉTARIEN / VEGAN (demandé par le restaurateur) :
+Pour chaque plat, analyse les ingrédients et ajoute ces champs :
+- "isVegetarian": true si le plat ne contient aucun produit animal (viande, poisson, crustacés)
+- "isVegan": true si le plat ne contient ni produit animal, ni lait, ni oeuf
+"isVegan": true implique toujours "isVegetarian": true.`);
+    }
+    if (options.detectCertif) {
+      optionsInstructions.push(`
+CERTIFICATIONS VIANDE (demandé par le restaurateur) :
+Pour chaque plat contenant de la viande (bœuf, veau, agneau, porc, poulet, canard, dinde, jambon, lardons, etc.), ajoute "hasMeat": true.
+Le restaurateur choisira lui-même la certification (Halal, Casher, Label Rouge, Bio) lors de la validation.
+Pour les plats sans viande : ne pas inclure ce champ.`);
+    }
+    const optionsBlock = optionsInstructions.length > 0
+      ? "\n\n━━━ OPTIONS DEMANDÉES ━━━" + optionsInstructions.join("") + "\n━━━━━━━━━━━━━━━━━━━━━━━━━"
+      : "";
 
     const prompt = `Tu es un expert en cuisine française et réglementation allergènes INCO (règlement UE 1169/2011).
 
@@ -72,7 +93,7 @@ Sois TRÈS conservateur. Un faux positif est pire qu'un oubli pour un restaurate
   - "champignons" → aucun allergène
   - "légumes", "salade", "tomate", "oignon" → aucun allergène
   - Un plat de viande grillée sans sauce → probablement aucun allergène
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${optionsBlock}
 
 TRADUCTIONS : Pour chaque plat, génère les traductions dans ces 7 langues en une seule fois :
 en (English), es (Spanish), de (German), it (Italian), nl (Dutch), ja (Japanese), zh (Mandarin)
@@ -100,6 +121,9 @@ FORMAT JSON EXACT :
       "categorie": "plat",
       "source": "carte",
       "confidence": "haute",
+      "isVegetarian": false,
+      "isVegan": false,
+      "hasMeat": false,
       "translations": {
         "en": { "dish_name": "Dish name", "ingredients": ["ing1", "ing2"] },
         "es": { "dish_name": "Nombre", "ingredients": ["ing1", "ing2"] },
@@ -111,11 +135,7 @@ FORMAT JSON EXACT :
       }
     }
   ],
-  "stats": {
-    "total": 5,
-    "depuis_carte": 3,
-    "suggestions_ia": 2
-  },
+  "stats": { "total": 5, "depuis_carte": 3, "suggestions_ia": 2 },
   "note": "Message optionnel si problème de lisibilité"
 }
 
@@ -149,6 +169,7 @@ Si aucun plat détectable : {"plats":[],"stats":{"total":0,"depuis_carte":0,"sug
     const clean = text.replace(/```json|```/g, "").trim();
     const result = JSON.parse(clean);
     return NextResponse.json(result);
+
   } catch (err) {
     console.error("Erreur scan-menu:", err);
     return NextResponse.json({ error: err.message }, { status: 500 });

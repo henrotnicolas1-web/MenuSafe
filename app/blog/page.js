@@ -1,5 +1,3 @@
-import { useRouter } from "next/navigation";
-
 export const metadata = {
   title: "Blog MenuSafe — Allergènes, conformité INCO et restauration",
   description: "Guides, conseils et actualités sur la réglementation allergènes en restauration. Conformité INCO, contrôles DGCCRF, gestion des allergènes.",

@@ -1,8 +1,4 @@
-export const metadata = {
-  title: "Blog MenuSafe — Allergènes, conformité INCO et restauration",
-  description: "Guides, conseils et actualités sur la réglementation allergènes en restauration. Conformité INCO, contrôles DGCCRF, gestion des allergènes.",
-};
-
+"use client";
 const ARTICLES = [
   { slug: "obligation-allergenes-restaurant-france", title: "Allergènes en restaurant : ce que la loi vous oblige vraiment à faire", excerpt: "Le règlement INCO oblige tous les restaurants à déclarer 14 allergènes par écrit. Ce guide explique exactement vos obligations, les sanctions encourues et comment vous conformer rapidement.", date: "2026-03-01", readTime: "8 min", category: "Réglementation" },
   { slug: "amende-dgccrf-allergenes-restauration", title: "Amende DGCCRF allergènes : combien risquez-vous vraiment ?", excerpt: "1 500€ par infraction, publication sur Alim'Confiance, fermeture temporaire. Découvrez comment se déroulent les contrôles DGCCRF et comment vous protéger.", date: "2026-03-05", readTime: "6 min", category: "Réglementation" },
@@ -61,9 +57,7 @@ export default function BlogPage() {
             const cat = CATEGORY_COLORS[article.category] || { bg: "#F5F5F5", color: "#555" };
             return (
               <a key={article.slug} href={`/blog/${article.slug}`} style={{ textDecoration: "none", color: "inherit" }}>
-                <div style={{ background: "white", border: "1px solid #EBEBEB", borderRadius: 16, padding: "24px", height: "100%", display: "flex", flexDirection: "column", transition: "border-color 0.2s, box-shadow 0.2s" }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor = "#1A1A1A"; e.currentTarget.style.boxShadow = "0 4px 24px rgba(0,0,0,0.08)"; }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = "#EBEBEB"; e.currentTarget.style.boxShadow = "none"; }}>
+                <div style={{ background: "white", border: "1px solid #EBEBEB", borderRadius: 16, padding: "24px", height: "100%", display: "flex", flexDirection: "column" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
                     <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 9px", borderRadius: 20, background: cat.bg, color: cat.color }}>
                       {article.category}

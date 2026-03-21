@@ -1,369 +1,212 @@
 "use client";
 import { useState } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useWindowSize } from "@/lib/useWindowSize";
+import { Utensils, Croissant, Truck, Building2, Link2, Check } from "lucide-react";
+
+function Logo({ size = 26, light = false }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 32 32" fill="none">
+      <path d="M16 2L4 7V17C4 23.5 9.5 29.2 16 31C22.5 29.2 28 23.5 28 17V7L16 2Z" fill={light ? "white" : "#1A1A1A"}/>
+      <path d="M16 4.5L6 9V17C6 22.5 10.5 27.5 16 29.2C21.5 27.5 26 22.5 26 17V9L16 4.5Z" fill={light ? "#E5E5E5" : "#2D2D2D"}/>
+      <path d="M10.5 16.5L14 20L21.5 12.5" stroke="#4ADE80" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  );
+}
 
 const SECTORS = [
   {
-    id: "restaurant",
-    emoji: "🍽️",
-    label: "Restaurant",
+    id: "restaurant", Icon: Utensils, label: "Restaurant",
     tagline: "De la brasserie au gastronomique",
-    color: "#2563eb",
-    bg: "#eff6ff",
     hero: "Votre carte change selon les saisons, les arrivages du marché, les suggestions du chef. MenuSafe suit le rythme sans effort.",
-    pain: [
-      "Carte saisonnière difficile à maintenir à jour",
-      "Serveurs ne connaissent pas toujours tous les ingrédients",
-      "Clientèle touristique ne parle pas français",
-      "Classeur papier toujours en retard sur la réalité",
-    ],
+    pain: ["Carte saisonnière difficile à maintenir", "Serveurs ne connaissent pas tous les ingrédients", "Clientèle touristique ne parle pas français", "Classeur papier toujours en retard"],
     solution: [
-      { icon: "⚡", title: "Mise à jour en 20 secondes", desc: "Nouveau plat du jour ? 3 clics. La carte QR code est à jour avant le service." },
-      { icon: "🌍", title: "8 langues automatiques", desc: "Import IA d'une photo de carte → traductions EN, ES, DE, IT, NL, JA, ZH générées instantanément." },
-      { icon: "👨‍🍳", title: "Briefing équipe simplifié", desc: "Chaque serveur peut consulter la fiche complète d'un plat depuis son téléphone avant le service." },
+      { title: "Mise à jour en 20 secondes", desc: "Nouveau plat du jour ? 3 clics. La carte QR code est à jour avant le service." },
+      { title: "8 langues automatiques", desc: "Import IA d'une photo de carte → traductions EN, ES, DE, IT, NL, JA, ZH générées instantanément." },
+      { title: "Briefing équipe simplifié", desc: "Chaque serveur peut consulter la fiche complète d'un plat depuis son téléphone." },
     ],
-    stat: { num: "85%", label: "des restaurants font confiance à la mémoire du serveur pour les allergènes. C'est insuffisant légalement." },
+    stat: { num: "85%", label: "des restaurants font confiance à la mémoire du serveur pour les allergènes. Insuffisant légalement." },
   },
   {
-    id: "boulangerie",
-    emoji: "🥐",
-    label: "Boulangerie / Pâtisserie",
+    id: "boulangerie", Icon: Croissant, label: "Boulangerie / Pâtisserie",
     tagline: "Du pain artisanal aux créations saisonnières",
-    color: "#d97706",
-    bg: "#fffbeb",
     hero: "Galette des rois en janvier, bûches en décembre, viennoiseries au levain toute l'année. Chaque produit contient du gluten, souvent des œufs et du lait — une erreur peut coûter cher.",
-    pain: [
-      "Produits très allergènes (gluten, lait, œufs dans presque tout)",
-      "Gamme change selon les saisons et les fournisseurs",
-      "Petite structure : pas de responsable dédié",
-      "Clients debout au comptoir, pas de menu à consulter",
-    ],
+    pain: ["Produits très allergènes (gluten, lait, œufs partout)", "Gamme change selon saisons et fournisseurs", "Petite structure : pas de responsable dédié", "Clients au comptoir, pas de menu à consulter"],
     solution: [
-      { icon: "🏷️", title: "QR code vitrine & comptoir", desc: "Un QR code affiché en vitrine ou sur le comptoir. Le client scanne et voit tous les allergènes avant d'acheter." },
-      { icon: "🌾", title: "Gluten & lait pré-détectés", desc: "La base 900+ ingrédients reconnaît les produits boulangers. Farine → gluten. Beurre → lait. Automatique." },
-      { icon: "📋", title: "PDF affichage légal", desc: "Un document A4 à imprimer et plastifier. Conforme INCO, prêt en 2 minutes." },
+      { title: "QR code vitrine et comptoir", desc: "Un QR code affiché en vitrine. Le client scanne et voit tous les allergènes avant d'acheter." },
+      { title: "Gluten et lait pré-détectés", desc: "La base 900+ ingrédients reconnaît les produits boulangers. Farine → gluten. Beurre → lait. Automatique." },
+      { title: "PDF affichage légal", desc: "Un document A4 à imprimer et plastifier. Conforme INCO, prêt en 2 minutes." },
     ],
     stat: { num: "100%", label: "des produits de boulangerie contiennent au moins 1 des 14 allergènes. La déclaration est obligatoire sans exception." },
   },
   {
-    id: "food_truck",
-    emoji: "🚚",
-    label: "Food Truck",
+    id: "food_truck", Icon: Truck, label: "Food Truck",
     tagline: "Mobilité, rapidité, conformité",
-    color: "#16a34a",
-    bg: "#f0fdf4",
-    hero: "Vous travaillez en espace réduit, avec une carte courte mais dense. Vos clients mangent debout ou dans leur voiture. La conformité allergènes ne peut pas ralentir votre flux de service.",
-    pain: [
-      "Pas de place pour un classeur ou un menu physique",
-      "Service très rapide, clients pressés",
-      "Carte qui change souvent selon les approvisionnements",
-      "Clientèle mix : touristes, salariés, familles",
-    ],
+    hero: "Vous travaillez en espace réduit, avec une carte courte mais dense. La conformité allergènes ne peut pas ralentir votre flux de service.",
+    pain: ["Pas de place pour un classeur ou menu physique", "Service très rapide, clients pressés", "Carte qui change souvent", "Clientèle mix : touristes, salariés, familles"],
     solution: [
-      { icon: "📱", title: "100% numérique, zéro papier", desc: "Un QR code collé sur votre camion ou votre vitrine. Accessible depuis n'importe quel smartphone sans app." },
-      { icon: "🔄", title: "Carte modifiable entre deux services", desc: "Plus de saumon ? Vous retirez le plat en 10 secondes depuis votre téléphone. La carte est à jour immédiatement." },
-      { icon: "⚡", title: "Conformité sans friction", desc: "Vos clients allergiques vérifient eux-mêmes. Vous continuez votre service sans interruption." },
+      { title: "100% numérique, zéro papier", desc: "Un QR code collé sur votre camion. Accessible depuis n'importe quel smartphone sans app." },
+      { title: "Carte modifiable entre deux services", desc: "Plus de saumon ? Vous retirez le plat en 10 secondes depuis votre téléphone." },
+      { title: "Conformité sans friction", desc: "Vos clients allergiques vérifient eux-mêmes. Vous continuez votre service sans interruption." },
     ],
     stat: { num: "3x", label: "plus de contrôles DGCCRF sur les food trucks que sur les restaurants fixes selon les professionnels du secteur." },
   },
   {
-    id: "hotel",
-    emoji: "🏨",
-    label: "Hôtel & Room Service",
+    id: "hotel", Icon: Building2, label: "Hôtel & Room Service",
     tagline: "Restaurant, bar, room service, petit-déjeuner",
-    color: "#7c3aed",
-    bg: "#f5f3ff",
-    hero: "Un hôtel cumule plusieurs points de restauration avec une clientèle internationale exigeante. Chaque service — petit-déjeuner buffet, restaurant gastronomique, bar, room service — a ses propres contraintes légales.",
-    pain: [
-      "Plusieurs menus à gérer simultanément",
-      "Clientèle internationale qui ne lit pas le français",
-      "Buffet : plats changent chaque jour",
-      "Équipes différentes selon les services",
-    ],
+    hero: "Un hôtel cumule plusieurs points de restauration avec une clientèle internationale exigeante. Chaque service a ses propres contraintes légales.",
+    pain: ["Plusieurs menus à gérer simultanément", "Clientèle internationale ne lit pas le français", "Buffet : plats changent chaque jour", "Équipes différentes selon les services"],
     solution: [
-      { icon: "🏢", title: "Multi-établissements natifs", desc: "Restaurant, bar, room service : chaque espace a sa propre carte et son propre QR code depuis un seul compte." },
-      { icon: "🌍", title: "8 langues pour votre clientèle internationale", desc: "Vos clients choisissent leur langue. Traductions EN, ES, DE, IT, NL, JA, ZH — générées une fois, disponibles à vie." },
-      { icon: "📅", title: "Buffet du jour en 2 minutes", desc: "Chaque matin, mise à jour du buffet en quelques clics. Le QR code sur chaque plat pointe vers la fiche à jour." },
+      { title: "Multi-établissements natifs", desc: "Restaurant, bar, room service : chaque espace a sa propre carte et son propre QR code depuis un seul compte." },
+      { title: "8 langues pour clientèle internationale", desc: "Vos clients choisissent leur langue. Traductions générées une fois, disponibles à vie." },
+      { title: "Buffet du jour en 2 minutes", desc: "Chaque matin, mise à jour du buffet en quelques clics. Le QR code pointe vers la fiche à jour." },
     ],
-    stat: { num: "8", label: "langues disponibles. Vos clients britanniques, espagnols, allemands et japonais peuvent vérifier les allergènes dans leur langue." },
+    stat: { num: "8", label: "langues disponibles. Vos clients britanniques, espagnols, allemands et japonais vérifient les allergènes dans leur langue." },
   },
   {
-    id: "franchise",
-    emoji: "🔗",
-    label: "Franchise & Multi-sites",
+    id: "franchise", Icon: Link2, label: "Franchise & Multi-sites",
     tagline: "Cohérence et contrôle à grande échelle",
-    color: "#dc2626",
-    bg: "#fef2f2",
     hero: "Gérer la conformité allergènes sur 5, 10 ou 50 points de vente est un défi organisationnel majeur. Une erreur dans un établissement met en danger toute l'enseigne.",
-    pain: [
-      "Cohérence des menus entre établissements impossible manuellement",
-      "Un nouveau plat national → mise à jour de tous les sites",
-      "Contrôle qualité difficile à distance",
-      "Responsabilité juridique centralisée mais exécution locale",
-    ],
+    pain: ["Cohérence des menus entre établissements impossible manuellement", "Un nouveau plat national → mise à jour de tous les sites", "Contrôle qualité difficile à distance", "Responsabilité juridique centralisée mais exécution locale"],
     solution: [
-      { icon: "🏗️", title: "Établissements illimités (plan Réseau)", desc: "Tous vos sites dans un seul compte. Vue d'ensemble, gestion individuelle. Ajoutez un site en 2 minutes." },
-      { icon: "👥", title: "Gestion des équipes par site", desc: "Chaque manager local a accès uniquement à son établissement. Vous gardez la main sur les données centrales." },
-      { icon: "🔌", title: "Export CSV & accès API", desc: "Intégrez vos données allergènes dans votre back-office existant. Compatible avec vos systèmes de gestion de menus." },
+      { title: "Établissements illimités (plan Réseau)", desc: "Tous vos sites dans un seul compte. Vue d'ensemble, gestion individuelle. Ajoutez un site en 2 minutes." },
+      { title: "Gestion des équipes par site", desc: "Chaque manager local a accès uniquement à son établissement. Vous gardez la main sur les données centrales." },
+      { title: "Export CSV et accès API", desc: "Intégrez vos données allergènes dans votre back-office existant. Compatible avec vos systèmes de gestion." },
     ],
     stat: { num: "1 500€", label: "par infraction, par établissement. Sur 10 sites non conformes, l'exposition potentielle dépasse 15 000€." },
   },
 ];
 
 export default function MetiersPage() {
+  const router = useRouter();
+  const { isMobile } = useWindowSize();
   const [activeSector, setActiveSector] = useState("restaurant");
   const sector = SECTORS.find(s => s.id === activeSector);
 
-  const styles = {
-    page: { fontFamily: "'DM Sans', sans-serif", color: "#111827", background: "#fff" },
-    nav: {
-      position: "sticky", top: 0, zIndex: 50,
-      background: "rgba(255,255,255,0.95)", backdropFilter: "blur(10px)",
-      borderBottom: "1px solid #e5e7eb", padding: "0 24px",
-    },
-    navInner: {
-      maxWidth: 1100, margin: "0 auto", height: 64,
-      display: "flex", alignItems: "center", justifyContent: "space-between",
-    },
-    logo: {
-      fontFamily: "'Syne', sans-serif", fontWeight: 800, fontSize: 20,
-      color: "#2563eb", textDecoration: "none", display: "flex", alignItems: "center", gap: 8,
-    },
-    ctaBtn: {
-      background: "#2563eb", color: "#fff", border: "none",
-      borderRadius: 8, padding: "10px 20px", fontWeight: 700,
-      fontSize: 14, cursor: "pointer", textDecoration: "none", display: "inline-block",
-    },
-    container: { maxWidth: 1100, margin: "0 auto" },
-    sectionLabel: {
-      fontSize: 13, fontWeight: 700, letterSpacing: "0.1em",
-      textTransform: "uppercase", color: "#2563eb", marginBottom: 12,
-    },
-    sectionTitle: {
-      fontFamily: "'Syne', sans-serif",
-      fontSize: "clamp(1.75rem, 3vw, 2.5rem)",
-      fontWeight: 800, color: "#111827", marginBottom: 16, lineHeight: 1.15,
-    },
-  };
-
   return (
-    <div style={styles.page}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600;700&display=swap');
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .sector-content { animation: fadeIn 0.3s ease both; }
-      `}</style>
+    <div style={{ fontFamily: "'Inter', -apple-system, sans-serif", background: "white", color: "#1A1A1A" }}>
 
-      {/* NAV */}
-      <nav style={styles.nav}>
-        <div style={styles.navInner}>
-          <Link href="/" style={styles.logo}>
-            <span style={{ width: 32, height: 32, borderRadius: 8, background: "#2563eb", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" />
-              </svg>
-            </span>
-            MenuSafe
-          </Link>
-          <Link href="/auth" style={styles.ctaBtn}>Essayer gratuitement</Link>
+      {/* Nav */}
+      <nav style={{ position: "sticky", top: 0, zIndex: 50, background: "rgba(255,255,255,0.95)", backdropFilter: "blur(10px)", borderBottom: "1px solid #EBEBEB" }}>
+        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "12px 20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }} onClick={() => router.push("/")}>
+            <Logo size={26} />
+            <span style={{ fontSize: 16, fontWeight: 800, color: "#1A1A1A", letterSpacing: "-0.02em" }}>MenuSafe</span>
+          </div>
+          <button onClick={() => router.push("/auth")} style={{ fontSize: 13, fontWeight: 700, padding: "8px 16px", background: "#1A1A1A", color: "white", border: "none", borderRadius: 10, cursor: "pointer" }}>
+            Essayer gratuitement →
+          </button>
         </div>
       </nav>
 
-      {/* HERO */}
-      <section style={{ background: "linear-gradient(135deg, #0f172a, #1e3a8a)", padding: "80px 24px", textAlign: "center" }}>
+      {/* Hero */}
+      <section style={{ background: "#0F0F0F", padding: isMobile ? "56px 20px" : "80px 20px", textAlign: "center" }}>
         <div style={{ maxWidth: 720, margin: "0 auto" }}>
-          <div style={{
-            display: "inline-flex", gap: 8, alignItems: "center",
-            background: "rgba(37,99,235,0.2)", border: "1px solid rgba(37,99,235,0.3)",
-            borderRadius: 100, padding: "6px 16px", fontSize: 13, color: "#93c5fd", marginBottom: 24,
-          }}>
-            🏪 5 profils métier
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(74,222,128,0.1)", border: "1px solid rgba(74,222,128,0.3)", borderRadius: 100, padding: "6px 16px", fontSize: 12, color: "#4ADE80", marginBottom: 24, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+            Par secteur d'activité
           </div>
-          <h1 style={{
-            fontFamily: "'Syne', sans-serif", fontSize: "clamp(2rem, 5vw, 3.2rem)",
-            fontWeight: 800, color: "#fff", lineHeight: 1.1, marginBottom: 20,
-          }}>
-            MenuSafe s'adapte<br />
-            <span style={{ color: "#3b82f6" }}>à votre type d'établissement</span>
+          <h1 style={{ fontSize: isMobile ? 28 : 40, fontWeight: 800, color: "white", margin: "0 0 16px", letterSpacing: "-0.02em", lineHeight: 1.15 }}>
+            MenuSafe adapté à votre métier
           </h1>
-          <p style={{ fontSize: 18, color: "#94a3b8", lineHeight: 1.6 }}>
-            Un food truck n'a pas les mêmes contraintes qu'un hôtel 4 étoiles. MenuSafe a été pensé pour chaque cas.
+          <p style={{ fontSize: isMobile ? 15 : 17, color: "rgba(255,255,255,0.6)", lineHeight: 1.7, margin: 0 }}>
+            Restaurant, boulangerie, food truck, hôtel ou franchise — les enjeux allergènes sont différents. Découvrez comment MenuSafe répond à vos contraintes spécifiques.
           </p>
         </div>
       </section>
 
-      {/* SECTOR TABS */}
-      <div style={{ background: "#f8f9ff", borderBottom: "1px solid #e5e7eb", padding: "0 24px", position: "sticky", top: 64, zIndex: 40 }}>
-        <div style={{ ...styles.container, display: "flex", gap: 4, overflowX: "auto" }}>
-          {SECTORS.map(s => (
-            <button
-              key={s.id}
-              onClick={() => setActiveSector(s.id)}
-              style={{
-                padding: "16px 20px",
-                border: "none",
-                borderBottom: `3px solid ${activeSector === s.id ? s.color : "transparent"}`,
-                background: "transparent",
-                cursor: "pointer",
-                fontWeight: activeSector === s.id ? 700 : 500,
-                fontSize: 14,
-                color: activeSector === s.id ? s.color : "#6b7280",
-                whiteSpace: "nowrap",
-                transition: "all 0.15s",
-                display: "flex", alignItems: "center", gap: 8,
-              }}
-            >
-              <span>{s.emoji}</span>
-              {s.label}
+      {/* Selector */}
+      <div style={{ background: "#F7F7F5", borderBottom: "1px solid #EBEBEB", padding: "0 20px", overflowX: "auto" }}>
+        <div style={{ maxWidth: 900, margin: "0 auto", display: "flex", gap: 0 }}>
+          {SECTORS.map(({ id, Icon, label }) => (
+            <button key={id} onClick={() => setActiveSector(id)}
+              style={{ display: "flex", alignItems: "center", gap: 6, padding: "14px 16px", fontSize: 13, fontWeight: activeSector === id ? 700 : 500,
+                background: "transparent", border: "none", cursor: "pointer", whiteSpace: "nowrap",
+                color: activeSector === id ? "#1A1A1A" : "#888",
+                borderBottom: activeSector === id ? "2px solid #1A1A1A" : "2px solid transparent",
+              }}>
+              <Icon size={15} />
+              {label}
             </button>
           ))}
         </div>
       </div>
 
-      {/* SECTOR CONTENT */}
-      <div key={activeSector} className="sector-content">
-        {/* Sector hero */}
-        <section style={{ background: sector.bg, padding: "64px 24px", borderBottom: `3px solid ${sector.color}22` }}>
-          <div style={{ ...styles.container, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 64, alignItems: "center" }}>
-            <div>
-              <div style={{ fontSize: 64, marginBottom: 20 }}>{sector.emoji}</div>
-              <div style={{ fontSize: 13, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: sector.color, marginBottom: 8 }}>
-                {sector.tagline}
-              </div>
-              <h2 style={{ ...styles.sectionTitle, fontSize: "clamp(1.5rem, 2.5vw, 2rem)" }}>
-                MenuSafe pour les <span style={{ color: sector.color }}>{sector.label}s</span>
-              </h2>
-              <p style={{ fontSize: 16, color: "#4b5563", lineHeight: 1.7 }}>{sector.hero}</p>
-            </div>
-            {/* Stat card */}
-            <div style={{
-              background: "#fff", borderRadius: 20, padding: "40px",
-              border: `2px solid ${sector.color}33`,
-              textAlign: "center",
-              boxShadow: `0 8px 32px ${sector.color}11`,
-            }}>
-              <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 72, fontWeight: 800, color: sector.color, lineHeight: 1 }}>
-                {sector.stat.num}
-              </div>
-              <div style={{ fontSize: 15, color: "#4b5563", marginTop: 12, lineHeight: 1.6 }}>
-                {sector.stat.label}
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Pain points */}
-        <section style={{ padding: "64px 24px", background: "#fff" }}>
-          <div style={styles.container}>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 48, alignItems: "start" }}>
+      {/* Sector content */}
+      {sector && (
+        <div key={sector.id}>
+          {/* Intro */}
+          <section style={{ padding: isMobile ? "40px 20px" : "64px 20px", background: "white" }}>
+            <div style={{ maxWidth: 900, margin: "0 auto", display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 40, alignItems: "center" }}>
               <div>
-                <div style={{ fontSize: 13, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "#dc2626", marginBottom: 12 }}>
-                  Vos défis
-                </div>
-                <h3 style={{ fontFamily: "'Syne', sans-serif", fontSize: 22, fontWeight: 800, marginBottom: 24, color: "#111827" }}>
-                  Ce qui rend la conformité difficile pour vous
-                </h3>
-                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                  {sector.pain.map((p, i) => (
-                    <div key={i} style={{
-                      display: "flex", gap: 12, alignItems: "flex-start",
-                      padding: "14px 16px", background: "#fef2f2",
-                      borderRadius: 10, border: "1px solid #fecaca",
-                    }}>
-                      <span style={{ color: "#dc2626", fontSize: 16, flexShrink: 0, marginTop: 1 }}>✗</span>
-                      <span style={{ fontSize: 14, color: "#374151", lineHeight: 1.5 }}>{p}</span>
-                    </div>
-                  ))}
+                <p style={{ fontSize: 11, fontWeight: 700, color: "#888", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 10 }}>{sector.tagline}</p>
+                <h2 style={{ fontSize: isMobile ? 24 : 30, fontWeight: 800, color: "#1A1A1A", margin: "0 0 16px", letterSpacing: "-0.02em", lineHeight: 1.2 }}>
+                  {sector.label}
+                </h2>
+                <p style={{ fontSize: 15, color: "#555", lineHeight: 1.7, margin: "0 0 24px" }}>{sector.hero}</p>
+                <div style={{ background: "#1A1A1A", borderRadius: 14, padding: "20px 24px" }}>
+                  <div style={{ fontSize: 30, fontWeight: 800, color: "#4ADE80", letterSpacing: "-0.02em" }}>{sector.stat.num}</div>
+                  <div style={{ fontSize: 13, color: "rgba(255,255,255,0.6)", lineHeight: 1.5, marginTop: 4 }}>{sector.stat.label}</div>
                 </div>
               </div>
               <div>
-                <div style={{ fontSize: 13, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: sector.color, marginBottom: 12 }}>
-                  La solution
-                </div>
-                <h3 style={{ fontFamily: "'Syne', sans-serif", fontSize: 22, fontWeight: 800, marginBottom: 24, color: "#111827" }}>
-                  Ce que MenuSafe fait pour vous
-                </h3>
-                <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                  {sector.solution.map((s, i) => (
-                    <div key={i} style={{
-                      display: "flex", gap: 16, alignItems: "flex-start",
-                      padding: "16px 18px", background: sector.bg,
-                      borderRadius: 12, border: `1px solid ${sector.color}33`,
-                    }}>
-                      <span style={{ fontSize: 24, flexShrink: 0 }}>{s.icon}</span>
-                      <div>
-                        <div style={{ fontWeight: 700, fontSize: 15, color: "#111827", marginBottom: 4 }}>{s.title}</div>
-                        <div style={{ fontSize: 14, color: "#6b7280", lineHeight: 1.5 }}>{s.desc}</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-      </div>
-
-      {/* ALL PLANS */}
-      <section style={{ background: "#f8f9ff", padding: "80px 24px" }}>
-        <div style={styles.container}>
-          <div style={{ textAlign: "center", marginBottom: 48 }}>
-            <div style={styles.sectionLabel}>Quel que soit votre profil</div>
-            <h2 style={styles.sectionTitle}>Un plan adapté à votre taille</h2>
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }}>
-            {[
-              { plan: "Gratuit", price: "0€", who: "Découverte", features: ["3 recettes", "1 établissement", "PDF conforme"], cta: "Commencer" },
-              { plan: "Solo", price: "29€/mois", who: "Boulangerie · Food truck", features: ["50 recettes", "QR code carte", "PDF illimités"], cta: "Essai 7j gratuit" },
-              { plan: "Pro", price: "59€/mois", who: "Restaurant · Hôtel", features: ["Recettes illimitées", "3 établissements", "Import IA · 8 langues"], cta: "Essai 7j gratuit", highlight: true },
-              { plan: "Réseau", price: "149€/mois", who: "Franchise · Multi-sites", features: ["Établissements illimités", "Équipes", "API + Export CSV"], cta: "Essai 7j gratuit" },
-            ].map((p, i) => (
-              <div key={i} style={{
-                background: "#fff", borderRadius: 16,
-                padding: "28px 24px",
-                border: p.highlight ? "2px solid #2563eb" : "1px solid #e5e7eb",
-                position: "relative",
-              }}>
-                {p.highlight && (
-                  <div style={{
-                    position: "absolute", top: -12, left: "50%", transform: "translateX(-50%)",
-                    background: "#2563eb", color: "#fff", fontSize: 11, fontWeight: 700,
-                    borderRadius: 100, padding: "4px 12px", whiteSpace: "nowrap",
-                  }}>
-                    LE PLUS POPULAIRE
-                  </div>
-                )}
-                <div style={{ fontFamily: "'Syne', sans-serif", fontWeight: 800, fontSize: 18, color: "#111827", marginBottom: 4 }}>{p.plan}</div>
-                <div style={{ fontSize: 22, fontWeight: 700, color: "#2563eb", marginBottom: 4 }}>{p.price}</div>
-                <div style={{ fontSize: 13, color: "#9ca3af", marginBottom: 20 }}>{p.who}</div>
-                {p.features.map((f, j) => (
-                  <div key={j} style={{ fontSize: 13, color: "#374151", marginBottom: 6, display: "flex", alignItems: "center", gap: 8 }}>
-                    <span style={{ color: "#16a34a", fontWeight: 700 }}>✓</span> {f}
+                <p style={{ fontSize: 12, fontWeight: 700, color: "#CC0000", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 12 }}>Points de friction</p>
+                {sector.pain.map((p, i) => (
+                  <div key={i} style={{ display: "flex", gap: 10, padding: "9px 0", borderBottom: i < sector.pain.length - 1 ? "1px solid #F5F5F5" : "none" }}>
+                    <span style={{ color: "#CC0000", fontWeight: 700, flexShrink: 0, fontSize: 14 }}>✗</span>
+                    <span style={{ fontSize: 13, color: "#444" }}>{p}</span>
                   </div>
                 ))}
-                <Link href="/auth" style={{
-                  display: "block", textAlign: "center", marginTop: 20,
-                  padding: "10px 16px", borderRadius: 8, fontWeight: 700, fontSize: 14,
-                  background: p.highlight ? "#2563eb" : "#f3f4f6",
-                  color: p.highlight ? "#fff" : "#374151",
-                  textDecoration: "none",
-                }}>{p.cta}</Link>
               </div>
-            ))}
-          </div>
+            </div>
+          </section>
+
+          {/* Solutions */}
+          <section style={{ background: "#F7F7F5", padding: isMobile ? "40px 20px" : "56px 20px" }}>
+            <div style={{ maxWidth: 900, margin: "0 auto" }}>
+              <p style={{ fontSize: 11, fontWeight: 700, color: "#888", textTransform: "uppercase", letterSpacing: "0.1em", textAlign: "center", marginBottom: 28 }}>
+                Ce que MenuSafe change pour vous
+              </p>
+              <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)", gap: 16 }}>
+                {sector.solution.map((sol, i) => (
+                  <div key={i} style={{ background: "white", border: "1px solid #EBEBEB", borderRadius: 14, padding: "22px" }}>
+                    <div style={{ width: 32, height: 32, borderRadius: 8, background: "#1A1A1A", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 12 }}>
+                      <Check size={16} color="#4ADE80" strokeWidth={2.5} />
+                    </div>
+                    <p style={{ fontSize: 14, fontWeight: 700, color: "#1A1A1A", margin: "0 0 6px" }}>{sol.title}</p>
+                    <p style={{ fontSize: 13, color: "#666", lineHeight: 1.6, margin: 0 }}>{sol.desc}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        </div>
+      )}
+
+      {/* CTA */}
+      <section style={{ background: "#0F0F0F", padding: isMobile ? "56px 20px" : "80px 20px", textAlign: "center" }}>
+        <div style={{ maxWidth: 560, margin: "0 auto" }}>
+          <h2 style={{ fontSize: isMobile ? 24 : 30, fontWeight: 800, color: "white", margin: "0 0 12px", letterSpacing: "-0.02em" }}>
+            Prêt à être en conformité ?
+          </h2>
+          <p style={{ fontSize: 15, color: "rgba(255,255,255,0.55)", margin: "0 0 28px", lineHeight: 1.7 }}>
+            Rejoignez les restaurateurs qui ont sécurisé leur conformité INCO en moins de 5 minutes.
+          </p>
+          <button onClick={() => router.push("/auth")} style={{ fontSize: 15, fontWeight: 700, padding: "14px 32px", background: "white", color: "#1A1A1A", border: "none", borderRadius: 12, cursor: "pointer" }}>
+            Essayer gratuitement →
+          </button>
+          <p style={{ fontSize: 12, color: "rgba(255,255,255,0.3)", marginTop: 12 }}>Sans frais pendant 7 jours · Annulation en 1 clic</p>
         </div>
       </section>
 
-      {/* FOOTER */}
-      <footer style={{ background: "#0f172a", padding: "40px 24px", textAlign: "center" }}>
-        <Link href="/" style={{ ...styles.logo, justifyContent: "center", marginBottom: 12, color: "#fff" }}>MenuSafe</Link>
-        <div style={{ display: "flex", justifyContent: "center", gap: 24, flexWrap: "wrap", marginTop: 8 }}>
-          {[["Accueil", "/"], ["Tarifs", "/#pricing"], ["CGU", "/cgu"]].map(([l, h]) => (
-            <Link key={h} href={h} style={{ fontSize: 13, color: "#64748b", textDecoration: "none" }}>{l}</Link>
-          ))}
+      {/* Footer */}
+      <footer style={{ background: "#080808", padding: "24px 20px" }}>
+        <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }} onClick={() => router.push("/")}>
+            <Logo size={18} light />
+            <span style={{ fontSize: 13, fontWeight: 700, color: "rgba(255,255,255,0.4)" }}>MenuSafe</span>
+          </div>
+          <p style={{ fontSize: 11, color: "rgba(255,255,255,0.2)", margin: 0 }}>© 2026 MenuSafe · Conformité allergènes par secteur</p>
         </div>
-        <p style={{ fontSize: 12, color: "#334155", marginTop: 20 }}>© 2026 MenuSafe</p>
       </footer>
     </div>
   );

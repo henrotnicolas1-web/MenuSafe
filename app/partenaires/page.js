@@ -1,248 +1,160 @@
 "use client";
-import { useState } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useWindowSize } from "@/lib/useWindowSize";
+import { Plug, Download, Code2, QrCode, Check } from "lucide-react";
 
-const PARTNERS_POS = [
-  { name: "Lightspeed", category: "Caisse", status: "csv", logo: "LS" },
-  { name: "Zelty", category: "Caisse", status: "csv", logo: "ZL" },
-  { name: "Cashpad", category: "Caisse", status: "csv", logo: "CP" },
-  { name: "Sunday", category: "Paiement table", status: "soon", logo: "SU" },
-  { name: "Laddition", category: "Caisse", status: "csv", logo: "LA" },
-  { name: "Tiller", category: "Caisse", status: "soon", logo: "TI" },
-  { name: "Revo", category: "Caisse", status: "csv", logo: "RV" },
-  { name: "Innovorder", category: "Borne commande", status: "soon", logo: "IN" },
-];
-
-const PARTNERS_FOOD = [
-  { name: "Uber Eats", category: "Livraison", status: "soon", logo: "UE" },
-  { name: "Deliveroo", category: "Livraison", status: "soon", logo: "DL" },
-  { name: "Just Eat", category: "Livraison", status: "soon", logo: "JE" },
-  { name: "Lyf Pay", category: "Paiement", status: "csv", logo: "LY" },
-];
-
-const PARTNERS_TOOLS = [
-  { name: "Google My Business", category: "Présence locale", status: "native", logo: "GM" },
-  { name: "Stripe", category: "Paiement", status: "native", logo: "ST" },
-  { name: "Resend", category: "Email", status: "native", logo: "RS" },
-  { name: "Anthropic AI", category: "Intelligence artificielle", status: "native", logo: "AI" },
-];
-
-const EXPORT_FORMATS = [
-  {
-    icon: "📄", title: "Export CSV",
-    desc: "Exportez toutes vos recettes avec leurs allergènes dans un fichier CSV standard. Compatible avec Excel, Google Sheets et la majorité des logiciels de restauration.",
-    badge: "Disponible · Plans Pro & Réseau",
-    color: "#16a34a",
-    steps: ["Dashboard → Export", "Choisir l'établissement", "Télécharger en 1 clic"]
-  },
-  {
-    icon: "🖨️", title: "PDF conforme INCO",
-    desc: "Document A4 paysage avec tous vos plats classés par catégorie, allergènes inclus. Prêt à imprimer et plastifier. Valeur légale reconnue.",
-    badge: "Disponible · Tous les plans",
-    color: "#2563eb",
-    steps: ["Dashboard → PDF", "Sélectionner la carte", "Télécharger le PDF"]
-  },
-  {
-    icon: "🔌", title: "API REST",
-    desc: "Accès programmatique à l'ensemble de vos données allergènes. Intégrez MenuSafe dans votre back-office, votre TPV, votre site web ou votre application.",
-    badge: "Plan Réseau · Documentation sur demande",
-    color: "#7c3aed",
-    steps: ["Générer une clé API", "Consulter la doc", "Intégrer en quelques lignes"]
-  },
-  {
-    icon: "📱", title: "QR code universel",
-    desc: "Un QR code permanent par établissement. Fonctionne avec n'importe quel smartphone, sans application à télécharger. Collez-le partout : tables, vitrine, addition.",
-    badge: "Disponible · Tous les plans",
-    color: "#d97706",
-    steps: ["Dashboard → QR code", "Télécharger le PNG ou SVG", "Coller et oublier"]
-  },
-];
-
-function StatusBadge({ status }) {
-  const config = {
-    native: { label: "Intégré nativement", color: "#16a34a", bg: "#dcfce7" },
-    csv:    { label: "Compatible via CSV", color: "#d97706", bg: "#fef3c7" },
-    soon:   { label: "Bientôt disponible", color: "#7c3aed", bg: "#ede9fe" },
-  };
-  const c = config[status];
+function Logo({ size = 26, light = false }) {
   return (
-    <span style={{
-      fontSize: 11, fontWeight: 700, padding: "3px 8px",
-      borderRadius: 100, color: c.color, background: c.bg,
-      whiteSpace: "nowrap",
-    }}>
-      {c.label}
-    </span>
+    <svg width={size} height={size} viewBox="0 0 32 32" fill="none">
+      <path d="M16 2L4 7V17C4 23.5 9.5 29.2 16 31C22.5 29.2 28 23.5 28 17V7L16 2Z" fill={light ? "white" : "#1A1A1A"}/>
+      <path d="M16 4.5L6 9V17C6 22.5 10.5 27.5 16 29.2C21.5 27.5 26 22.5 26 17V9L16 4.5Z" fill={light ? "#E5E5E5" : "#2D2D2D"}/>
+      <path d="M10.5 16.5L14 20L21.5 12.5" stroke="#4ADE80" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
   );
 }
 
+const STATUS_CONFIG = {
+  native: { label: "Intégré nativement", color: "#155724", bg: "#D4EDDA" },
+  csv:    { label: "Compatible via CSV",  color: "#856404", bg: "#FFF3CD" },
+  soon:   { label: "Bientôt disponible",  color: "#555",    bg: "#F0F0F0" },
+};
+
+const PARTNERS_POS = [
+  { name: "Lightspeed",   category: "Caisse",         status: "csv",  logo: "LS" },
+  { name: "Zelty",        category: "Caisse",         status: "csv",  logo: "ZL" },
+  { name: "Cashpad",      category: "Caisse",         status: "csv",  logo: "CP" },
+  { name: "Sunday",       category: "Paiement table", status: "soon", logo: "SU" },
+  { name: "Laddition",    category: "Caisse",         status: "csv",  logo: "LA" },
+  { name: "Tiller",       category: "Caisse",         status: "soon", logo: "TI" },
+  { name: "Revo",         category: "Caisse",         status: "csv",  logo: "RV" },
+  { name: "Innovorder",   category: "Borne commande", status: "soon", logo: "IN" },
+];
+
+const PARTNERS_FOOD = [
+  { name: "Uber Eats",    category: "Livraison",  status: "soon", logo: "UE" },
+  { name: "Deliveroo",    category: "Livraison",  status: "soon", logo: "DL" },
+  { name: "Just Eat",     category: "Livraison",  status: "soon", logo: "JE" },
+  { name: "Lyf Pay",      category: "Paiement",   status: "csv",  logo: "LY" },
+];
+
+const PARTNERS_TOOLS = [
+  { name: "Stripe",       category: "Paiement",              status: "native", logo: "ST" },
+  { name: "Resend",       category: "Email",                 status: "native", logo: "RS" },
+  { name: "Anthropic AI", category: "Intelligence artificielle", status: "native", logo: "AI" },
+  { name: "Supabase",     category: "Base de données",       status: "native", logo: "SB" },
+];
+
+const EXPORT_FORMATS = [
+  { Icon: Download, title: "Export CSV", desc: "Exportez toutes vos recettes avec leurs allergènes. Compatible avec Excel, Google Sheets et la majorité des logiciels de restauration.", badge: "Plans Pro & Réseau", steps: ["Dashboard → Export", "Choisir l'établissement", "Télécharger en 1 clic"] },
+  { Icon: QrCode, title: "PDF conforme INCO", desc: "Document A4 paysage avec tous vos plats classés par catégorie. Prêt à imprimer et plastifier.", badge: "Tous les plans", steps: ["Dashboard → PDF", "Sélectionner la carte", "Télécharger le PDF"] },
+  { Icon: Code2, title: "API REST", desc: "Accès programmatique à l'ensemble de vos données allergènes. Intégrez MenuSafe dans votre back-office, TPV, site web ou application.", badge: "Plan Réseau", steps: ["Générer une clé API", "Consulter la documentation", "Intégrer en quelques lignes"] },
+  { Icon: QrCode, title: "QR code universel", desc: "Un QR code permanent par établissement. Fonctionne avec n'importe quel smartphone sans application. Collez-le partout.", badge: "Tous les plans", steps: ["Dashboard → QR code", "Télécharger le PNG ou SVG", "Coller et oublier"] },
+];
+
 function PartnerCard({ partner }) {
-  const [hovered, setHovered] = useState(false);
-  const colors = {
-    native: "#2563eb",
-    csv: "#d97706",
-    soon: "#9ca3af",
-  };
+  const sc = STATUS_CONFIG[partner.status];
   return (
-    <div
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      style={{
-        background: hovered ? "#f8f9ff" : "#fff",
-        border: `1.5px solid ${hovered ? "#c7d2fe" : "#e5e7eb"}`,
-        borderRadius: 12, padding: "20px 16px",
-        cursor: "default", transition: "all 0.2s",
-        display: "flex", flexDirection: "column", alignItems: "center",
-        textAlign: "center", gap: 10,
-      }}
-    >
-      {/* Logo placeholder */}
-      <div style={{
-        width: 48, height: 48, borderRadius: 12,
-        background: partner.status === "soon" ? "#f3f4f6" : "#eff6ff",
-        display: "flex", alignItems: "center", justifyContent: "center",
-        fontFamily: "'Syne', sans-serif", fontWeight: 800, fontSize: 14,
-        color: colors[partner.status],
-        border: `1px solid ${partner.status === "soon" ? "#e5e7eb" : "#bfdbfe"}`,
-        opacity: partner.status === "soon" ? 0.6 : 1,
-      }}>
+    <div style={{ background: "white", border: "1px solid #EBEBEB", borderRadius: 12, padding: "18px 14px", display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", gap: 8, opacity: partner.status === "soon" ? 0.65 : 1 }}>
+      <div style={{ width: 44, height: 44, borderRadius: 10, background: partner.status === "soon" ? "#F5F5F5" : "#1A1A1A", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: 12, color: partner.status === "soon" ? "#888" : "white", letterSpacing: "0.02em" }}>
         {partner.logo}
       </div>
       <div>
-        <div style={{ fontWeight: 700, fontSize: 14, color: partner.status === "soon" ? "#9ca3af" : "#111827" }}>{partner.name}</div>
-        <div style={{ fontSize: 12, color: "#9ca3af", marginTop: 2 }}>{partner.category}</div>
+        <div style={{ fontWeight: 700, fontSize: 13, color: "#1A1A1A" }}>{partner.name}</div>
+        <div style={{ fontSize: 11, color: "#888", marginTop: 1 }}>{partner.category}</div>
       </div>
-      <StatusBadge status={partner.status} />
+      <span style={{ fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 20, color: sc.color, background: sc.bg }}>
+        {sc.label}
+      </span>
+    </div>
+  );
+}
+
+function PartnerGroup({ title, partners }) {
+  return (
+    <div style={{ marginBottom: 40 }}>
+      <p style={{ fontSize: 11, fontWeight: 700, color: "#888", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 16 }}>{title}</p>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 10 }}>
+        {partners.map((p, i) => <PartnerCard key={i} partner={p} />)}
+      </div>
     </div>
   );
 }
 
 export default function PartenairesPage() {
-  const styles = {
-    page: { fontFamily: "'DM Sans', sans-serif", color: "#111827", background: "#fff" },
-    nav: {
-      position: "sticky", top: 0, zIndex: 50,
-      background: "rgba(255,255,255,0.95)", backdropFilter: "blur(10px)",
-      borderBottom: "1px solid #e5e7eb", padding: "0 24px",
-    },
-    navInner: {
-      maxWidth: 1100, margin: "0 auto", height: 64,
-      display: "flex", alignItems: "center", justifyContent: "space-between",
-    },
-    logo: {
-      fontFamily: "'Syne', sans-serif", fontWeight: 800, fontSize: 20,
-      color: "#2563eb", textDecoration: "none", display: "flex", alignItems: "center", gap: 8,
-    },
-    ctaBtn: {
-      background: "#2563eb", color: "#fff", border: "none",
-      borderRadius: 8, padding: "10px 20px", fontWeight: 700,
-      fontSize: 14, cursor: "pointer", textDecoration: "none", display: "inline-block",
-    },
-    container: { maxWidth: 1100, margin: "0 auto" },
-    sectionLabel: {
-      fontSize: 13, fontWeight: 700, letterSpacing: "0.1em",
-      textTransform: "uppercase", color: "#2563eb", marginBottom: 12,
-    },
-    sectionTitle: {
-      fontFamily: "'Syne', sans-serif",
-      fontSize: "clamp(1.75rem, 3vw, 2.5rem)",
-      fontWeight: 800, color: "#111827", marginBottom: 16, lineHeight: 1.15,
-    },
-  };
+  const router = useRouter();
+  const { isMobile } = useWindowSize();
 
   return (
-    <div style={styles.page}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600;700&display=swap');
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-      `}</style>
+    <div style={{ fontFamily: "'Inter', -apple-system, sans-serif", background: "white", color: "#1A1A1A" }}>
 
-      {/* NAV */}
-      <nav style={styles.nav}>
-        <div style={styles.navInner}>
-          <Link href="/" style={styles.logo}>
-            <span style={{ width: 32, height: 32, borderRadius: 8, background: "#2563eb", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" />
-              </svg>
-            </span>
-            MenuSafe
-          </Link>
-          <Link href="/auth" style={styles.ctaBtn}>Essayer gratuitement</Link>
+      {/* Nav */}
+      <nav style={{ position: "sticky", top: 0, zIndex: 50, background: "rgba(255,255,255,0.95)", backdropFilter: "blur(10px)", borderBottom: "1px solid #EBEBEB" }}>
+        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "12px 20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }} onClick={() => router.push("/")}>
+            <Logo size={26} />
+            <span style={{ fontSize: 16, fontWeight: 800, color: "#1A1A1A", letterSpacing: "-0.02em" }}>MenuSafe</span>
+          </div>
+          <button onClick={() => router.push("/auth")} style={{ fontSize: 13, fontWeight: 700, padding: "8px 16px", background: "#1A1A1A", color: "white", border: "none", borderRadius: 10, cursor: "pointer" }}>
+            Essayer gratuitement →
+          </button>
         </div>
       </nav>
 
-      {/* HERO */}
-      <section style={{ background: "linear-gradient(135deg, #0f172a, #1e3a8a)", padding: "80px 24px", textAlign: "center" }}>
+      {/* Hero */}
+      <section style={{ background: "#0F0F0F", padding: isMobile ? "56px 20px" : "80px 20px", textAlign: "center" }}>
         <div style={{ maxWidth: 720, margin: "0 auto" }}>
-          <div style={{
-            display: "inline-flex", gap: 8, alignItems: "center",
-            background: "rgba(37,99,235,0.2)", border: "1px solid rgba(37,99,235,0.3)",
-            borderRadius: 100, padding: "6px 16px", fontSize: 13, color: "#93c5fd", marginBottom: 24,
-          }}>
-            🔌 Intégrations & Compatibilité
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(74,222,128,0.1)", border: "1px solid rgba(74,222,128,0.3)", borderRadius: 100, padding: "6px 16px", fontSize: 12, color: "#4ADE80", marginBottom: 24, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+            Intégrations & Compatibilité
           </div>
-          <h1 style={{
-            fontFamily: "'Syne', sans-serif", fontSize: "clamp(2rem, 5vw, 3.2rem)",
-            fontWeight: 800, color: "#fff", lineHeight: 1.1, marginBottom: 20,
-          }}>
-            MenuSafe s'intègre dans<br />
-            <span style={{ color: "#3b82f6" }}>votre organisation existante</span>
+          <h1 style={{ fontSize: isMobile ? 28 : 40, fontWeight: 800, color: "white", margin: "0 0 16px", letterSpacing: "-0.02em", lineHeight: 1.15 }}>
+            MenuSafe s'intègre dans votre organisation existante
           </h1>
-          <p style={{ fontSize: 18, color: "#94a3b8", lineHeight: 1.6, maxWidth: 560, margin: "0 auto 40px" }}>
-            Compatible avec les principales caisses enregistreuses, exportable en CSV et PDF, avec une API pour les intégrations avancées.
+          <p style={{ fontSize: isMobile ? 15 : 17, color: "rgba(255,255,255,0.6)", lineHeight: 1.7, margin: "0 0 28px" }}>
+            Compatible avec les principales caisses, exportable en CSV et PDF, avec une API pour les intégrations avancées.
           </p>
           {/* Legend */}
-          <div style={{ display: "flex", justifyContent: "center", gap: 20, flexWrap: "wrap" }}>
-            {[
-              { color: "#16a34a", bg: "#dcfce7", label: "Intégré nativement" },
-              { color: "#d97706", bg: "#fef3c7", label: "Compatible via CSV" },
-              { color: "#7c3aed", bg: "#ede9fe", label: "Bientôt disponible" },
-            ].map((l, i) => (
-              <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13 }}>
-                <span style={{ background: l.bg, color: l.color, padding: "3px 10px", borderRadius: 100, fontWeight: 700, fontSize: 11 }}>{l.label}</span>
+          <div style={{ display: "flex", justifyContent: "center", gap: 16, flexWrap: "wrap" }}>
+            {Object.values(STATUS_CONFIG).map((sc, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <span style={{ fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 20, color: sc.color, background: sc.bg }}>{sc.label}</span>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* EXPORT FORMATS */}
-      <section style={{ padding: "80px 24px" }}>
-        <div style={styles.container}>
-          <div style={{ textAlign: "center", marginBottom: 48 }}>
-            <div style={styles.sectionLabel}>Formats d'export</div>
-            <h2 style={styles.sectionTitle}>Vos données, où vous en avez besoin</h2>
-            <p style={{ fontSize: 17, color: "#4b5563", maxWidth: 540, margin: "0 auto" }}>
-              MenuSafe ne vous enferme pas. Exportez vos données dans le format qui convient à votre organisation.
-            </p>
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 24 }}>
-            {EXPORT_FORMATS.map((f, i) => (
-              <div key={i} style={{
-                background: "#f8f9ff", borderRadius: 16, padding: "32px",
-                border: `1px solid ${f.color}22`,
-              }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
-                  <div style={{ fontSize: 36 }}>{f.icon}</div>
-                  <span style={{
-                    fontSize: 11, fontWeight: 700, padding: "4px 10px",
-                    borderRadius: 100, background: `${f.color}15`, color: f.color,
-                  }}>{f.badge}</span>
+      {/* Partners */}
+      <section style={{ padding: isMobile ? "48px 20px" : "72px 20px" }}>
+        <div style={{ maxWidth: 900, margin: "0 auto" }}>
+          <PartnerGroup title="Logiciels de caisse & paiement table" partners={PARTNERS_POS} />
+          <PartnerGroup title="Livraison & paiement" partners={PARTNERS_FOOD} />
+          <PartnerGroup title="Technologies intégrées nativement" partners={PARTNERS_TOOLS} />
+        </div>
+      </section>
+
+      {/* Exports */}
+      <section style={{ background: "#F7F7F5", padding: isMobile ? "48px 20px" : "72px 20px" }}>
+        <div style={{ maxWidth: 900, margin: "0 auto" }}>
+          <p style={{ fontSize: 11, fontWeight: 700, color: "#888", textTransform: "uppercase", letterSpacing: "0.1em", textAlign: "center", marginBottom: 10 }}>Formats disponibles</p>
+          <h2 style={{ fontSize: isMobile ? 24 : 30, fontWeight: 800, color: "#1A1A1A", textAlign: "center", margin: "0 0 36px", letterSpacing: "-0.02em" }}>
+            Exportez vos données comme vous voulez
+          </h2>
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(2, 1fr)", gap: 16 }}>
+            {EXPORT_FORMATS.map(({ Icon, title, desc, badge, steps }, i) => (
+              <div key={i} style={{ background: "white", border: "1px solid #EBEBEB", borderRadius: 16, padding: "24px", display: "flex", flexDirection: "column" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
+                  <div style={{ width: 40, height: 40, borderRadius: 10, background: "#1A1A1A", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <Icon size={18} color="#4ADE80" strokeWidth={1.75} />
+                  </div>
+                  <span style={{ fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 20, background: "#F0F0F0", color: "#555" }}>{badge}</span>
                 </div>
-                <div style={{ fontFamily: "'Syne', sans-serif", fontWeight: 800, fontSize: 20, color: "#111827", marginBottom: 10 }}>{f.title}</div>
-                <p style={{ fontSize: 14, color: "#6b7280", lineHeight: 1.6, marginBottom: 20 }}>{f.desc}</p>
-                <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                  {f.steps.map((s, j) => (
-                    <div key={j} style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <div style={{
-                        background: "#fff", border: `1px solid ${f.color}33`,
-                        borderRadius: 8, padding: "6px 10px",
-                        fontSize: 12, color: "#374151", whiteSpace: "nowrap",
-                      }}>
-                        {j + 1}. {s}
-                      </div>
-                      {j < f.steps.length - 1 && <span style={{ color: "#d1d5db", fontSize: 12 }}>→</span>}
+                <p style={{ fontSize: 14, fontWeight: 700, color: "#1A1A1A", margin: "0 0 6px" }}>{title}</p>
+                <p style={{ fontSize: 13, color: "#666", lineHeight: 1.6, margin: "0 0 16px", flex: 1 }}>{desc}</p>
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  {steps.map((step, j) => (
+                    <div key={j} style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                      {j > 0 && <span style={{ color: "#CCC", fontSize: 10 }}>→</span>}
+                      <span style={{ fontSize: 11, fontWeight: 600, color: "#888", background: "#F5F5F5", padding: "3px 8px", borderRadius: 6 }}>{step}</span>
                     </div>
                   ))}
                 </div>
@@ -252,121 +164,35 @@ export default function PartenairesPage() {
         </div>
       </section>
 
-      {/* POS INTEGRATIONS */}
-      <section style={{ background: "#f8f9ff", padding: "80px 24px" }}>
-        <div style={styles.container}>
-          <div style={{ marginBottom: 40 }}>
-            <div style={styles.sectionLabel}>Caisses enregistreuses (TPV)</div>
-            <h2 style={{ ...styles.sectionTitle, fontSize: "clamp(1.5rem, 2vw, 2rem)" }}>Compatible avec votre caisse</h2>
-            <p style={{ fontSize: 16, color: "#4b5563", maxWidth: 560 }}>
-              Les caisses compatibles via CSV vous permettent d'importer/exporter votre carte directement. Les intégrations natives sont en cours de développement.
-            </p>
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 40 }}>
-            {PARTNERS_POS.map(p => <PartnerCard key={p.name} partner={p} />)}
-          </div>
-
-          <div style={{ marginBottom: 40 }}>
-            <div style={styles.sectionLabel}>Livraison & Commande en ligne</div>
-            <h2 style={{ ...styles.sectionTitle, fontSize: "clamp(1.5rem, 2vw, 2rem)" }}>Bientôt sur vos plateformes</h2>
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 40 }}>
-            {PARTNERS_FOOD.map(p => <PartnerCard key={p.name} partner={p} />)}
-          </div>
-
-          <div style={{ marginBottom: 40 }}>
-            <div style={styles.sectionLabel}>Technologies intégrées nativement</div>
-            <h2 style={{ ...styles.sectionTitle, fontSize: "clamp(1.5rem, 2vw, 2rem)" }}>Le stack qui fait tourner MenuSafe</h2>
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
-            {PARTNERS_TOOLS.map(p => <PartnerCard key={p.name} partner={p} />)}
-          </div>
-        </div>
-      </section>
-
-      {/* CSV HOW TO */}
-      <section style={{ padding: "80px 24px" }}>
-        <div style={{ ...styles.container, maxWidth: 800 }}>
-          <div style={{ textAlign: "center", marginBottom: 48 }}>
-            <div style={styles.sectionLabel}>Comment ça marche</div>
-            <h2 style={styles.sectionTitle}>Connecter MenuSafe à votre caisse en 3 étapes</h2>
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            {[
-              { step: "01", title: "Exportez votre menu depuis votre caisse", desc: "La plupart des caisses permettent d'exporter la liste des plats en CSV ou Excel. Consultez la documentation de votre logiciel." },
-              { step: "02", title: "Importez dans MenuSafe via l'import IA", desc: "Glissez le fichier ou une photo de votre carte. L'IA lit les plats, génère les allergènes et les traductions en 8 langues automatiquement." },
-              { step: "03", title: "Réexportez le CSV enrichi vers votre caisse", desc: "MenuSafe ajoute les colonnes allergènes à votre fichier. Réimportez dans votre caisse pour avoir les données allergènes centralisées." },
-            ].map((s, i) => (
-              <div key={i} style={{
-                display: "flex", gap: 24, alignItems: "flex-start",
-                padding: "24px", background: "#f8f9ff",
-                borderRadius: 14, border: "1px solid #e5e7eb",
-              }}>
-                <div style={{
-                  fontFamily: "'Syne', sans-serif", fontWeight: 800, fontSize: 32,
-                  color: "#e5e7eb", flexShrink: 0, lineHeight: 1,
-                }}>{s.step}</div>
-                <div>
-                  <div style={{ fontWeight: 700, fontSize: 17, color: "#111827", marginBottom: 6 }}>{s.title}</div>
-                  <div style={{ fontSize: 15, color: "#6b7280", lineHeight: 1.6 }}>{s.desc}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* SUGGEST INTEGRATION */}
-      <section style={{ background: "#f0fdf4", padding: "64px 24px", textAlign: "center" }}>
-        <div style={{ maxWidth: 560, margin: "0 auto" }}>
-          <div style={{ fontSize: 40, marginBottom: 16 }}>🤝</div>
-          <h2 style={{ fontFamily: "'Syne', sans-serif", fontSize: 24, fontWeight: 800, color: "#111827", marginBottom: 12 }}>
-            Votre outil n'est pas dans la liste ?
-          </h2>
-          <p style={{ fontSize: 16, color: "#4b5563", lineHeight: 1.7, marginBottom: 24 }}>
-            Dites-nous quel logiciel vous utilisez. Nous priorisons nos intégrations en fonction des demandes de nos clients.
-          </p>
-          <Link href="/support" style={{
-            background: "#16a34a", color: "#fff",
-            padding: "14px 32px", borderRadius: 10,
-            fontWeight: 700, fontSize: 15,
-            textDecoration: "none", display: "inline-block",
-          }}>
-            Suggérer une intégration →
-          </Link>
-        </div>
-      </section>
-
       {/* CTA */}
-      <section style={{ background: "linear-gradient(135deg, #1e3a8a, #2563eb)", padding: "80px 24px", textAlign: "center" }}>
-        <div style={{ maxWidth: 600, margin: "0 auto" }}>
-          <h2 style={{ fontFamily: "'Syne', sans-serif", fontSize: "clamp(1.75rem, 3vw, 2.5rem)", fontWeight: 800, color: "#fff", marginBottom: 16 }}>
-            Prêt à vous lancer ?
+      <section style={{ background: "#0F0F0F", padding: isMobile ? "56px 20px" : "80px 20px", textAlign: "center" }}>
+        <div style={{ maxWidth: 560, margin: "0 auto" }}>
+          <h2 style={{ fontSize: isMobile ? 24 : 30, fontWeight: 800, color: "white", margin: "0 0 12px", letterSpacing: "-0.02em" }}>
+            Une question sur les intégrations ?
           </h2>
-          <p style={{ fontSize: 17, color: "rgba(255,255,255,0.8)", marginBottom: 32 }}>
-            7 jours gratuits, sans carte bancaire. Votre première carte conforme en moins de 5 minutes.
+          <p style={{ fontSize: 15, color: "rgba(255,255,255,0.55)", margin: "0 0 28px", lineHeight: 1.7 }}>
+            Notre équipe peut vous aider à connecter MenuSafe à votre système existant.
           </p>
-          <Link href="/auth" style={{
-            background: "#fff", color: "#2563eb",
-            padding: "16px 40px", borderRadius: 12,
-            fontWeight: 800, fontSize: 16,
-            textDecoration: "none", display: "inline-block",
-          }}>
-            Créer mon compte gratuitement →
-          </Link>
-          <div style={{ marginTop: 12, fontSize: 13, color: "rgba(255,255,255,0.5)" }}>Sans engagement · Annulation en 1 clic</div>
+          <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
+            <button onClick={() => router.push("/support")} style={{ fontSize: 14, fontWeight: 700, padding: "12px 24px", background: "transparent", color: "white", border: "1.5px solid rgba(255,255,255,0.3)", borderRadius: 12, cursor: "pointer" }}>
+              Contacter le support
+            </button>
+            <button onClick={() => router.push("/auth")} style={{ fontSize: 14, fontWeight: 700, padding: "12px 24px", background: "white", color: "#1A1A1A", border: "none", borderRadius: 12, cursor: "pointer" }}>
+              Essayer gratuitement →
+            </button>
+          </div>
         </div>
       </section>
 
-      {/* FOOTER */}
-      <footer style={{ background: "#0f172a", padding: "40px 24px", textAlign: "center" }}>
-        <Link href="/" style={{ ...styles.logo, justifyContent: "center", marginBottom: 12, color: "#fff" }}>MenuSafe</Link>
-        <div style={{ display: "flex", justifyContent: "center", gap: 24, flexWrap: "wrap", marginTop: 8 }}>
-          {[["Accueil", "/"], ["Tarifs", "/#pricing"], ["CGU", "/cgu"]].map(([l, h]) => (
-            <Link key={h} href={h} style={{ fontSize: 13, color: "#64748b", textDecoration: "none" }}>{l}</Link>
-          ))}
+      {/* Footer */}
+      <footer style={{ background: "#080808", padding: "24px 20px" }}>
+        <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }} onClick={() => router.push("/")}>
+            <Logo size={18} light />
+            <span style={{ fontSize: 13, fontWeight: 700, color: "rgba(255,255,255,0.4)" }}>MenuSafe</span>
+          </div>
+          <p style={{ fontSize: 11, color: "rgba(255,255,255,0.2)", margin: 0 }}>© 2026 MenuSafe · Intégrations et exports</p>
         </div>
-        <p style={{ fontSize: 12, color: "#334155", marginTop: 20 }}>© 2026 MenuSafe</p>
       </footer>
     </div>
   );

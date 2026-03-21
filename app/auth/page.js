@@ -53,6 +53,13 @@ export default function AuthPage() {
             .update({ full_name: name })
             .eq("id", data.user.id);
         }
+        // Enregistre l'acceptation des CGU
+        if (data?.user?.id) {
+          supabase.from("profiles")
+            .upsert({ user_id: data.user.id, cgu_accepted_at: new Date().toISOString(), cgu_version: "1.0" })
+            .then(() => {});
+        }
+
         // Email de bienvenue (non bloquant)
         fetch("/api/send-welcome", {
           method: "POST",
@@ -144,7 +151,18 @@ export default function AuthPage() {
           {error && <div style={s.error}>{error}</div>}
           {success && <div style={s.successMsg}>{success}</div>}
 
-          <button style={s.btn} type="submit" disabled={loading}>
+          {mode === "signup" && (
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "12px", background: "#F7F7F5", borderRadius: 10, border: "1px solid #EBEBEB", marginBottom: 4 }}>
+              <input type="checkbox" id="cgu" checked={cguAccepted} onChange={e => setCguAccepted(e.target.checked)}
+                style={{ marginTop: 2, width: 15, height: 15, flexShrink: 0, cursor: "pointer", accentColor: "#1A1A1A" }} />
+              <label htmlFor="cgu" style={{ fontSize: 12, color: "#555", lineHeight: 1.6, cursor: "pointer" }}>
+                J'accepte les <a href="/cgu" target="_blank" style={{ color: "#1A1A1A", fontWeight: 700, textDecoration: "underline" }}>CGU</a> et la <a href="/confidentialite" target="_blank" style={{ color: "#1A1A1A", fontWeight: 700, textDecoration: "underline" }}>Politique de confidentialité</a>. Je comprends que la vérification des allergènes relève de ma responsabilité.
+              </label>
+            </div>
+          )}
+
+          <button style={{ ...s.btn, opacity: mode === "signup" && !cguAccepted ? 0.5 : 1, cursor: mode === "signup" && !cguAccepted ? "not-allowed" : "pointer" }}
+            type="submit" disabled={loading || (mode === "signup" && !cguAccepted)}>
             {loading ? "Chargement..." : mode === "login" ? "Se connecter →" : "Créer mon compte →"}
           </button>
         </form>

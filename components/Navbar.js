@@ -30,6 +30,7 @@ const RESOURCES_LINKS = [
   { Icon: BarChart2, label: "Comparatif",           desc: "MenuSafe vs classeur, PDF, Excel",    href: "/comparatif" },
   { Icon: Users,    label: "Par métier",            desc: "Restaurant, boulangerie, hôtel…",     href: "/metiers" },
   { Icon: Link2,    label: "Intégrations",          desc: "Caisses, exports, API",               href: "/partenaires" },
+  { Icon: BookOpen, label: "Blog",                  desc: "Guides et actualités INCO",           href: "/blog" },
 ];
 
 export default function Navbar() {

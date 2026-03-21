@@ -17,12 +17,12 @@ function Logo({ size = 28, light = false }) {
 }
 
 function MenuMockup({ small = false }) {
-  const w = small ? 240 : 300;
+  const w = small ? 280 : 360;
   return (
     <div style={{ background: "#1A1A1A", borderRadius: 24, padding: 3, maxWidth: w, margin: "0 auto", boxShadow: "0 24px 48px rgba(0,0,0,0.15)" }}>
       <div style={{ background: "white", borderRadius: 22, overflow: "hidden" }}>
         <div style={{ background: "#1A1A1A", padding: "10px 14px 8px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <p style={{ fontSize: small ? 11 : 13, fontWeight: 800, color: "white", margin: 0 }}>Le Bistrot du Coin</p>
+          <p style={{ fontSize: small ? 12 : 14, fontWeight: 800, color: "white", margin: 0 }}>Le Bistrot du Coin</p>
           <div style={{ display: "flex", gap: 3 }}>
             {[{c:"FR",b:"#003189"},{c:"EN",b:"#C8102E"},{c:"ES",b:"#AA151B"},{c:"DE",b:"#000"}].map((f, i) => (
               <span key={i} style={{ fontSize: 9, fontWeight: 800, color: "white", background: i === 0 ? f.b : "rgba(255,255,255,0.15)", padding: "2px 4px", borderRadius: 4, opacity: i === 0 ? 1 : 0.6 }}>{f.c}</span>
@@ -51,7 +51,7 @@ function MenuMockup({ small = false }) {
             <div key={i} style={{ padding: "6px 8px", borderRadius: 8, marginBottom: 4, background: plat.ok ? "white" : "#F9F9F9", border: `1px solid ${plat.ok ? "#EBEBEB" : "#F0F0F0"}`, opacity: plat.ok ? 1 : 0.55 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <p style={{ fontSize: small ? 10 : 11, fontWeight: 600, color: plat.ok ? "#1A1A1A" : "#999", margin: 0 }}>{plat.name}</p>
-                {!plat.ok && <span style={{ fontSize: 8, background: "#FFF3CD", color: "#856404", padding: "2px 5px", borderRadius: 10, fontWeight: 600 }}>⚠️</span>}
+                {!plat.ok && <span style={{ fontSize: 8, background: "#FFD0D0", color: "#CC0000", padding: "2px 5px", borderRadius: 10, fontWeight: 700 }}>✗</span>}
               </div>
             </div>
           ))}
@@ -65,59 +65,29 @@ function MenuMockup({ small = false }) {
 
 function FeatureGrid({ isMobile }) {
   const features = [
-    {
-      Icon: Search,
-      title: "Détection allergènes en temps réel",
-      desc: "Base de 900+ ingrédients. Tapez un ingrédient, les 14 allergènes légaux s'affichent instantanément. Autocomplétion intelligente.",
-      color: "#F0F7FF",
-      iconColor: "#2563EB",
-    },
-    {
-      Icon: Smartphone,
-      title: "Carte interactive multilingue",
-      desc: "Un QR code par table. Vos clients scannent, choisissent leur langue (8 disponibles) et cochent leurs allergies. Les plats incompatibles sont grisés.",
-      color: "#F0FFF4",
-      iconColor: "#16A34A",
-    },
-    {
-      Icon: FileText,
-      title: "PDF carte complète",
-      desc: "Document A4 paysage avec tous vos plats par catégorie et les allergènes de chaque plat. À plastifier sur vos tables.",
-      color: "#FFF7F0",
-      iconColor: "#EA580C",
-    },
-    {
-      Icon: Camera,
-      title: "Import IA depuis une photo",
-      desc: "Photographiez votre carte. L'IA extrait les plats, génère les traductions en 8 langues et détecte les allergènes en une seule analyse.",
-      color: "#FDF4FF",
-      iconColor: "#9333EA",
-    },
-    {
-      Icon: Building2,
-      title: "Multi-établissements",
-      desc: "Gérez plusieurs adresses depuis un seul compte avec navigation par onglets. Chaque établissement a son propre QR code et sa propre carte.",
-      color: "#F0F7FF",
-      iconColor: "#2563EB",
-    },
-    {
-      Icon: RefreshCw,
-      title: "Mise à jour instantanée",
-      desc: "Modifiez une recette et la carte interactive se met à jour immédiatement. Le QR code ne change jamais — imprimez-le une seule fois.",
-      color: "#F0FFF4",
-      iconColor: "#16A34A",
-    },
+    { Icon: Search,    title: "Détection allergènes en temps réel",  desc: "Base de 900+ ingrédients. Tapez un ingrédient, les 14 allergènes légaux s'affichent instantanément. Autocomplétion intelligente.", color: "#F7F7F5", iconColor: "#1A1A1A", href: "/loi-inco" },
+    { Icon: Smartphone, title: "Carte interactive multilingue",          desc: "Un QR code par table. Vos clients scannent, choisissent leur langue (8 disponibles) et cochent leurs allergies. Les plats incompatibles s'affichent grisés.", color: "#F7F7F5", iconColor: "#1A1A1A", href: null },
+    { Icon: FileText,   title: "PDF conforme INCO en 1 clic",            desc: "Document A4 paysage avec tous vos plats par catégorie, allergènes inclus. Prêt à imprimer et plastifier pour vos tables.", color: "#F7F7F5", iconColor: "#1A1A1A", href: null },
+    { Icon: Camera,     title: "Import IA depuis une photo",             desc: "Photographiez votre carte. L'IA extrait les plats, génère les traductions en 8 langues et détecte les allergènes en une seule analyse.", color: "#F7F7F5", iconColor: "#1A1A1A", href: "/blog/import-ia-menu-restaurant-allergenes" },
+    { Icon: Building2,  title: "Multi-établissements",                   desc: "Gérez plusieurs adresses depuis un seul compte avec navigation par onglets. Chaque établissement a son propre QR code et sa propre carte.", color: "#F7F7F5", iconColor: "#1A1A1A", href: "/metiers" },
+    { Icon: RefreshCw,  title: "Mise à jour en temps réel",              desc: "Modifiez une recette et la carte interactive se met à jour immédiatement. Le QR code ne change jamais — imprimez-le une seule fois.", color: "#F7F7F5", iconColor: "#1A1A1A", href: null },
   ];
 
   return (
     <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fit, minmax(280px, 1fr))", gap: isMobile ? 12 : 20 }}>
-      {features.map(({ Icon, title, desc, color, iconColor }, i) => (
-        <div key={i} style={{ background: "white", border: "1px solid #EBEBEB", borderRadius: 16, padding: isMobile ? "16px" : "24px", display: isMobile ? "flex" : "block", gap: 14, alignItems: "flex-start" }}>
+      {features.map(({ Icon, title, desc, color, iconColor, href }, i) => (
+        <div key={i} onClick={() => href && (window.location.href = href)}
+          style={{ background: "white", border: "1px solid #EBEBEB", borderRadius: 16, padding: isMobile ? "16px" : "24px", display: isMobile ? "flex" : "block", gap: 14, alignItems: "flex-start", cursor: href ? "pointer" : "default", transition: "border-color 0.15s, box-shadow 0.15s" }}
+          onMouseEnter={e => { if (href) { e.currentTarget.style.borderColor = "#1A1A1A"; e.currentTarget.style.boxShadow = "0 4px 20px rgba(0,0,0,0.08)"; }}}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = "#EBEBEB"; e.currentTarget.style.boxShadow = "none"; }}>
           <div style={{ width: 44, height: 44, borderRadius: 12, background: color, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginBottom: isMobile ? 0 : 16 }}>
             <Icon size={22} color={iconColor} strokeWidth={1.75} />
           </div>
-          <div>
-            <p style={{ fontSize: 14, fontWeight: 700, color: "#1A1A1A", margin: "0 0 6px" }}>{title}</p>
+          <div style={{ flex: 1 }}>
+            <p style={{ fontSize: 14, fontWeight: 700, color: "#1A1A1A", margin: "0 0 6px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              {title}
+              {href && <span style={{ fontSize: 11, color: "#BBB" }}>→</span>}
+            </p>
             <p style={{ fontSize: 13, color: "#666", lineHeight: 1.65, margin: 0 }}>{desc}</p>
           </div>
         </div>
@@ -276,7 +246,7 @@ export default function Home() {
               <span style={{ color: "#1A1A1A" }}>en 5 minutes.</span>
             </h1>
             <p style={{ ...s.heroSub, fontSize: isMobile ? 15 : 16 }}>
-              Obligation légale depuis 2014, encore violée par <strong>75% des restaurants</strong>. MenuSafe gère vos allergènes, génère vos PDF conformes et crée votre carte interactive multilingue avec filtrage en temps réel.
+              Obligation légale depuis 2014, encore ignorée par <strong>75% des restaurants</strong>. MenuSafe prend en charge vos 14 allergènes, génère vos documents conformes INCO et crée votre carte interactive multilingue — le tout en moins de 5 minutes.
             </p>
             <div style={{ marginBottom: isMobile ? 28 : 36 }}>
               <button style={{ ...s.ctaPrimary, width: isMobile ? "100%" : "auto", textAlign: "center" }} onClick={goAuth}>
@@ -327,18 +297,18 @@ export default function Home() {
               La carte interactive<br />que vos clients adorent
             </h2>
             <p style={{ fontSize: isMobile ? 14 : 15, color: "#555", lineHeight: 1.7, marginBottom: 20 }}>
-              Un seul QR code sur chaque table. Le client scanne, sélectionne sa langue et coche ses allergies. Les plats incompatibles s'affichent grisés avec une alerte.
+              Un QR code posé sur chaque table, imprimé une seule fois. Le client scanne depuis son téléphone — sans application — sélectionne sa langue parmi 8 options et coche ses allergies. Les plats incompatibles s'affichent immédiatement grisés.
             </p>
             <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 24 }}>
               {[
-                ["🌍", "8 langues — traductions stockées, changement instantané"],
-                ["!", "Filtrage allergènes en temps réel"],
-                ["🔄", "Mise à jour auto quand vous modifiez vos recettes"],
-                ["📱", "100% mobile — aucune app à télécharger"],
-                ["🖨️", "QR code permanent — imprimez-le une seule fois"],
-              ].map(([icon, text], i) => (
+                "8 langues — traductions stockées, changement instantané",
+                "Filtrage allergènes en temps réel par le client",
+                "Mise à jour automatique à chaque modification de recette",
+                "100% mobile — aucune application à télécharger",
+                "QR code permanent — imprimez-le une seule fois",
+              ].map((text, i) => (
                 <div key={i} style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
-                  <span style={{ fontSize: 15, flexShrink: 0 }}>{icon}</span>
+                  <span style={{ color: "#155724", fontWeight: 800, flexShrink: 0, marginTop: 2 }}>✓</span>
                   <p style={{ fontSize: 13, color: "#444", margin: 0, lineHeight: 1.5 }}>{text}</p>
                 </div>
               ))}
@@ -362,8 +332,8 @@ export default function Home() {
           <div style={{ background: "white", borderRadius: 16, padding: isMobile ? 16 : 24, border: "1px solid #EBEBEB", order: isMobile ? -1 : 0 }}>
             <p style={{ fontSize: 11, fontWeight: 700, color: "#888", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 12px" }}>Import IA en action</p>
             <div style={{ background: "#F7F7F5", borderRadius: 10, padding: "10px 14px", marginBottom: 8, border: "1px dashed #DDD" }}>
-              <p style={{ fontSize: 12, fontWeight: 600, color: "#1A1A1A", margin: "0 0 4px" }}>📸 Carte uploadée</p>
-              <span style={{ fontSize: 11, background: "#D4EDDA", color: "#155724", padding: "2px 8px", borderRadius: 20, fontWeight: 600 }}>🌍 8 langues générées en 1 passe</span>
+              <p style={{ fontSize: 12, fontWeight: 600, color: "#1A1A1A", margin: "0 0 4px" }}>Carte uploadée</p>
+              <span style={{ fontSize: 11, background: "#D4EDDA", color: "#155724", padding: "2px 8px", borderRadius: 20, fontWeight: 600 }}>8 langues générées en 1 passe</span>
             </div>
             {[
               { name: "Sole meunière", source: "carte", allergens: ["Poissons", "Gluten", "Lait"] },
@@ -373,7 +343,7 @@ export default function Home() {
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 5 }}>
                   <p style={{ fontSize: 12, fontWeight: 600, color: "#1A1A1A", margin: 0 }}>{p.name}</p>
                   <span style={{ fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 20, background: p.source === "ia" ? "#F0E6FF" : "#E6F1FB", color: p.source === "ia" ? "#5A2D8E" : "#084298" }}>
-                    {p.source === "ia" ? "🧠 IA" : "📋 Carte"}
+                    {p.source === "ia" ? "IA" : "Carte"}
                   </span>
                 </div>
                 <div style={{ display: "flex", gap: 3, flexWrap: "wrap", marginBottom: 6 }}>
@@ -408,35 +378,52 @@ export default function Home() {
       {/* ── Risque ── */}
       <section style={{ ...s.section, padding: isMobile ? "48px 20px" : "80px 20px" }}>
         <div style={s.sectionInner}>
-          <p style={s.eyebrow}>Le risque réel</p>
-          <h2 style={{ ...s.h2, fontSize: isMobile ? 24 : 32 }}>Une amende qui se justifie en 3 secondes</h2>
-          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fit, minmax(280px, 1fr))", gap: isMobile ? 12 : 20, maxWidth: 760, margin: "0 auto" }}>
-            {[
-              { icon: "!", title: "Sans MenuSafe", bordered: false, items: [
-                ["✗","#E53E3E","Amende DGCCRF : jusqu'à 1 500€"],
-                ["✗","#E53E3E","Publication sur Alim'Confiance (Google)"],
-                ["✗","#E53E3E","Fermeture temporaire en récidive"],
-                ["✗","#E53E3E","Classeur papier toujours périmé"],
-                ["✗","#E53E3E","3-4h/mois de mise à jour manuelle"],
-              ]},
-              { icon: "✓", title: "Avec MenuSafe", bordered: true, items: [
-                ["✓","#38A169","Conformité garantie en 5 minutes"],
-                ["✓","#38A169","PDF légal en 1 clic"],
-                ["✓","#38A169","Carte interactive multilingue"],
-                ["✓","#38A169","QR code permanent"],
-                ["✓","#38A169","À partir de 0,97€/jour"],
-              ]},
-            ].map((card, i) => (
-              <div key={i} style={{ background: "white", border: card.bordered ? "2px solid #1A1A1A" : "1px solid #E8E8E8", borderRadius: 16, padding: isMobile ? "20px" : "28px" }}>
-                <p style={{ fontSize: 24, marginBottom: 8 }}>{card.icon}</p>
-                <p style={{ fontSize: 15, fontWeight: 700, color: "#1A1A1A", marginBottom: 14 }}>{card.title}</p>
-                {card.items.map(([sym, color, text], j) => (
-                  <div key={j} style={{ fontSize: 13, color: "#444", padding: "6px 0", borderBottom: "1px solid #F5F5F5", display: "flex", gap: 8 }}>
-                    <span style={{ color, fontWeight: 700, flexShrink: 0 }}>{sym}</span>{text}
-                  </div>
-                ))}
+          <p style={s.eyebrow}>La réalité du terrain</p>
+          <h2 style={{ ...s.h2, fontSize: isMobile ? 24 : 32 }}>Non-conformité ou tranquillité — le choix est simple</h2>
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: isMobile ? 12 : 20, maxWidth: 760, margin: "0 auto" }}>
+
+            {/* Card SANS */}
+            <div style={{ background: "#FFF8F8", border: "1px solid #FFD0D0", borderRadius: 16, padding: isMobile ? "20px" : "28px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+                <div style={{ width: 36, height: 36, borderRadius: 10, background: "#FFD0D0", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <AlertTriangle size={18} color="#CC0000" />
+                </div>
+                <p style={{ fontSize: 14, fontWeight: 800, color: "#CC0000", margin: 0 }}>Sans MenuSafe</p>
               </div>
-            ))}
+              {[
+                "Amende DGCCRF jusqu'à 1 500€ par infraction",
+                "Publication sur Alim'Confiance — visible sur Google",
+                "Fermeture temporaire en cas de récidive",
+                "Classeur papier qui se périme à chaque modification",
+                "3 à 5 heures par mois de mise à jour manuelle",
+              ].map((text, j) => (
+                <div key={j} style={{ fontSize: 13, color: "#444", padding: "8px 0", borderBottom: j < 4 ? "1px solid #FFE8E8" : "none", display: "flex", gap: 8, alignItems: "flex-start" }}>
+                  <span style={{ color: "#CC0000", fontWeight: 800, flexShrink: 0, marginTop: 1 }}>✗</span>{text}
+                </div>
+              ))}
+            </div>
+
+            {/* Card AVEC */}
+            <div style={{ background: "white", border: "2px solid #1A1A1A", borderRadius: 16, padding: isMobile ? "20px" : "28px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+                <div style={{ width: 36, height: 36, borderRadius: 10, background: "#D4EDDA", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <Check size={18} color="#155724" />
+                </div>
+                <p style={{ fontSize: 14, fontWeight: 800, color: "#155724", margin: 0 }}>Avec MenuSafe</p>
+              </div>
+              {[
+                "Conformité INCO garantie dès la première recette",
+                "PDF légal généré en 1 clic, toujours à jour",
+                "Carte interactive multilingue (8 langues) via QR code",
+                "QR code permanent — une impression, pour toujours",
+                "À partir de 0,97€/jour · Moins cher qu'une heure de mise à jour",
+              ].map((text, j) => (
+                <div key={j} style={{ fontSize: 13, color: "#444", padding: "8px 0", borderBottom: j < 4 ? "1px solid #F0F0F0" : "none", display: "flex", gap: 8, alignItems: "flex-start" }}>
+                  <span style={{ color: "#155724", fontWeight: 800, flexShrink: 0, marginTop: 1 }}>✓</span>{text}
+                </div>
+              ))}
+            </div>
+
           </div>
         </div>
       </section>
@@ -546,6 +533,7 @@ export default function Home() {
               {[
                 { label: "Fonctionnalités", href: "/#features" },
                 { label: "Tarifs", href: "/#pricing" },
+                { label: "Blog", href: "/blog" },
                 { label: "FAQ", href: "/#faq" },
                 { label: "Se connecter", href: "/auth" },
               ].map((l, i) => (

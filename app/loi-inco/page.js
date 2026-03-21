@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useWindowSize } from "@/lib/useWindowSize";
 import { AllergenIcon, ALLERGENS } from "@/lib/allergens-db";
 import { AlertTriangle, ShieldCheck, Clock } from "lucide-react";
+import Navbar from "@/components/Navbar";
 
 function Logo({ size = 26, light = false }) {
   return (
@@ -124,18 +125,7 @@ export default function LoiIncoPage() {
   return (
     <div style={{ fontFamily: "'Inter', -apple-system, sans-serif", background: "white", color: "#1A1A1A" }}>
 
-      {/* Nav */}
-      <nav style={{ position: "sticky", top: 0, zIndex: 50, background: "rgba(255,255,255,0.95)", backdropFilter: "blur(10px)", borderBottom: "1px solid #EBEBEB" }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "12px 20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }} onClick={() => router.push("/")}>
-            <Logo size={26} />
-            <span style={{ fontSize: 16, fontWeight: 800, color: "#1A1A1A", letterSpacing: "-0.02em" }}>MenuSafe</span>
-          </div>
-          <button onClick={() => router.push("/auth")} style={{ fontSize: 13, fontWeight: 700, padding: "8px 16px", background: "#1A1A1A", color: "white", border: "none", borderRadius: 10, cursor: "pointer" }}>
-            Essayer gratuitement →
-          </button>
-        </div>
-      </nav>
+      <Navbar />
 
       {/* Hero */}
       <section style={{ background: "#0F0F0F", padding: isMobile ? "56px 20px" : "80px 20px", textAlign: "center" }}>
@@ -178,17 +168,18 @@ export default function LoiIncoPage() {
           </h2>
           <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
             {TIMELINE.map((item, i) => (
-              <div key={i} style={{ display: "flex", gap: 20, paddingBottom: i < TIMELINE.length - 1 ? 28 : 0 }}>
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: 40, flexShrink: 0 }}>
-                  <div style={{ width: 40, height: 40, borderRadius: "50%", background: "#1A1A1A", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <span style={{ fontSize: 10, fontWeight: 800, color: "white" }}>{item.year.slice(2)}</span>
+              <div key={i} style={{ display: "flex", gap: 24, paddingBottom: i < TIMELINE.length - 1 ? 32 : 0 }}>
+                {/* Colonne gauche : année + ligne */}
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", flexShrink: 0, width: 56 }}>
+                  <div style={{ background: "#1A1A1A", borderRadius: 10, padding: "6px 10px", textAlign: "center" }}>
+                    <span style={{ fontSize: 13, fontWeight: 800, color: "white", letterSpacing: "-0.01em" }}>{item.year}</span>
                   </div>
-                  {i < TIMELINE.length - 1 && <div style={{ width: 2, flex: 1, background: "#EBEBEB", marginTop: 6 }} />}
+                  {i < TIMELINE.length - 1 && <div style={{ width: 2, flex: 1, background: "#EBEBEB", marginTop: 8 }} />}
                 </div>
-                <div style={{ paddingTop: 8, paddingBottom: 8 }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: "#888", marginBottom: 2 }}>{item.year}</div>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: "#1A1A1A", marginBottom: 4 }}>{item.title}</div>
-                  <div style={{ fontSize: 13, color: "#666", lineHeight: 1.6 }}>{item.desc}</div>
+                {/* Colonne droite : contenu */}
+                <div style={{ paddingTop: 4, paddingBottom: 8 }}>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: "#1A1A1A", marginBottom: 6 }}>{item.title}</div>
+                  <div style={{ fontSize: 13, color: "#666", lineHeight: 1.65 }}>{item.desc}</div>
                 </div>
               </div>
             ))}

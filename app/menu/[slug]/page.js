@@ -98,7 +98,7 @@ export default function MenuPage() {
 
       const { data: recipesData } = await supabase
         .from("recipes")
-        .select("id, dish_name, category, ingredients, allergens, translations_cache")
+        .select("id, dish_name, category, ingredients, allergens, translations_cache, is_vegan, is_vegetarian, meat_certification")
         .eq("establishment_id", menuData.establishment_id)
         .order("category")
         .order("dish_name");
@@ -260,6 +260,21 @@ export default function MenuPage() {
                         {getDisplayIngredients(recipe).join(", ")}
                       </p>
                     )}
+
+                    {/* Pastilles régime */}
+                    <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginBottom: recipe.allergens?.length > 0 ? 6 : 0 }}>
+                      {recipe.is_vegan && (
+                        <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 20, background: "#F0FFF4", color: "#155724", border: "1px solid #C6F6D5" }}>Vegan</span>
+                      )}
+                      {recipe.is_vegetarian && !recipe.is_vegan && (
+                        <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 20, background: "#F0FFF4", color: "#155724", border: "1px solid #C6F6D5" }}>Végétarien</span>
+                      )}
+                      {recipe.meat_certification && (
+                        <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 20, background: "#F7F7F5", color: "#555", border: "1px solid #E0E0E0" }}>
+                          {recipe.meat_certification === "halal" ? "Halal" : recipe.meat_certification === "casher" ? "Casher" : recipe.meat_certification === "label_rouge" ? "Label Rouge" : "Bio"}
+                        </span>
+                      )}
+                    </div>
 
                     {recipe.allergens?.length > 0 && (
                       <div style={s.recipePills}>

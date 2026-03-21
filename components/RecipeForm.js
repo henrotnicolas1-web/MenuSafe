@@ -186,6 +186,58 @@ export default function RecipeForm({ onSave, initialData }) {
         })}
       </div>
 
+      {/* ── Pastilles régime et certification ── */}
+      <div style={{ marginTop: 16, paddingTop: 16, borderTop: "1px solid #F0F0F0" }}>
+        <p style={{ fontSize: 12, fontWeight: 600, color: "#666", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 10 }}>
+          Labels & certifications
+        </p>
+
+        {/* Vegan / Végétarien */}
+        <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
+          <button onClick={() => setIsVegetarian(v => !v)}
+            style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 12px", borderRadius: 20, border: "1.5px solid", cursor: "pointer", fontSize: 12, fontWeight: 600, transition: "all 0.15s",
+              borderColor: isVegetarian ? "#155724" : "#E0E0E0",
+              background: isVegetarian ? "#F0FFF4" : "white",
+              color: isVegetarian ? "#155724" : "#888" }}>
+            <span style={{ width: 8, height: 8, borderRadius: "50%", background: isVegetarian ? "#38A169" : "#CCC" }} />
+            Végétarien
+            {!canBeVegetarian && !isVegetarian && <span style={{ fontSize: 10, color: "#CC0000" }}>⚠</span>}
+          </button>
+          <button onClick={() => { setIsVegan(v => !v); if (!isVegan) setIsVegetarian(true); }}
+            style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 12px", borderRadius: 20, border: "1.5px solid", cursor: "pointer", fontSize: 12, fontWeight: 600, transition: "all 0.15s",
+              borderColor: isVegan ? "#155724" : "#E0E0E0",
+              background: isVegan ? "#F0FFF4" : "white",
+              color: isVegan ? "#155724" : "#888" }}>
+            <span style={{ width: 8, height: 8, borderRadius: "50%", background: isVegan ? "#38A169" : "#CCC" }} />
+            Vegan
+            {!canBeVegan && !isVegan && <span style={{ fontSize: 10, color: "#CC0000" }}>⚠</span>}
+          </button>
+          {(isVegetarian && !canBeVegetarian) && (
+            <span style={{ fontSize: 11, color: "#856404", background: "#FFF3CD", padding: "3px 8px", borderRadius: 8 }}>
+              Attention : des ingrédients animaux ont été détectés
+            </span>
+          )}
+        </div>
+
+        {/* Certification viande — affichée seulement si viande détectée */}
+        {hasMeat && (
+          <div>
+            <p style={{ fontSize: 11, color: "#888", marginBottom: 8 }}>Certification viande (optionnel)</p>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+              {["", "halal", "casher", "label_rouge", "bio"].map(cert => (
+                <button key={cert} onClick={() => setMeatCert(meatCert === cert && cert !== "" ? "" : cert)}
+                  style={{ padding: "6px 12px", borderRadius: 20, border: "1.5px solid", cursor: "pointer", fontSize: 12, fontWeight: 600, transition: "all 0.15s",
+                    borderColor: meatCert === cert && cert !== "" ? "#1A1A1A" : "#E0E0E0",
+                    background: meatCert === cert && cert !== "" ? "#1A1A1A" : "white",
+                    color: meatCert === cert && cert !== "" ? "white" : "#888" }}>
+                  {cert === "" ? "Aucune" : cert === "halal" ? "Halal" : cert === "casher" ? "Casher" : cert === "label_rouge" ? "Label Rouge" : "Bio"}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
       <button style={styles.btnSave} onClick={handleSave}>Sauvegarder la recette</button>
       {toast.visible && <div style={styles.toast}>{toast.message}</div>}
     </div>

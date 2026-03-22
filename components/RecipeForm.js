@@ -1,39 +1,7 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
-import { ALLERGENS, AllergenIcon, detectAllergens } from "@/lib/allergens-db";
+import { ALLERGENS, AllergenIcon, detectAllergens, getSuggestions } from "@/lib/allergens-db";
 
-// Liste d'ingrédients pour l'autocomplétion
-const INGREDIENT_LIST = [
-  "farine","farine de blé","pain","pain de mie","pâtes","spaghetti","tagliatelles",
-  "blé","semoule","orge","avoine","biscuit","chapelure","panure",
-  "crevette","gambas","langoustine","homard","crabe","tourteau",
-  "œuf","œufs","jaune d'œuf","blanc d'œuf","mayonnaise","meringue",
-  "saumon","thon","cabillaud","bar","daurade","sole","truite","sardine","anchois",
-  "arachide","cacahuète","beurre de cacahuète","huile d'arachide",
-  "soja","tofu","tempeh","miso","sauce soja","lait de soja","edamame",
-  "lait","lait entier","beurre","crème","crème fraîche","fromage","gruyère",
-  "emmental","parmesan","mozzarella","brie","camembert","chèvre","feta",
-  "mascarpone","yaourt","glace","chocolat au lait",
-  "noix","noix de cajou","amande","noisette","pistache","noix de coco",
-  "châtaigne","pignon","praline",
-  "céleri","céleri-rave","sel de céleri",
-  "moutarde","moutarde de dijon","moutarde à l'ancienne",
-  "sésame","tahini","huile de sésame","hummus",
-  "vin","vinaigre","fruits secs","abricot sec","raisin sec",
-  "lupin","farine de lupin",
-  "moule","huître","coquille saint-jacques","calmar","seiche","pieuvre",
-  "sauce tomate","tomate","oignon","ail","échalote","carotte","poivron",
-  "champignon","champignons","courgette","aubergine","épinard","poireau",
-  "pomme de terre","riz","lentille","pois chiche","haricot",
-  "bœuf","veau","agneau","porc","poulet","canard","dinde",
-  "jambon","lardons","bacon","saucisse","chorizo","merguez",
-  "huile d'olive","huile de tournesol","vinaigre balsamique",
-  "basilic","thym","romarin","persil","coriandre","estragon","menthe",
-  "sucre","sel","poivre","paprika","cumin","curry","cannelle",
-  "crème pâtissière","pâte feuilletée","pâte brisée","levure",
-  "bouillon de volaille","bouillon de légumes","fond de veau",
-  "citron","orange","pomme","poire","fraise","framboise","myrtille",
-];
 
 const CATEGORIES = [
   { value: "entree",  label: "🥗 Entrée" },
@@ -66,17 +34,9 @@ export default function RecipeForm({ onSave, initialData }) {
   const canBeVegan = !hasAnimal && !detectedAllergens.has("lait") && !detectedAllergens.has("oeufs");
 
   useEffect(() => {
-    // Autocomplete local — filtre dans la liste des ingrédients connus
-    const results = ingInput.length >= 2
-      ? INGREDIENT_LIST.filter((name) =>
-          name.toLowerCase().includes(ingInput.toLowerCase())
-        ).slice(0, 8).map((name) => ({ name }))
-      : [];
-    const unique = results.filter((item, idx, arr) =>
-      arr.findIndex((x) => x.name === item.name) === idx
-    );
-    setSuggestions(unique);
-    setShowSug(unique.length > 0 && ingInput.length >= 2);
+    const results = getSuggestions(ingInput);
+    setSuggestions(results);
+    setShowSug(results.length > 0 && ingInput.length >= 2);
   }, [ingInput]);
 
   function addIngredient(name) {

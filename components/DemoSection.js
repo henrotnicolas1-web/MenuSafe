@@ -1,4 +1,5 @@
 "use client";
+import { LangFlag } from "@/components/LangBadge";
 import { useState } from "react";
 import { useWindowSize } from "@/lib/useWindowSize";
 
@@ -40,11 +41,8 @@ function PhoneMockup() {
       <div style={{ background: "#111", padding: "10px 14px" }}>
         <p style={{ fontSize: 12, fontWeight: 700, color: "white", margin: "0 0 5px" }}>Le Bistrot du Coin</p>
         <div style={{ display: "flex", gap: 4 }}>
-          {LANGS.map((f, i) => (
-            <button key={i} onClick={() => setLang(i)}
-              style={{ background: i === lang ? f.bg : "rgba(255,255,255,0.1)", border: "none", cursor: "pointer", fontSize: 9, fontWeight: 800, color: "white", padding: "3px 5px", borderRadius: 5, minWidth: 24, fontFamily: "'Inter',sans-serif" }}>
-              {f.code}
-            </button>
+          {["fr","en","es","de","ja"].map((code, i) => (
+            <LangFlag key={code} code={code} active={i === lang} onClick={() => setLang(i)} size={22} />
           ))}
         </div>
       </div>

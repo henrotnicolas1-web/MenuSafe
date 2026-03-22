@@ -2,6 +2,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { createClient } from "@/lib/supabase";
 import { ALLERGENS, AllergenIcon } from "@/lib/allergens-db";
+import { LangFlag } from "@/components/LangBadge";
 import { useParams } from "next/navigation";
 
 const LANGUAGES = {

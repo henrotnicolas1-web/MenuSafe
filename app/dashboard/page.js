@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
+import AnalyticsPanel from "@/components/AnalyticsPanel";
 import { createClient } from "@/lib/supabase";
 import { getPlan, canAddRecipe, canAddEstablishment, getLimitMessage } from "@/lib/plans";
 import { generateAllergenPDF } from "@/lib/pdf-generator";
@@ -39,6 +40,7 @@ export default function Dashboard() {
   const plan = subscription?.plan ?? "free";
   const planInfo = getPlan(plan);
   const canImport = plan === "pro" || plan === "reseau";
+  const isPro = plan === "pro" || plan === "reseau";
 
   const loadData = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser();

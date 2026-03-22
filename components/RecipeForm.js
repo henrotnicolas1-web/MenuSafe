@@ -4,11 +4,11 @@ import { ALLERGENS, AllergenIcon, detectAllergens, getSuggestions } from "@/lib/
 
 
 const CATEGORIES = [
-  { value: "entree",  label: "🥗 Entrée" },
-  { value: "plat",    label: "🍽️ Plat" },
-  { value: "dessert", label: "🍰 Dessert" },
-  { value: "boisson", label: "🥤 Boisson" },
-  { value: "autre",   label: "📋 Autre" },
+  { value: "entree",  label: "Entrée" },
+  { value: "plat",    label: "Plat" },
+  { value: "dessert", label: "Dessert" },
+  { value: "boisson", label: "Boisson" },
+  { value: "autre",   label: "Autre" },
 ];
 
 export default function RecipeForm({ onSave, initialData }) {
@@ -115,11 +115,6 @@ export default function RecipeForm({ onSave, initialData }) {
                     onMouseEnter={(e) => (e.currentTarget.style.background = "#F5F5F3")}
                     onMouseLeave={(e) => (e.currentTarget.style.background = "white")}>
                     <span style={{ fontSize: 13 }}>{s.name}</span>
-                    <span style={{ fontSize: 11, color: "#BBB" }}>
-                      {s.allergens.length > 0
-                        ? s.allergens.map((id) => ALLERGENS.find((a) => a.id === id)?.icon).join(" ")
-                        : "aucun allergène"}
-                    </span>
                   </div>
                 ))}
               </div>

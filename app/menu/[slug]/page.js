@@ -190,21 +190,8 @@ export default function MenuPage() {
       <div style={s.header}>
         <p style={s.estName}>{establishment?.name}</p>
         <div style={s.langRow}>
-          {Object.entries(LANGUAGES).map(([code, info]) => (
-            <button key={code}
-              onClick={() => setLang(code)}
-              title={info.label}
-              style={{
-                width: 38, height: 38, borderRadius: 9,
-                background: lang === code ? info.bg : "rgba(255,255,255,0.12)",
-                color: lang === code ? info.color : "rgba(255,255,255,0.6)",
-                border: lang === code ? `2px solid ${info.bg}` : "1.5px solid rgba(255,255,255,0.15)",
-                cursor: "pointer", fontSize: 11, fontWeight: 800,
-                fontFamily: "'Inter', sans-serif", letterSpacing: "0.03em",
-                transition: "all 0.15s",
-              }}>
-              {info.code}
-            </button>
+          {Object.keys(LANGUAGES).map((code) => (
+            <LangFlag key={code} code={code} active={lang === code} onClick={() => setLang(code)} size={34} />
           ))}
         </div>
       </div>

@@ -184,11 +184,22 @@ export default function MenuPage() {
   const subStatus = establishment?.sub_status;
   const isUnavailable = subStatus === "canceled" || subStatus === "expired";
 
+  // Branding personnalisé (plan Pro)
+  const brandColor = establishment?.brand_color || "#1A1A1A";
+  const brandLogo  = establishment?.brand_logo_url || null;
+
   return (
     <div style={s.page}>
       {/* Header */}
-      <div style={s.header}>
-        <p style={s.estName}>{establishment?.name}</p>
+      <div style={{ ...s.header, background: brandColor }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          {brandLogo && (
+            <img src={brandLogo} alt="Logo"
+              style={{ width: 36, height: 36, borderRadius: 8, objectFit: "contain",
+                background: "rgba(255,255,255,0.9)", padding: 3, flexShrink: 0 }} />
+          )}
+          <p style={{ ...s.estName, color: "white", margin: 0 }}>{establishment?.name}</p>
+        </div>
         <div style={s.langRow}>
           {Object.keys(LANGUAGES).map((code) => (
             <LangFlag key={code} code={code} active={lang === code} onClick={() => setLang(code)} size={34} />

@@ -95,7 +95,6 @@ export default function MenuPage() {
   const scanIdRef      = useRef(null);
   const sessionIdRef   = useRef(null);
   const estIdRef       = useRef(null);
-  const isFirstLang    = useRef(true); // ignore le set initial fr → évite faux positif
 
   const supabase = createClient();
 
@@ -168,11 +167,14 @@ export default function MenuPage() {
     })();
   }, [slug]);
 
-  // ── Track changement de langue ──────────────────────────────────────────────
-  useEffect(() => {
-    if (isFirstLang.current) { isFirstLang.current = false; return; }
-    trackEvent("lang_change", { lang });
-  }, [lang]);
+  // ── Changement de langue avec tracking direct ───────────────────────────────
+  function handleLangChange(code) {
+    setLang(code);
+    setLangOpen(false);
+    // trackEvent appelé directement — les refs sont garanties prêtes
+    // car l'utilisateur ne peut pas changer de langue avant que la carte soit chargée
+    trackEvent("lang_change", { lang: code });
+  }
 
   // ── Interactions ─────────────────────────────────────────────────────────────
 
@@ -317,7 +319,7 @@ export default function MenuPage() {
                 display:"grid", gridTemplateColumns:"1fr 1fr", gap:4, minWidth:180 }}>
                 {Object.entries(LANGUAGES).map(([code, l]) => (
                   <button key={code}
-                    onClick={() => { setLang(code); setLangOpen(false); }}
+                    onClick={() => handleLangChange(code)}
                     style={{ display:"flex", alignItems:"center", gap:8, padding:"9px 12px",
                       borderRadius:9, border:"none", cursor:"pointer", textAlign:"left",
                       background: lang === code ? "#F7F7F5" : "transparent",

@@ -59,7 +59,15 @@ export default function ParamatresPage() {
         supabase.from("establishments").select("*").eq("user_id", user.id).order("created_at"),
       ]);
       setSub(sub);
-      setEsts(ests ?? []);
+      const estList = ests ?? [];
+      setEsts(estList);
+      if (estList.length > 0) {
+        const first = estList[0];
+        setBrandEstId(first.id);
+        setBrandColor(first.brand_color || "#1A1A1A");
+        setBrandLogo(first.brand_logo_url || null);
+        setLogoPreview(first.brand_logo_url || null);
+      }
       setLoading(false);
     })();
   }, []);
@@ -114,8 +122,8 @@ export default function ParamatresPage() {
       let logoUrl = brandLogo;
       if (logoFile) {
         const ext = logoFile.name.split(".").pop();
-        const path = `${brandEstId}/logo.${ext}`;
-        const { data: upData, error: upErr } = await supabase.storage
+        const path = `${user?.id}/${brandEstId}/logo.${ext}`;
+        const { error: upErr } = await supabase.storage
           .from("establishment-logos")
           .upload(path, logoFile, { upsert: true });
         if (upErr) throw upErr;
@@ -201,7 +209,6 @@ export default function ParamatresPage() {
               <span style={s.infoLabel}>Membre depuis</span>
               <span style={s.infoValue}>{user?.created_at ? new Date(user.created_at).toLocaleDateString("fr-FR") : "—"}</span>
             </div>
-
             <div style={s.divider} />
             <h3 style={s.subTitle}>Changer d'email</h3>
             {emailSent ? (
@@ -241,7 +248,6 @@ export default function ParamatresPage() {
                 {saving ? "Mise à jour..." : "Changer le mot de passe →"}
               </button>
             </form>
-
             <div style={s.divider} />
             <h2 style={s.sectionTitle}>Zone de danger</h2>
             <div style={{ background: "#FFF0F0", border: "1px solid #FFD0D0", borderRadius: 12, padding: "16px 20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -324,7 +330,6 @@ export default function ParamatresPage() {
   );
 }
 
-
 function ApparenceTab({ ests, brandEstId, setBrandEstId, brandColor, setBrandColor,
   logoPreview, setLogoPreview, setLogoFile, brandSaving, brandSaved, sub, onSave }) {
 
@@ -351,7 +356,6 @@ function ApparenceTab({ ests, brandEstId, setBrandEstId, brandColor, setBrandCol
         </div>
       )}
 
-      {/* Sélecteur d'établissement */}
       {ests.length > 1 && (
         <div style={{ marginBottom: 20 }}>
           <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#888", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>
@@ -429,7 +433,8 @@ function ApparenceTab({ ests, brandEstId, setBrandEstId, brandColor, setBrandCol
               }} title={c} />
           ))}
           <div style={{ position: "relative" }}>
-            <button style={{ width: 32, height: 32, borderRadius: 8, background: PRESETS.includes(brandColor) ? "#F0F0F0" : brandColor, border: "1px dashed #CCC", cursor: isPro ? "pointer" : "not-allowed", fontSize: 16 }}
+            <button
+              style={{ width: 32, height: 32, borderRadius: 8, background: PRESETS.includes(brandColor) ? "#F0F0F0" : brandColor, border: "1px dashed #CCC", cursor: isPro ? "pointer" : "not-allowed", fontSize: 16 }}
               onClick={() => isPro && document.getElementById("brand-color-picker").click()}>
               +
             </button>
@@ -470,7 +475,6 @@ function ApparenceTab({ ests, brandEstId, setBrandEstId, brandColor, setBrandCol
         </div>
       </div>
 
-      {/* Save */}
       <button onClick={onSave} disabled={brandSaving || !isPro}
         style={{ fontSize: 14, fontWeight: 700, padding: "12px 24px", background: isPro ? "#1A1A1A" : "#E0E0E0", color: isPro ? "white" : "#AAA", border: "none", borderRadius: 10, cursor: isPro ? "pointer" : "not-allowed" }}>
         {brandSaving ? "Sauvegarde..." : "Sauvegarder l'apparence"}

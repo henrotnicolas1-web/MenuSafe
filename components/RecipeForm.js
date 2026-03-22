@@ -34,7 +34,7 @@ export default function RecipeForm({ onSave, initialData }) {
   const canBeVegan = !hasAnimal && !detectedAllergens.has("lait") && !detectedAllergens.has("oeufs");
 
   useEffect(() => {
-    const results = getSuggestions(ingInput);
+    const results = getSuggestions(ingInput).map(name => ({ name }));
     setSuggestions(results);
     setShowSug(results.length > 0 && ingInput.length >= 2);
   }, [ingInput]);

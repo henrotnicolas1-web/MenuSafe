@@ -19,10 +19,10 @@ function Logo({ size = 26, light = false }) {
 }
 
 const PRODUCT_LINKS = [
-  { Icon: Shield,      label: "Détection allergènes",   desc: "14 allergènes, 900+ ingrédients",     href: "/#features" },
-  { Icon: Smartphone,  label: "Carte multilingue",       desc: "QR code, 8 langues, filtrage live",   href: "/#features" },
-  { Icon: FileText,    label: "PDF conforme INCO",       desc: "Document légal en 1 clic",             href: "/#features" },
-  { Icon: Camera,      label: "Import IA",               desc: "Photo de carte → données complètes",  href: "/#features" },
+  { Icon: Shield,      label: "Détection allergènes",   desc: "14 allergènes, 900+ ingrédients",     href: "/loi-inco" },
+  { Icon: Smartphone,  label: "Carte multilingue",       desc: "QR code, 8 langues, filtrage live",   href: "/metiers" },
+  { Icon: FileText,    label: "PDF conforme INCO",       desc: "Document légal en 1 clic",             href: "/comparatif" },
+  { Icon: Camera,      label: "Import IA",               desc: "Photo de carte → données complètes",  href: "/blog/import-ia-menu-restaurant-allergenes" },
 ];
 
 const RESOURCES_LINKS = [
@@ -59,7 +59,7 @@ export default function Navbar() {
       setTimeout(() => {
         const id = href.slice(2);
         document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
-      }, 100);
+      }, 400);
     } else {
       router.push(href);
     }

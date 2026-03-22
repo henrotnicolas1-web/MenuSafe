@@ -1,24 +1,22 @@
 "use client";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { createClient } from "@/lib/supabase";
 import { ALLERGENS, AllergenIcon } from "@/lib/allergens-db";
-import { LangFlag } from "@/components/LangBadge";
 import { useParams } from "next/navigation";
 
 const LANGUAGES = {
-  fr: { label: "Français",    code: "FR", bg: "#003189", color: "white" },
-  en: { label: "English",     code: "EN", bg: "#C8102E", color: "white" },
-  es: { label: "Español",     code: "ES", bg: "#AA151B", color: "white" },
-  de: { label: "Deutsch",     code: "DE", bg: "#000000", color: "#FFD700" },
-  it: { label: "Italiano",    code: "IT", bg: "#009246", color: "white" },
-  nl: { label: "Nederlands",  code: "NL", bg: "#AE1C28", color: "white" },
-  ja: { label: "日本語",       code: "JP", bg: "#BC002D", color: "white" },
-  zh: { label: "中文",         code: "ZH", bg: "#DE2910", color: "#FFDE00" },
+  fr: { label: "Français",   code: "FR", flag: "🇫🇷" },
+  en: { label: "English",    code: "EN", flag: "🇬🇧" },
+  es: { label: "Español",    code: "ES", flag: "🇪🇸" },
+  de: { label: "Deutsch",    code: "DE", flag: "🇩🇪" },
+  it: { label: "Italiano",   code: "IT", flag: "🇮🇹" },
+  nl: { label: "Nederlands", code: "NL", flag: "🇳🇱" },
+  ja: { label: "日本語",      code: "JP", flag: "🇯🇵" },
+  zh: { label: "中文",        code: "ZH", flag: "🇨🇳" },
 };
 
-// ── Noms d'allergènes traduits en dur — zéro appel API ────────────────────────
 const ALLERGEN_NAMES = {
-  fr: { gluten:"Gluten", crustaces:"Crustacés", oeufs:"Œufs", poissons:"Poissons", arachides:"Arachides", soja:"Soja", lait:"Lait", fruits_coq:"Fruits à coque", celeri:"Céleri", moutarde:"Moutarde", sesame:"Sésame", so2:"SO₂/Sulfites", lupin:"Lupin", mollusques:"Mollusques" },
+  fr: { gluten:"Gluten", crustaces:"Crustacés", oeufs:"Œufs", poissons:"Poissons", arachides:"Arachides", soja:"Soja", lait:"Lait", fruits_coq:"Fruits à coque", celeri:"Céleri", moutarde:"Moutarde", sesame:"Sésame", so2:"Sulfites", lupin:"Lupin", mollusques:"Mollusques" },
   en: { gluten:"Gluten", crustaces:"Crustaceans", oeufs:"Eggs", poissons:"Fish", arachides:"Peanuts", soja:"Soy", lait:"Milk", fruits_coq:"Tree nuts", celeri:"Celery", moutarde:"Mustard", sesame:"Sesame", so2:"Sulphites", lupin:"Lupin", mollusques:"Molluscs" },
   es: { gluten:"Gluten", crustaces:"Crustáceos", oeufs:"Huevos", poissons:"Pescado", arachides:"Cacahuetes", soja:"Soja", lait:"Leche", fruits_coq:"Frutos secos", celeri:"Apio", moutarde:"Mostaza", sesame:"Sésamo", so2:"Sulfitos", lupin:"Altramuz", mollusques:"Moluscos" },
   de: { gluten:"Gluten", crustaces:"Krebstiere", oeufs:"Eier", poissons:"Fisch", arachides:"Erdnüsse", soja:"Soja", lait:"Milch", fruits_coq:"Schalenfrüchte", celeri:"Sellerie", moutarde:"Senf", sesame:"Sesam", so2:"Sulfite", lupin:"Lupinen", mollusques:"Weichtiere" },
@@ -40,14 +38,14 @@ const CATEGORY_LABELS = {
 };
 
 const UI_TEXT = {
-  fr: { allergTitle:"Mes allergies", allergSub:"Sélectionnez vos allergènes pour filtrer la carte", incompatible:"Contient vos allergènes", clearFilters:"Effacer les filtres", poweredBy:"Carte allergènes propulsée par", loading:"Chargement de la carte...", notFound:"Menu introuvable ou désactivé." },
-  en: { allergTitle:"My allergies", allergSub:"Select your allergens to filter the menu", incompatible:"Contains your allergens", clearFilters:"Clear filters", poweredBy:"Allergen menu powered by", loading:"Loading menu...", notFound:"Menu not found or disabled." },
-  es: { allergTitle:"Mis alergias", allergSub:"Seleccione sus alérgenos para filtrar la carta", incompatible:"Contiene sus alérgenos", clearFilters:"Borrar filtros", poweredBy:"Carta alérgenos impulsada por", loading:"Cargando carta...", notFound:"Menú no encontrado." },
-  de: { allergTitle:"Meine Allergien", allergSub:"Wählen Sie Ihre Allergene, um die Karte zu filtern", incompatible:"Enthält Ihre Allergene", clearFilters:"Filter löschen", poweredBy:"Allergenkarte bereitgestellt von", loading:"Karte wird geladen...", notFound:"Menü nicht gefunden." },
-  it: { allergTitle:"Le mie allergie", allergSub:"Seleziona i tuoi allergeni per filtrare il menu", incompatible:"Contiene i tuoi allergeni", clearFilters:"Cancella filtri", poweredBy:"Menu allergeni offerto da", loading:"Caricamento menu...", notFound:"Menu non trovato." },
-  nl: { allergTitle:"Mijn allergieën", allergSub:"Selecteer uw allergenen om de kaart te filteren", incompatible:"Bevat uw allergenen", clearFilters:"Filters wissen", poweredBy:"Allergenenkaart aangedreven door", loading:"Menu laden...", notFound:"Menu niet gevonden." },
-  ja: { allergTitle:"アレルギー選択", allergSub:"アレルゲンを選択してメニューをフィルタリング", incompatible:"アレルゲンを含む", clearFilters:"フィルターをクリア", poweredBy:"アレルゲンメニュー提供：", loading:"メニューを読み込み中...", notFound:"メニューが見つかりません。" },
-  zh: { allergTitle:"我的过敏原", allergSub:"选择您的过敏原以筛选菜单", incompatible:"含有您的过敏原", clearFilters:"清除筛选", poweredBy:"过敏原菜单由以下提供：", loading:"正在加载菜单...", notFound:"菜单未找到。" },
+  fr: { allergTitle:"Mes allergies", allergSub:"Touchez vos allergènes pour filtrer", incompatible:"Contient vos allergènes", clearFilters:"Effacer", poweredBy:"Carte allergènes propulsée par", loading:"Chargement...", notFound:"Menu introuvable.", search:"Rechercher un plat...", all:"Tous", veg:"Végétarien", vegan:"Vegan", noResult:"Aucun plat ne correspond à votre recherche." },
+  en: { allergTitle:"My allergies", allergSub:"Tap allergens to filter", incompatible:"Contains your allergens", clearFilters:"Clear", poweredBy:"Allergen menu powered by", loading:"Loading...", notFound:"Menu not found.", search:"Search a dish...", all:"All", veg:"Vegetarian", vegan:"Vegan", noResult:"No dish matches your search." },
+  es: { allergTitle:"Mis alergias", allergSub:"Toque sus alérgenos para filtrar", incompatible:"Contiene sus alérgenos", clearFilters:"Borrar", poweredBy:"Carta alérgenos impulsada por", loading:"Cargando...", notFound:"Menú no encontrado.", search:"Buscar un plato...", all:"Todos", veg:"Vegetariano", vegan:"Vegano", noResult:"Ningún plato coincide." },
+  de: { allergTitle:"Meine Allergien", allergSub:"Allergene antippen zum Filtern", incompatible:"Enthält Ihre Allergene", clearFilters:"Löschen", poweredBy:"Allergenkarte bereitgestellt von", loading:"Laden...", notFound:"Menü nicht gefunden.", search:"Gericht suchen...", all:"Alle", veg:"Vegetarisch", vegan:"Vegan", noResult:"Kein Gericht gefunden." },
+  it: { allergTitle:"Le mie allergie", allergSub:"Tocca gli allergeni per filtrare", incompatible:"Contiene i tuoi allergeni", clearFilters:"Cancella", poweredBy:"Menu allergeni offerto da", loading:"Caricamento...", notFound:"Menu non trovato.", search:"Cerca un piatto...", all:"Tutti", veg:"Vegetariano", vegan:"Vegano", noResult:"Nessun piatto trovato." },
+  nl: { allergTitle:"Mijn allergieën", allergSub:"Tik allergenen aan om te filteren", incompatible:"Bevat uw allergenen", clearFilters:"Wissen", poweredBy:"Allergenenkaart aangedreven door", loading:"Laden...", notFound:"Menu niet gevonden.", search:"Zoek een gerecht...", all:"Alles", veg:"Vegetarisch", vegan:"Veganistisch", noResult:"Geen gerecht gevonden." },
+  ja: { allergTitle:"アレルギー選択", allergSub:"アレルゲンをタップしてフィルター", incompatible:"アレルゲンを含む", clearFilters:"クリア", poweredBy:"アレルゲンメニュー提供：", loading:"読み込み中...", notFound:"メニューが見つかりません。", search:"料理を検索...", all:"すべて", veg:"ベジタリアン", vegan:"ビーガン", noResult:"該当する料理がありません。" },
+  zh: { allergTitle:"我的过敏原", allergSub:"点击过敏原进行筛选", incompatible:"含有您的过敏原", clearFilters:"清除", poweredBy:"过敏原菜单由以下提供：", loading:"加载中...", notFound:"菜单未找到。", search:"搜索菜肴...", all:"全部", veg:"素食", vegan:"纯素", noResult:"未找到匹配的菜肴。" },
 };
 
 const CATEGORY_ORDER = ["entree", "plat", "dessert", "boisson", "autre"];
@@ -60,9 +58,14 @@ export default function MenuPage() {
   const [recipes, setRecipes]       = useState([]);
   const [lang, setLang]             = useState("fr");
   const [selectedAllergens, setSel] = useState(new Set());
-  const [dietFilter, setDietFilter] = useState("all"); // "all" | "vegetarian" | "vegan"
+  const [dietFilter, setDietFilter] = useState("all");
+  const [search, setSearch]         = useState("");
+  const [activeTab, setActiveTab]   = useState(null);
   const [loading, setLoading]       = useState(true);
-  const [notFound, setNotFound]     = useState(null); // null | true | "unavailable"
+  const [notFound, setNotFound]     = useState(null);
+  const [langOpen, setLangOpen]     = useState(false);
+  const tabsRef = useRef(null);
+  const categoryRefs = useRef({});
   const supabase = createClient();
 
   useEffect(() => {
@@ -76,10 +79,8 @@ export default function MenuPage() {
         .single();
 
       if (!menuData) { setNotFound(true); setLoading(false); return; }
-      setEst({ ...menuData.establishments });
       setEst(menuData.establishments);
 
-      // Récupère aussi le statut de l'abonnement
       const { data: subData } = await supabase
         .from("subscriptions")
         .select("status, trial_ends_at")
@@ -118,7 +119,6 @@ export default function MenuPage() {
     });
   }
 
-  // Lit depuis le cache JSON — zéro appel API
   function getDisplayName(recipe) {
     if (lang === "fr") return recipe.dish_name;
     return recipe.translations_cache?.[lang]?.dish_name || recipe.dish_name;
@@ -137,115 +137,182 @@ export default function MenuPage() {
   const grouped = useMemo(() => {
     const groups = {};
     CATEGORY_ORDER.forEach((cat) => { groups[cat] = []; });
+    const q = search.toLowerCase().trim();
     recipes.forEach((r) => {
       if (dietFilter === "vegetarian" && !r.is_vegetarian && !r.is_vegan) return;
       if (dietFilter === "vegan" && !r.is_vegan) return;
+      if (q && !getDisplayName(r).toLowerCase().includes(q) && !r.dish_name.toLowerCase().includes(q)) return;
       const cat = r.category || "plat";
       if (!groups[cat]) groups[cat] = [];
       groups[cat].push(r);
     });
     return groups;
-  }, [recipes, dietFilter]);
+  }, [recipes, dietFilter, search, lang]);
+
+  const activeCats = CATEGORY_ORDER.filter(cat => grouped[cat]?.length > 0);
+
+  function scrollToCategory(cat) {
+    setActiveTab(cat);
+    const el = categoryRefs.current[cat];
+    if (el) {
+      const offset = 120; // header + tabs height
+      const top = el.getBoundingClientRect().top + window.scrollY - offset;
+      window.scrollTo({ top, behavior: "smooth" });
+    }
+  }
 
   const ui = UI_TEXT[lang] || UI_TEXT.fr;
   const catLabels = CATEGORY_LABELS[lang] || CATEGORY_LABELS.fr;
   const allergenNames = ALLERGEN_NAMES[lang] || ALLERGEN_NAMES.fr;
+  const brandColor = establishment?.brand_color || "#1A1A1A";
+  const brandLogo  = establishment?.brand_logo_url || null;
+
+  // Couleur de contraste auto pour texte sur brandColor
+  function hexToLuma(hex) {
+    const c = hex.replace("#", "");
+    const r = parseInt(c.substr(0,2),16);
+    const g = parseInt(c.substr(2,2),16);
+    const b = parseInt(c.substr(4,2),16);
+    return 0.299*r + 0.587*g + 0.114*b;
+  }
+  const brandTextColor = hexToLuma(brandColor) > 128 ? "#1A1A1A" : "#FFFFFF";
 
   if (loading) return (
-    <div style={s.loadPage}>
-      <div style={s.spinner} />
-      <p style={{ color: "#999", fontSize: 13, marginTop: 16, fontFamily: "Inter, sans-serif" }}>
-        {UI_TEXT[lang]?.loading || "Chargement..."}
-      </p>
+    <div style={{ minHeight:"100vh", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", background:"#F7F7F5", fontFamily:"Inter,sans-serif" }}>
+      <div style={{ width:32, height:32, border:"3px solid #E8E8E8", borderTop:`3px solid ${brandColor || "#1A1A1A"}`, borderRadius:"50%", animation:"spin 0.8s linear infinite" }} />
+      <p style={{ color:"#999", fontSize:13, marginTop:14 }}>Chargement...</p>
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </div>
   );
 
   if (notFound === "unavailable") return (
-    <div style={s.loadPage}>
-      <div style={{ textAlign: "center", padding: "0 20px" }}>
-        <p style={{ fontSize: 40, marginBottom: 12 }}>🔒</p>
-        <p style={{ fontSize: 18, fontWeight: 700, color: "#1A1A1A", margin: "0 0 8px", fontFamily: "Inter, sans-serif" }}>Carte temporairement indisponible</p>
-        <p style={{ fontSize: 14, color: "#888", fontFamily: "Inter, sans-serif", lineHeight: 1.6 }}>
-          Cette carte allergènes n'est pas disponible pour le moment.<br />
-          Veuillez contacter directement le restaurant pour toute information sur les allergènes.
-        </p>
-      </div>
+    <div style={{ minHeight:"100vh", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", background:"#F7F7F5", fontFamily:"Inter,sans-serif", padding:"0 24px", textAlign:"center" }}>
+      <div style={{ fontSize:48, marginBottom:16 }}>🔒</div>
+      <p style={{ fontSize:18, fontWeight:800, color:"#1A1A1A", margin:"0 0 8px" }}>Carte temporairement indisponible</p>
+      <p style={{ fontSize:14, color:"#888", lineHeight:1.6 }}>Veuillez contacter directement le restaurant<br />pour toute information sur les allergènes.</p>
     </div>
   );
 
   if (notFound) return (
-    <div style={s.loadPage}>
-      <p style={{ fontSize: 48, marginBottom: 12 }}>404</p>
-      <p style={{ fontSize: 14, color: "#999", fontFamily: "Inter, sans-serif" }}>{ui.notFound}</p>
+    <div style={{ minHeight:"100vh", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", background:"#F7F7F5", fontFamily:"Inter,sans-serif" }}>
+      <p style={{ fontSize:56, fontWeight:800, color:"#E0E0E0", margin:0 }}>404</p>
+      <p style={{ fontSize:14, color:"#999", marginTop:8 }}>{ui.notFound}</p>
     </div>
   );
 
-  // Vérifie si l'abonnement du restaurateur est actif
-  const subStatus = establishment?.sub_status;
-  const isUnavailable = subStatus === "canceled" || subStatus === "expired";
-
-  // Branding personnalisé (plan Pro)
-  const brandColor = establishment?.brand_color || "#1A1A1A";
-  const brandLogo  = establishment?.brand_logo_url || null;
-
   return (
-    <div style={s.page}>
-      {/* Header */}
-      <div style={{ ...s.header, background: brandColor }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          {brandLogo && (
-            <img src={brandLogo} alt="Logo"
-              style={{ width: 36, height: 36, borderRadius: 8, objectFit: "contain",
-                background: "rgba(255,255,255,0.9)", padding: 3, flexShrink: 0 }} />
-          )}
-          <p style={{ ...s.estName, color: "white", margin: 0 }}>{establishment?.name}</p>
-        </div>
-        <div style={s.langRow}>
-          {Object.keys(LANGUAGES).map((code) => (
-            <LangFlag key={code} code={code} active={lang === code} onClick={() => setLang(code)} size={34} />
-          ))}
+    <div style={{ minHeight:"100vh", background:"#F7F7F5", fontFamily:"'Inter',-apple-system,sans-serif", maxWidth:640, margin:"0 auto" }}>
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes slideDown { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:translateY(0); } }
+        * { box-sizing: border-box; }
+        ::-webkit-scrollbar { display: none; }
+      `}</style>
+
+      {/* ── HEADER STICKY ── */}
+      <div style={{ position:"sticky", top:0, zIndex:100, background:brandColor, boxShadow:"0 2px 12px rgba(0,0,0,0.15)" }}>
+        {/* Ligne 1 : logo + nom + sélecteur langue */}
+        <div style={{ padding:"14px 16px 10px", display:"flex", alignItems:"center", justifyContent:"space-between", gap:12 }}>
+          <div style={{ display:"flex", alignItems:"center", gap:10, minWidth:0 }}>
+            {brandLogo && (
+              <img src={brandLogo} alt="Logo"
+                style={{ width:34, height:34, borderRadius:8, objectFit:"contain",
+                  background:"rgba(255,255,255,0.95)", padding:3, flexShrink:0 }} />
+            )}
+            <p style={{ fontSize:17, fontWeight:800, color:brandTextColor, margin:0, letterSpacing:"-0.02em",
+              overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+              {establishment?.name}
+            </p>
+          </div>
+
+          {/* Sélecteur langue — bouton + dropdown */}
+          <div style={{ position:"relative", flexShrink:0 }}>
+            <button
+              onClick={() => setLangOpen(o => !o)}
+              style={{ display:"flex", alignItems:"center", gap:6, background:"rgba(255,255,255,0.15)",
+                border:"1px solid rgba(255,255,255,0.3)", borderRadius:10, padding:"6px 10px",
+                cursor:"pointer", color:brandTextColor, fontSize:13, fontWeight:700 }}>
+              <span style={{ fontSize:18, lineHeight:1 }}>{LANGUAGES[lang]?.flag}</span>
+              <span>{LANGUAGES[lang]?.code}</span>
+              <span style={{ fontSize:10, opacity:0.7 }}>▾</span>
+            </button>
+            {langOpen && (
+              <div style={{ position:"absolute", top:"calc(100% + 6px)", right:0,
+                background:"white", borderRadius:14, border:"1px solid #EBEBEB",
+                boxShadow:"0 8px 32px rgba(0,0,0,0.12)", padding:6, zIndex:200,
+                animation:"slideDown 0.15s ease",
+                display:"grid", gridTemplateColumns:"1fr 1fr", gap:4, minWidth:180 }}>
+                {Object.entries(LANGUAGES).map(([code, l]) => (
+                  <button key={code}
+                    onClick={() => { setLang(code); setLangOpen(false); }}
+                    style={{ display:"flex", alignItems:"center", gap:8, padding:"9px 12px",
+                      borderRadius:9, border:"none", cursor:"pointer", textAlign:"left",
+                      background: lang === code ? "#F7F7F5" : "transparent",
+                      fontWeight: lang === code ? 700 : 500,
+                      fontSize:13, color:"#1A1A1A" }}>
+                    <span style={{ fontSize:20 }}>{l.flag}</span>
+                    <span>{l.label}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Sélecteur allergènes — noms traduits en dur */}
-      <div style={s.allergenSection}>
-        <p style={s.allergenTitle}>{ui.allergTitle}</p>
-        <p style={s.allergenSub}>{ui.allergSub}</p>
-        <div style={s.allergenGrid}>
+      {/* ── SECTION ALLERGÈNES ── */}
+      <div style={{ background:"white", borderBottom:"1px solid #EBEBEB", padding:"16px 16px 12px" }}>
+
+        {/* Titre + clear */}
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:4 }}>
+          <p style={{ fontSize:14, fontWeight:700, color:"#1A1A1A", margin:0 }}>{ui.allergTitle}</p>
+          {selectedAllergens.size > 0 && (
+            <button onClick={() => setSel(new Set())}
+              style={{ fontSize:12, fontWeight:700, color:"#888", background:"#F0F0F0",
+                border:"none", borderRadius:20, padding:"4px 12px", cursor:"pointer" }}>
+              × {ui.clearFilters} ({selectedAllergens.size})
+            </button>
+          )}
+        </div>
+        <p style={{ fontSize:12, color:"#AAA", margin:"0 0 12px" }}>{ui.allergSub}</p>
+
+        {/* Grille allergènes 7 colonnes compacte */}
+        <div style={{ display:"grid", gridTemplateColumns:"repeat(7, 1fr)", gap:6 }}>
           {ALLERGENS.map((a) => {
             const active = selectedAllergens.has(a.id);
             return (
-              <button key={a.id}
-                style={{ ...s.allergenBtn, ...(active ? { background: a.color, borderColor: a.text, borderWidth: "1.5px" } : {}) }}
-                onClick={() => toggleAllergen(a.id)}>
-                <AllergenIcon id={a.id} size={22} color={active ? a.text : "#999"} />
-                <span style={{ fontSize: 9, fontWeight: 700, textAlign: "center", lineHeight: 1.3, color: active ? a.text : "#777" }}>
+              <button key={a.id} onClick={() => toggleAllergen(a.id)}
+                style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:4,
+                  padding:"8px 2px 6px", borderRadius:10,
+                  border: active ? `2px solid ${a.text}` : "1.5px solid #EBEBEB",
+                  background: active ? a.color : "white",
+                  cursor:"pointer", transition:"all 0.12s",
+                  transform: active ? "scale(1.05)" : "scale(1)" }}>
+                <AllergenIcon id={a.id} size={20} color={active ? a.text : "#BBBBBB"} />
+                <span style={{ fontSize:8.5, fontWeight:active ? 700 : 500,
+                  textAlign:"center", lineHeight:1.2,
+                  color: active ? a.text : "#999" }}>
                   {allergenNames[a.id] || a.label}
                 </span>
               </button>
             );
           })}
         </div>
-        {selectedAllergens.size > 0 && (
-          <button style={s.clearBtn} onClick={() => setSel(new Set())}>
-            × {ui.clearFilters}
-          </button>
-        )}
 
-        {/* Filtre régime alimentaire */}
+        {/* Filtres régime — seulement si pertinent */}
         {recipes.some(r => r.is_vegetarian || r.is_vegan) && (
-          <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 10 }}>
+          <div style={{ display:"flex", gap:6, marginTop:12 }}>
             {[
-              { key: "all", label: "Tous les plats" },
-              { key: "vegetarian", label: "Végétarien" },
-              { key: "vegan", label: "Vegan" },
+              { key:"all", label: ui.all },
+              { key:"vegetarian", label: ui.veg },
+              { key:"vegan", label: ui.vegan },
             ].map(({ key, label }) => (
               <button key={key} onClick={() => setDietFilter(key)}
-                style={{ fontSize: 11, fontWeight: 700, padding: "5px 12px", borderRadius: 20, cursor: "pointer", transition: "all 0.15s",
+                style={{ fontSize:12, fontWeight:700, padding:"5px 14px", borderRadius:20, cursor:"pointer",
                   background: dietFilter === key ? brandColor : "white",
-                  color: dietFilter === key ? "white" : "#666",
+                  color: dietFilter === key ? brandTextColor : "#666",
                   border: dietFilter === key ? `1.5px solid ${brandColor}` : "1.5px solid #E0E0E0",
-                }}>
+                  transition:"all 0.12s" }}>
                 {label}
               </button>
             ))}
@@ -253,120 +320,245 @@ export default function MenuPage() {
         )}
       </div>
 
-      {/* Carte par catégorie */}
-      <div style={s.menuBody}>
+      {/* ── SEARCH ── */}
+      <div style={{ background:"white", borderBottom:"1px solid #EBEBEB", padding:"10px 16px" }}>
+        <div style={{ position:"relative" }}>
+          <svg style={{ position:"absolute", left:12, top:"50%", transform:"translateY(-50%)" }}
+            width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#BBBBBB" strokeWidth="2.5" strokeLinecap="round">
+            <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+          </svg>
+          <input
+            type="text" value={search} onChange={e => setSearch(e.target.value)}
+            placeholder={ui.search}
+            style={{ width:"100%", padding:"10px 12px 10px 36px", fontSize:14,
+              border:"1.5px solid #EBEBEB", borderRadius:10, outline:"none",
+              background:"#FAFAFA", color:"#1A1A1A", fontFamily:"inherit",
+              transition:"border 0.15s" }}
+            onFocus={e => e.target.style.borderColor = brandColor}
+            onBlur={e => e.target.style.borderColor = "#EBEBEB"}
+          />
+          {search && (
+            <button onClick={() => setSearch("")}
+              style={{ position:"absolute", right:10, top:"50%", transform:"translateY(-50%)",
+                background:"none", border:"none", cursor:"pointer", color:"#BBB", fontSize:16, padding:0 }}>
+              ×
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* ── TABS CATÉGORIES STICKY ── */}
+      {activeCats.length > 1 && (
+        <div ref={tabsRef} style={{ position:"sticky", top:62, zIndex:90,
+          background:"white", borderBottom:"1px solid #EBEBEB",
+          overflowX:"auto", display:"flex", gap:0, padding:"0 8px" }}>
+          {activeCats.map((cat) => (
+            <button key={cat} onClick={() => scrollToCategory(cat)}
+              style={{ padding:"11px 14px", fontSize:13, fontWeight:600, whiteSpace:"nowrap",
+                border:"none", background:"transparent", cursor:"pointer",
+                borderBottom: activeTab === cat ? `2.5px solid ${brandColor}` : "2.5px solid transparent",
+                color: activeTab === cat ? brandColor : "#888",
+                transition:"all 0.15s", flexShrink:0 }}>
+              {catLabels[cat]}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* ── MENU ── */}
+      <div style={{ padding:"12px 16px 48px" }}>
+
+        {/* Résumé filtres actifs */}
+        {selectedAllergens.size > 0 && (
+          <div style={{ background:"#FFF8E6", border:"1px solid #FDE68A", borderRadius:10,
+            padding:"10px 14px", marginBottom:12, display:"flex", alignItems:"center", gap:8 }}>
+            <span style={{ fontSize:16 }}>⚠️</span>
+            <p style={{ fontSize:13, color:"#856404", margin:0, fontWeight:600 }}>
+              {selectedAllergens.size} allergène{selectedAllergens.size > 1 ? "s" : ""} filtré{selectedAllergens.size > 1 ? "s" : ""} — les plats incompatibles sont grisés
+            </p>
+          </div>
+        )}
+
+        {activeCats.length === 0 && (
+          <div style={{ textAlign:"center", padding:"48px 20px" }}>
+            <p style={{ fontSize:32, marginBottom:8 }}>🔍</p>
+            <p style={{ fontSize:14, color:"#AAA" }}>{ui.noResult}</p>
+          </div>
+        )}
+
         {CATEGORY_ORDER.map((cat) => {
           const items = grouped[cat];
           if (!items?.length) return null;
+
+          // Sépare compatible / incompatible
+          const compatible = items.filter(r => !isIncompatible(r));
+          const incompatible = items.filter(r => isIncompatible(r));
+
           return (
-            <div key={cat} style={s.category}>
-              <p style={s.categoryTitle}>{catLabels[cat]}</p>
-              {items.map((recipe) => {
-                const incompatible = isIncompatible(recipe);
-                return (
-                  <div key={recipe.id} style={{ ...s.recipeCard, ...(incompatible ? s.recipeCardIncompat : {}) }}>
-                    <div style={s.recipeTop}>
-                      <p style={{ ...s.recipeName, ...(incompatible ? { color: "#999" } : {}) }}>
-                        {getDisplayName(recipe)}
-                      </p>
-                      {incompatible && (
-                        <div style={s.warningBadge}>
-                          <span>⚠️</span>
-                          <span style={{ fontSize: 11, fontWeight: 600 }}>{ui.incompatible}</span>
-                        </div>
-                      )}
-                    </div>
+            <div key={cat} ref={el => categoryRefs.current[cat] = el} style={{ marginBottom:28 }}>
+              {/* Header catégorie */}
+              <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:12 }}>
+                <p style={{ fontSize:12, fontWeight:800, color:"#AAA", textTransform:"uppercase",
+                  letterSpacing:"0.1em", margin:0 }}>
+                  {catLabels[cat]}
+                </p>
+                <div style={{ flex:1, height:1, background:"#EBEBEB" }} />
+                <span style={{ fontSize:11, color:"#CCC", fontWeight:600 }}>{items.length}</span>
+              </div>
 
-                    {getDisplayIngredients(recipe).length > 0 && (
-                      <p style={{ ...s.recipeIngredients, ...(incompatible ? { color: "#CCC" } : {}) }}>
-                        {getDisplayIngredients(recipe).join(", ")}
-                      </p>
-                    )}
+              {/* Plats compatibles */}
+              {compatible.map(recipe => (
+                <RecipeCard key={recipe.id} recipe={recipe}
+                  getDisplayName={getDisplayName}
+                  getDisplayIngredients={getDisplayIngredients}
+                  allergenNames={allergenNames}
+                  selectedAllergens={selectedAllergens}
+                  incompatible={false}
+                  brandColor={brandColor}
+                />
+              ))}
 
-                    {/* Pastilles régime */}
-                    <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginBottom: recipe.allergens?.length > 0 ? 6 : 0 }}>
-                      {recipe.is_vegan && (
-                        <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 20, background: "#F0FFF4", color: "#155724", border: "1px solid #C6F6D5" }}>Vegan</span>
-                      )}
-                      {recipe.is_vegetarian && !recipe.is_vegan && (
-                        <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 20, background: "#F0FFF4", color: "#155724", border: "1px solid #C6F6D5" }}>Végétarien</span>
-                      )}
-                      {recipe.meat_certification && (
-                        <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 20, background: "#F7F7F5", color: "#555", border: "1px solid #E0E0E0" }}>
-                          {recipe.meat_certification === "halal" ? "Halal" : recipe.meat_certification === "casher" ? "Casher" : recipe.meat_certification === "label_rouge" ? "Label Rouge" : "Bio"}
-                        </span>
-                      )}
-                    </div>
+              {/* Séparateur incompatibles */}
+              {incompatible.length > 0 && selectedAllergens.size > 0 && (
+                <div style={{ display:"flex", alignItems:"center", gap:8, margin:"10px 0 8px" }}>
+                  <div style={{ flex:1, height:1, background:"#FFE4E4" }} />
+                  <span style={{ fontSize:11, color:"#E57373", fontWeight:700, whiteSpace:"nowrap" }}>
+                    ⚠️ Contient vos allergènes
+                  </span>
+                  <div style={{ flex:1, height:1, background:"#FFE4E4" }} />
+                </div>
+              )}
 
-                    {recipe.allergens?.length > 0 && (
-                      <div style={s.recipePills}>
-                        {recipe.allergens.map((id) => {
-                          const a = ALLERGENS.find((x) => x.id === id);
-                          if (!a) return null;
-                          const mine = selectedAllergens.has(id);
-                          return (
-                            <span key={id} style={{
-                              ...s.pill,
-                              background: mine ? "#FFE0E0" : a.color,
-                              color: mine ? "#842029" : a.text,
-                              border: mine ? "1px solid #FF9999" : "none",
-                              fontWeight: mine ? 700 : 500,
-                              display: "inline-flex", alignItems: "center", gap: 4,
-                            }}>
-                              <AllergenIcon id={id} size={11} color={mine ? "#842029" : a.text} />
-                              {allergenNames[id] || a.label}
-                            </span>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+              {/* Plats incompatibles */}
+              {incompatible.map(recipe => (
+                <RecipeCard key={recipe.id} recipe={recipe}
+                  getDisplayName={getDisplayName}
+                  getDisplayIngredients={getDisplayIngredients}
+                  allergenNames={allergenNames}
+                  selectedAllergens={selectedAllergens}
+                  incompatible={true}
+                  brandColor={brandColor}
+                />
+              ))}
             </div>
           );
         })}
       </div>
 
-      <div style={s.footer}>
-        <p style={s.footerText}>{ui.poweredBy}</p>
-        <p style={s.footerBrand}>🛡️ MenuSafe</p>
-        <p style={s.footerLegal}>Conforme règlement UE n°1169/2011 (INCO)</p>
+      {/* ── FOOTER ── */}
+      <div style={{ padding:"20px 16px 32px", textAlign:"center", borderTop:"1px solid #EBEBEB", background:"white" }}>
+        <div style={{ display:"inline-flex", alignItems:"center", gap:6 }}>
+          <svg width="16" height="16" viewBox="0 0 32 32" fill="none">
+            <path d="M16 2L4 7V17C4 23.5 9.5 29.2 16 31C22.5 29.2 28 23.5 28 17V7L16 2Z" fill="#1A1A1A"/>
+            <path d="M16 4.5L6 9V17C6 22.5 10.5 27.5 16 29.2C21.5 27.5 26 22.5 26 17V9L16 4.5Z" fill="#2D2D2D"/>
+            <path d="M10.5 16.5L14 20L21.5 12.5" stroke="#4ADE80" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          <span style={{ fontSize:12, fontWeight:700, color:"#888" }}>MenuSafe</span>
+        </div>
+        <p style={{ fontSize:10, color:"#CCC", margin:"4px 0 0" }}>Conforme règlement UE n°1169/2011 (INCO)</p>
       </div>
 
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      {/* Overlay fermeture dropdown langue */}
+      {langOpen && (
+        <div style={{ position:"fixed", inset:0, zIndex:99 }} onClick={() => setLangOpen(false)} />
+      )}
     </div>
   );
 }
 
-const s = {
-  page: { minHeight: "100vh", background: "#F7F7F5", fontFamily: "'Inter', -apple-system, sans-serif", maxWidth: 600, margin: "0 auto" },
-  loadPage: { minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" },
-  spinner: { width: 32, height: 32, border: "3px solid #F0F0F0", borderTop: "3px solid #1A1A1A", borderRadius: "50%", animation: "spin 0.8s linear infinite" },
-  header: { background: "#1A1A1A", padding: "20px 16px 16px" },
-  estName: { fontSize: 20, fontWeight: 800, color: "white", margin: "0 0 12px", letterSpacing: "-0.02em" },
-  langRow: { display: "flex", gap: 6, flexWrap: "wrap" },
-  langBtn: { width: 36, height: 36, borderRadius: 8, border: "1px solid rgba(255,255,255,0.15)", background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" },
-  langBtnActive: { background: "white", border: "1px solid white" },
-  allergenSection: { background: "white", padding: "16px", borderBottom: "1px solid #EBEBEB" },
-  allergenTitle: { fontSize: 15, fontWeight: 700, color: "#1A1A1A", margin: "0 0 4px" },
-  allergenSub: { fontSize: 12, color: "#888", margin: "0 0 12px", lineHeight: 1.4 },
-  allergenGrid: { display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 8 },
-  allergenBtn: { display: "flex", flexDirection: "column", alignItems: "center", gap: 5, padding: "10px 4px", borderRadius: 12, border: "1px solid #E8E8E8", background: "white", cursor: "pointer", transition: "all 0.15s" },
-  clearBtn: { marginTop: 10, fontSize: 12, fontWeight: 600, color: "#888", background: "none", border: "none", cursor: "pointer", padding: 0 },
-  menuBody: { padding: "12px 16px 32px" },
-  category: { marginBottom: 24 },
-  categoryTitle: { fontSize: 13, fontWeight: 700, color: "#888", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10, paddingBottom: 6, borderBottom: "1px solid #E8E8E8" },
-  recipeCard: { background: "white", borderRadius: 14, padding: "14px", marginBottom: 8, border: "1px solid #EBEBEB" },
-  recipeCardIncompat: { background: "#F9F9F9", border: "1px solid #F0F0F0", opacity: 0.65 },
-  recipeTop: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8, marginBottom: 4 },
-  recipeName: { fontSize: 15, fontWeight: 700, color: "#1A1A1A", margin: 0, flex: 1 },
-  warningBadge: { display: "inline-flex", alignItems: "center", gap: 4, background: "#FFF3CD", color: "#856404", border: "1px solid #FDDEA0", borderRadius: 20, padding: "3px 8px", flexShrink: 0 },
-  recipeIngredients: { fontSize: 12, color: "#888", margin: "0 0 8px", lineHeight: 1.5 },
-  recipePills: { display: "flex", flexWrap: "wrap", gap: 4 },
-  pill: { fontSize: 11, padding: "3px 8px", borderRadius: 20 },
-  footer: { padding: "20px 16px", textAlign: "center", borderTop: "1px solid #EBEBEB" },
-  footerText: { fontSize: 11, color: "#CCC", margin: "0 0 2px" },
-  footerBrand: { fontSize: 13, fontWeight: 700, color: "#888", margin: "0 0 4px" },
-  footerLegal: { fontSize: 10, color: "#CCC", margin: 0 },
-};
+// ── Composant card plat ────────────────────────────────────────────────────────
+function RecipeCard({ recipe, getDisplayName, getDisplayIngredients, allergenNames, selectedAllergens, incompatible, brandColor }) {
+  const [expanded, setExpanded] = useState(false);
+  const ingredients = getDisplayIngredients(recipe);
+  const SHOW_LIMIT = 4;
+
+  return (
+    <div
+      onClick={() => ingredients.length > SHOW_LIMIT && setExpanded(e => !e)}
+      style={{ background: incompatible ? "#FDF5F5" : "white",
+        border: incompatible ? "1px solid #F5C6C6" : "1px solid #EBEBEB",
+        borderRadius:14, padding:"14px", marginBottom:8,
+        opacity: incompatible ? 0.8 : 1,
+        cursor: ingredients.length > SHOW_LIMIT ? "pointer" : "default",
+        transition:"all 0.15s" }}>
+
+      {/* Nom + badge warning */}
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:10, marginBottom:ingredients.length > 0 ? 5 : 0 }}>
+        <p style={{ fontSize:15, fontWeight:700, color: incompatible ? "#C0A0A0" : "#1A1A1A",
+          margin:0, flex:1, lineHeight:1.3 }}>
+          {getDisplayName(recipe)}
+        </p>
+        {incompatible && (
+          <div style={{ display:"flex", alignItems:"center", gap:4,
+            background:"#FFEBEB", border:"1px solid #FFBBBB",
+            borderRadius:20, padding:"3px 9px", flexShrink:0 }}>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#CC3333" strokeWidth="2.5">
+              <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+            <span style={{ fontSize:11, fontWeight:700, color:"#CC3333" }}>Allergène</span>
+          </div>
+        )}
+      </div>
+
+      {/* Ingrédients */}
+      {ingredients.length > 0 && (
+        <p style={{ fontSize:12, color: incompatible ? "#C8AEAD" : "#999",
+          margin:"0 0 8px", lineHeight:1.5 }}>
+          {expanded || ingredients.length <= SHOW_LIMIT
+            ? ingredients.join(", ")
+            : ingredients.slice(0, SHOW_LIMIT).join(", ") + "..."}
+          {ingredients.length > SHOW_LIMIT && (
+            <span style={{ color: brandColor, fontWeight:700, marginLeft:4, fontSize:11 }}>
+              {expanded ? " − voir moins" : ` +${ingredients.length - SHOW_LIMIT}`}
+            </span>
+          )}
+        </p>
+      )}
+
+      {/* Pastilles régime */}
+      {(recipe.is_vegan || recipe.is_vegetarian || recipe.meat_certification) && (
+        <div style={{ display:"flex", gap:4, flexWrap:"wrap", marginBottom:8 }}>
+          {recipe.is_vegan && (
+            <span style={{ fontSize:10, fontWeight:700, padding:"2px 8px", borderRadius:20,
+              background:"#F0FFF4", color:"#155724", border:"1px solid #C6F6D5" }}>Vegan</span>
+          )}
+          {recipe.is_vegetarian && !recipe.is_vegan && (
+            <span style={{ fontSize:10, fontWeight:700, padding:"2px 8px", borderRadius:20,
+              background:"#F0FFF4", color:"#155724", border:"1px solid #C6F6D5" }}>Végétarien</span>
+          )}
+          {recipe.meat_certification && (
+            <span style={{ fontSize:10, fontWeight:700, padding:"2px 8px", borderRadius:20,
+              background:"#F7F7F5", color:"#555", border:"1px solid #E0E0E0" }}>
+              {recipe.meat_certification === "halal" ? "Halal"
+                : recipe.meat_certification === "casher" ? "Casher"
+                : recipe.meat_certification === "label_rouge" ? "Label Rouge"
+                : "Bio"}
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* Pills allergènes */}
+      {recipe.allergens?.length > 0 && (
+        <div style={{ display:"flex", flexWrap:"wrap", gap:4 }}>
+          {recipe.allergens.map((id) => {
+            const a = ALLERGENS.find((x) => x.id === id);
+            if (!a) return null;
+            const mine = selectedAllergens.has(id);
+            return (
+              <span key={id} style={{ fontSize:11, padding:"3px 8px", borderRadius:20,
+                display:"inline-flex", alignItems:"center", gap:4,
+                background: mine ? "#FFDDDD" : a.color,
+                color: mine ? "#991111" : a.text,
+                border: mine ? "1px solid #FF9999" : "none",
+                fontWeight: mine ? 700 : 500 }}>
+                <AllergenIcon id={id} size={11} color={mine ? "#991111" : a.text} />
+                {allergenNames[id] || a.label}
+              </span>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}

@@ -38,17 +38,42 @@ const CATEGORY_LABELS = {
 };
 
 const UI_TEXT = {
-  fr: { allergTitle:"Mes allergies", allergSub:"Touchez vos allergènes pour filtrer", incompatible:"Contient vos allergènes", clearFilters:"Effacer", poweredBy:"Carte allergènes propulsée par", loading:"Chargement...", notFound:"Menu introuvable.", search:"Rechercher un plat...", all:"Tous", veg:"Végétarien", vegan:"Vegan", noResult:"Aucun plat ne correspond à votre recherche." },
-  en: { allergTitle:"My allergies", allergSub:"Tap allergens to filter", incompatible:"Contains your allergens", clearFilters:"Clear", poweredBy:"Allergen menu powered by", loading:"Loading...", notFound:"Menu not found.", search:"Search a dish...", all:"All", veg:"Vegetarian", vegan:"Vegan", noResult:"No dish matches your search." },
-  es: { allergTitle:"Mis alergias", allergSub:"Toque sus alérgenos para filtrar", incompatible:"Contiene sus alérgenos", clearFilters:"Borrar", poweredBy:"Carta alérgenos impulsada por", loading:"Cargando...", notFound:"Menú no encontrado.", search:"Buscar un plato...", all:"Todos", veg:"Vegetariano", vegan:"Vegano", noResult:"Ningún plato coincide." },
-  de: { allergTitle:"Meine Allergien", allergSub:"Allergene antippen zum Filtern", incompatible:"Enthält Ihre Allergene", clearFilters:"Löschen", poweredBy:"Allergenkarte bereitgestellt von", loading:"Laden...", notFound:"Menü nicht gefunden.", search:"Gericht suchen...", all:"Alle", veg:"Vegetarisch", vegan:"Vegan", noResult:"Kein Gericht gefunden." },
-  it: { allergTitle:"Le mie allergie", allergSub:"Tocca gli allergeni per filtrare", incompatible:"Contiene i tuoi allergeni", clearFilters:"Cancella", poweredBy:"Menu allergeni offerto da", loading:"Caricamento...", notFound:"Menu non trovato.", search:"Cerca un piatto...", all:"Tutti", veg:"Vegetariano", vegan:"Vegano", noResult:"Nessun piatto trovato." },
-  nl: { allergTitle:"Mijn allergieën", allergSub:"Tik allergenen aan om te filteren", incompatible:"Bevat uw allergenen", clearFilters:"Wissen", poweredBy:"Allergenenkaart aangedreven door", loading:"Laden...", notFound:"Menu niet gevonden.", search:"Zoek een gerecht...", all:"Alles", veg:"Vegetarisch", vegan:"Veganistisch", noResult:"Geen gerecht gevonden." },
-  ja: { allergTitle:"アレルギー選択", allergSub:"アレルゲンをタップしてフィルター", incompatible:"アレルゲンを含む", clearFilters:"クリア", poweredBy:"アレルゲンメニュー提供：", loading:"読み込み中...", notFound:"メニューが見つかりません。", search:"料理を検索...", all:"すべて", veg:"ベジタリアン", vegan:"ビーガン", noResult:"該当する料理がありません。" },
-  zh: { allergTitle:"我的过敏原", allergSub:"点击过敏原进行筛选", incompatible:"含有您的过敏原", clearFilters:"清除", poweredBy:"过敏原菜单由以下提供：", loading:"加载中...", notFound:"菜单未找到。", search:"搜索菜肴...", all:"全部", veg:"素食", vegan:"纯素", noResult:"未找到匹配的菜肴。" },
+  fr: { allergTitle:"Mes allergies", allergSub:"Touchez vos allergènes pour filtrer", incompatible:"Contient vos allergènes", clearFilters:"Effacer", poweredBy:"Carte allergènes propulsée par", loading:"Chargement...", notFound:"Menu introuvable.", search:"Rechercher un plat...", all:"Tous", veg:"Végétarien", vegan:"Vegan", noResult:"Aucun plat ne correspond." },
+  en: { allergTitle:"My allergies", allergSub:"Tap allergens to filter", incompatible:"Contains your allergens", clearFilters:"Clear", poweredBy:"Allergen menu powered by", loading:"Loading...", notFound:"Menu not found.", search:"Search a dish...", all:"All", veg:"Vegetarian", vegan:"Vegan", noResult:"No dish matches." },
+  es: { allergTitle:"Mis alergias", allergSub:"Toque sus alérgenos para filtrar", incompatible:"Contiene sus alérgenos", clearFilters:"Borrar", poweredBy:"Carta impulsada por", loading:"Cargando...", notFound:"Menú no encontrado.", search:"Buscar un plato...", all:"Todos", veg:"Vegetariano", vegan:"Vegano", noResult:"Ningún plato coincide." },
+  de: { allergTitle:"Meine Allergien", allergSub:"Allergene antippen zum Filtern", incompatible:"Enthält Ihre Allergene", clearFilters:"Löschen", poweredBy:"Bereitgestellt von", loading:"Laden...", notFound:"Menü nicht gefunden.", search:"Gericht suchen...", all:"Alle", veg:"Vegetarisch", vegan:"Vegan", noResult:"Kein Gericht gefunden." },
+  it: { allergTitle:"Le mie allergie", allergSub:"Tocca gli allergeni per filtrare", incompatible:"Contiene i tuoi allergeni", clearFilters:"Cancella", poweredBy:"Offerto da", loading:"Caricamento...", notFound:"Menu non trovato.", search:"Cerca un piatto...", all:"Tutti", veg:"Vegetariano", vegan:"Vegano", noResult:"Nessun piatto trovato." },
+  nl: { allergTitle:"Mijn allergieën", allergSub:"Tik allergenen aan om te filteren", incompatible:"Bevat uw allergenen", clearFilters:"Wissen", poweredBy:"Aangedreven door", loading:"Laden...", notFound:"Menu niet gevonden.", search:"Zoek een gerecht...", all:"Alles", veg:"Vegetarisch", vegan:"Veganistisch", noResult:"Geen gerecht gevonden." },
+  ja: { allergTitle:"アレルギー選択", allergSub:"アレルゲンをタップしてフィルター", incompatible:"アレルゲンを含む", clearFilters:"クリア", poweredBy:"提供：", loading:"読み込み中...", notFound:"メニューが見つかりません。", search:"料理を検索...", all:"すべて", veg:"ベジタリアン", vegan:"ビーガン", noResult:"該当する料理がありません。" },
+  zh: { allergTitle:"我的过敏原", allergSub:"点击过敏原进行筛选", incompatible:"含有您的过敏原", clearFilters:"清除", poweredBy:"由以下提供：", loading:"加载中...", notFound:"菜单未找到。", search:"搜索菜肴...", all:"全部", veg:"素食", vegan:"纯素", noResult:"未找到匹配的菜肴。" },
 };
 
 const CATEGORY_ORDER = ["entree", "plat", "dessert", "boisson", "autre"];
+
+// ── Utilitaires ───────────────────────────────────────────────────────────────
+
+function getDeviceType() {
+  if (typeof window === "undefined") return "desktop";
+  const ua = navigator.userAgent;
+  if (/tablet|ipad|playbook|silk/i.test(ua)) return "tablet";
+  if (/mobile|iphone|ipod|android|blackberry|mini|windows\sce|palm/i.test(ua)) return "mobile";
+  return "desktop";
+}
+
+function generateSessionId() {
+  // Réutilise la session si déjà générée dans la page (navigation SPA)
+  if (typeof window !== "undefined") {
+    let sid = sessionStorage.getItem("ms_session_id");
+    if (!sid) {
+      sid = crypto.randomUUID();
+      sessionStorage.setItem("ms_session_id", sid);
+    }
+    return sid;
+  }
+  return crypto.randomUUID();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 export default function MenuPage() {
   const params = useParams();
@@ -64,9 +89,31 @@ export default function MenuPage() {
   const [loading, setLoading]       = useState(true);
   const [notFound, setNotFound]     = useState(null);
   const [langOpen, setLangOpen]     = useState(false);
-  const tabsRef = useRef(null);
   const categoryRefs = useRef({});
+
+  // Tracking state
+  const scanIdRef      = useRef(null);
+  const sessionIdRef   = useRef(null);
+  const estIdRef       = useRef(null);
+  const isFirstLang    = useRef(true); // ignore le set initial fr → évite faux positif
+
   const supabase = createClient();
+
+  // ── Tracking helpers ────────────────────────────────────────────────────────
+
+  const trackEvent = useCallback(async (event_type, payload) => {
+    if (!estIdRef.current || !sessionIdRef.current) return;
+    try {
+      await supabase.from("qr_events").insert({
+        establishment_id: estIdRef.current,
+        session_id: sessionIdRef.current,
+        event_type,
+        payload,
+      });
+    } catch (_) { /* silencieux — ne jamais bloquer l'UX */ }
+  }, []);
+
+  // ── Chargement carte ────────────────────────────────────────────────────────
 
   useEffect(() => {
     if (!slug) return;
@@ -80,6 +127,7 @@ export default function MenuPage() {
 
       if (!menuData) { setNotFound(true); setLoading(false); return; }
       setEst(menuData.establishments);
+      estIdRef.current = menuData.establishments.id;
 
       const { data: subData } = await supabase
         .from("subscriptions")
@@ -94,43 +142,54 @@ export default function MenuPage() {
       const isFree = !subData?.status || subData?.status === "free";
 
       if (!isTrialing && !isActive && !isFree) {
-        setNotFound("unavailable");
-        setLoading(false);
-        return;
+        setNotFound("unavailable"); setLoading(false); return;
       }
 
       const { data: recipesData } = await supabase
         .from("recipes")
         .select("id, dish_name, category, ingredients, allergens, translations_cache, is_vegan, is_vegetarian, meat_certification")
         .eq("establishment_id", menuData.establishment_id)
-        .order("category")
-        .order("dish_name");
+        .order("category").order("dish_name");
 
       setRecipes(recipesData ?? []);
       setLoading(false);
 
-      // ── Tracking scan QR code (silencieux, non bloquant) ──
-      if (menuData.establishments?.id) {
-        fetch("/api/track-scan", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            establishment_id: menuData.establishments.id,
-            menu_slug: slug,
-            lang: navigator?.language?.slice(0, 2) || "fr",
-            user_agent: navigator?.userAgent || "",
-          }),
-        }).catch(() => {});
-      }
+      // ── Enregistre le scan initial ─────────────────────────────────────────
+      const sessionId = generateSessionId();
+      sessionIdRef.current = sessionId;
+      try {
+        const { data: scanRow } = await supabase.from("qr_scans").insert({
+          establishment_id: menuData.establishments.id,
+          session_id: sessionId,
+          device_type: getDeviceType(),
+        }).select("id").single();
+        if (scanRow) scanIdRef.current = scanRow.id;
+      } catch (_) {}
     })();
   }, [slug]);
+
+  // ── Track changement de langue ──────────────────────────────────────────────
+  useEffect(() => {
+    if (isFirstLang.current) { isFirstLang.current = false; return; }
+    trackEvent("lang_change", { lang });
+  }, [lang]);
+
+  // ── Interactions ─────────────────────────────────────────────────────────────
 
   function toggleAllergen(id) {
     setSel((prev) => {
       const next = new Set(prev);
+      const active = !prev.has(id);
       next.has(id) ? next.delete(id) : next.add(id);
+      // Track après le setState
+      trackEvent("allergen_toggle", { allergen: id, active });
       return next;
     });
+  }
+
+  function handleDietFilter(key) {
+    setDietFilter(key);
+    trackEvent("diet_filter", { filter: key });
   }
 
   function getDisplayName(recipe) {
@@ -169,8 +228,7 @@ export default function MenuPage() {
     setActiveTab(cat);
     const el = categoryRefs.current[cat];
     if (el) {
-      const offset = 120;
-      const top = el.getBoundingClientRect().top + window.scrollY - offset;
+      const top = el.getBoundingClientRect().top + window.scrollY - 120;
       window.scrollTo({ top, behavior: "smooth" });
     }
   }
@@ -182,7 +240,7 @@ export default function MenuPage() {
   const brandLogo  = establishment?.brand_logo_url || null;
 
   function hexToLuma(hex) {
-    const c = hex.replace("#", "");
+    const c = (hex || "#1A1A1A").replace("#", "");
     const r = parseInt(c.substr(0,2),16);
     const g = parseInt(c.substr(2,2),16);
     const b = parseInt(c.substr(4,2),16);
@@ -190,9 +248,11 @@ export default function MenuPage() {
   }
   const brandTextColor = hexToLuma(brandColor) > 128 ? "#1A1A1A" : "#FFFFFF";
 
+  // ── États de chargement / erreur ─────────────────────────────────────────────
+
   if (loading) return (
     <div style={{ minHeight:"100vh", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", background:"#F7F7F5", fontFamily:"Inter,sans-serif" }}>
-      <div style={{ width:32, height:32, border:"3px solid #E8E8E8", borderTop:`3px solid ${brandColor || "#1A1A1A"}`, borderRadius:"50%", animation:"spin 0.8s linear infinite" }} />
+      <div style={{ width:32, height:32, border:"3px solid #E8E8E8", borderTop:`3px solid #1A1A1A`, borderRadius:"50%", animation:"spin 0.8s linear infinite" }} />
       <p style={{ color:"#999", fontSize:13, marginTop:14 }}>Chargement...</p>
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </div>
@@ -212,6 +272,8 @@ export default function MenuPage() {
       <p style={{ fontSize:14, color:"#999", marginTop:8 }}>{ui.notFound}</p>
     </div>
   );
+
+  // ─────────────────────────────────────────────────────────────────────────────
 
   return (
     <div style={{ minHeight:"100vh", background:"#F7F7F5", fontFamily:"'Inter',-apple-system,sans-serif", maxWidth:640, margin:"0 auto" }}>
@@ -237,9 +299,9 @@ export default function MenuPage() {
             </p>
           </div>
 
+          {/* Sélecteur langue */}
           <div style={{ position:"relative", flexShrink:0 }}>
-            <button
-              onClick={() => setLangOpen(o => !o)}
+            <button onClick={() => setLangOpen(o => !o)}
               style={{ display:"flex", alignItems:"center", gap:6, background:"rgba(255,255,255,0.15)",
                 border:"1px solid rgba(255,255,255,0.3)", borderRadius:10, padding:"6px 10px",
                 cursor:"pointer", color:brandTextColor, fontSize:13, fontWeight:700 }}>
@@ -271,12 +333,12 @@ export default function MenuPage() {
         </div>
       </div>
 
-      {/* ── SECTION ALLERGÈNES ── */}
+      {/* ── ALLERGÈNES ── */}
       <div style={{ background:"white", borderBottom:"1px solid #EBEBEB", padding:"16px 16px 12px" }}>
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:4 }}>
           <p style={{ fontSize:14, fontWeight:700, color:"#1A1A1A", margin:0 }}>{ui.allergTitle}</p>
           {selectedAllergens.size > 0 && (
-            <button onClick={() => setSel(new Set())}
+            <button onClick={() => { setSel(new Set()); }}
               style={{ fontSize:12, fontWeight:700, color:"#888", background:"#F0F0F0",
                 border:"none", borderRadius:20, padding:"4px 12px", cursor:"pointer" }}>
               × {ui.clearFilters} ({selectedAllergens.size})
@@ -298,8 +360,7 @@ export default function MenuPage() {
                   transform: active ? "scale(1.05)" : "scale(1)" }}>
                 <AllergenIcon id={a.id} size={20} color={active ? a.text : "#BBBBBB"} />
                 <span style={{ fontSize:8.5, fontWeight:active ? 700 : 500,
-                  textAlign:"center", lineHeight:1.2,
-                  color: active ? a.text : "#999" }}>
+                  textAlign:"center", lineHeight:1.2, color: active ? a.text : "#999" }}>
                   {allergenNames[a.id] || a.label}
                 </span>
               </button>
@@ -314,7 +375,7 @@ export default function MenuPage() {
               { key:"vegetarian", label: ui.veg },
               { key:"vegan", label: ui.vegan },
             ].map(({ key, label }) => (
-              <button key={key} onClick={() => setDietFilter(key)}
+              <button key={key} onClick={() => handleDietFilter(key)}
                 style={{ fontSize:12, fontWeight:700, padding:"5px 14px", borderRadius:20, cursor:"pointer",
                   background: dietFilter === key ? brandColor : "white",
                   color: dietFilter === key ? brandTextColor : "#666",
@@ -334,31 +395,26 @@ export default function MenuPage() {
             width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#BBBBBB" strokeWidth="2.5" strokeLinecap="round">
             <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
           </svg>
-          <input
-            type="text" value={search} onChange={e => setSearch(e.target.value)}
+          <input type="text" value={search} onChange={e => setSearch(e.target.value)}
             placeholder={ui.search}
             style={{ width:"100%", padding:"10px 12px 10px 36px", fontSize:14,
               border:"1.5px solid #EBEBEB", borderRadius:10, outline:"none",
-              background:"#FAFAFA", color:"#1A1A1A", fontFamily:"inherit",
-              transition:"border 0.15s" }}
+              background:"#FAFAFA", color:"#1A1A1A", fontFamily:"inherit" }}
             onFocus={e => e.target.style.borderColor = brandColor}
             onBlur={e => e.target.style.borderColor = "#EBEBEB"}
           />
           {search && (
             <button onClick={() => setSearch("")}
               style={{ position:"absolute", right:10, top:"50%", transform:"translateY(-50%)",
-                background:"none", border:"none", cursor:"pointer", color:"#BBB", fontSize:16, padding:0 }}>
-              ×
-            </button>
+                background:"none", border:"none", cursor:"pointer", color:"#BBB", fontSize:18, padding:0 }}>×</button>
           )}
         </div>
       </div>
 
-      {/* ── TABS CATÉGORIES STICKY ── */}
+      {/* ── TABS CATÉGORIES ── */}
       {activeCats.length > 1 && (
-        <div ref={tabsRef} style={{ position:"sticky", top:62, zIndex:90,
-          background:"white", borderBottom:"1px solid #EBEBEB",
-          overflowX:"auto", display:"flex", gap:0, padding:"0 8px" }}>
+        <div style={{ position:"sticky", top:62, zIndex:90, background:"white",
+          borderBottom:"1px solid #EBEBEB", overflowX:"auto", display:"flex", padding:"0 8px" }}>
           {activeCats.map((cat) => (
             <button key={cat} onClick={() => scrollToCategory(cat)}
               style={{ padding:"11px 14px", fontSize:13, fontWeight:600, whiteSpace:"nowrap",
@@ -396,48 +452,32 @@ export default function MenuPage() {
           if (!items?.length) return null;
           const compatible = items.filter(r => !isIncompatible(r));
           const incompatible = items.filter(r => isIncompatible(r));
-
           return (
             <div key={cat} ref={el => categoryRefs.current[cat] = el} style={{ marginBottom:28 }}>
               <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:12 }}>
                 <p style={{ fontSize:12, fontWeight:800, color:"#AAA", textTransform:"uppercase",
-                  letterSpacing:"0.1em", margin:0 }}>
-                  {catLabels[cat]}
-                </p>
+                  letterSpacing:"0.1em", margin:0 }}>{catLabels[cat]}</p>
                 <div style={{ flex:1, height:1, background:"#EBEBEB" }} />
                 <span style={{ fontSize:11, color:"#CCC", fontWeight:600 }}>{items.length}</span>
               </div>
-
               {compatible.map(recipe => (
                 <RecipeCard key={recipe.id} recipe={recipe}
-                  getDisplayName={getDisplayName}
-                  getDisplayIngredients={getDisplayIngredients}
-                  allergenNames={allergenNames}
-                  selectedAllergens={selectedAllergens}
-                  incompatible={false}
-                  brandColor={brandColor}
-                />
+                  getDisplayName={getDisplayName} getDisplayIngredients={getDisplayIngredients}
+                  allergenNames={allergenNames} selectedAllergens={selectedAllergens}
+                  incompatible={false} brandColor={brandColor} />
               ))}
-
               {incompatible.length > 0 && selectedAllergens.size > 0 && (
                 <div style={{ display:"flex", alignItems:"center", gap:8, margin:"10px 0 8px" }}>
                   <div style={{ flex:1, height:1, background:"#FFE4E4" }} />
-                  <span style={{ fontSize:11, color:"#E57373", fontWeight:700, whiteSpace:"nowrap" }}>
-                    ⚠️ Contient vos allergènes
-                  </span>
+                  <span style={{ fontSize:11, color:"#E57373", fontWeight:700, whiteSpace:"nowrap" }}>⚠️ Contient vos allergènes</span>
                   <div style={{ flex:1, height:1, background:"#FFE4E4" }} />
                 </div>
               )}
-
               {incompatible.map(recipe => (
                 <RecipeCard key={recipe.id} recipe={recipe}
-                  getDisplayName={getDisplayName}
-                  getDisplayIngredients={getDisplayIngredients}
-                  allergenNames={allergenNames}
-                  selectedAllergens={selectedAllergens}
-                  incompatible={true}
-                  brandColor={brandColor}
-                />
+                  getDisplayName={getDisplayName} getDisplayIngredients={getDisplayIngredients}
+                  allergenNames={allergenNames} selectedAllergens={selectedAllergens}
+                  incompatible={true} brandColor={brandColor} />
               ))}
             </div>
           );
@@ -457,9 +497,7 @@ export default function MenuPage() {
         <p style={{ fontSize:10, color:"#CCC", margin:"4px 0 0" }}>Conforme règlement UE n°1169/2011 (INCO)</p>
       </div>
 
-      {langOpen && (
-        <div style={{ position:"fixed", inset:0, zIndex:99 }} onClick={() => setLangOpen(false)} />
-      )}
+      {langOpen && <div style={{ position:"fixed", inset:0, zIndex:99 }} onClick={() => setLangOpen(false)} />}
     </div>
   );
 }
@@ -470,18 +508,15 @@ function RecipeCard({ recipe, getDisplayName, getDisplayIngredients, allergenNam
   const SHOW_LIMIT = 4;
 
   return (
-    <div
-      onClick={() => ingredients.length > SHOW_LIMIT && setExpanded(e => !e)}
+    <div onClick={() => ingredients.length > SHOW_LIMIT && setExpanded(e => !e)}
       style={{ background: incompatible ? "#FDF5F5" : "white",
         border: incompatible ? "1px solid #F5C6C6" : "1px solid #EBEBEB",
         borderRadius:14, padding:"14px", marginBottom:8,
         opacity: incompatible ? 0.8 : 1,
-        cursor: ingredients.length > SHOW_LIMIT ? "pointer" : "default",
-        transition:"all 0.15s" }}>
+        cursor: ingredients.length > SHOW_LIMIT ? "pointer" : "default" }}>
 
-      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:10, marginBottom:ingredients.length > 0 ? 5 : 0 }}>
-        <p style={{ fontSize:15, fontWeight:700, color: incompatible ? "#C0A0A0" : "#1A1A1A",
-          margin:0, flex:1, lineHeight:1.3 }}>
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:10, marginBottom: ingredients.length > 0 ? 5 : 0 }}>
+        <p style={{ fontSize:15, fontWeight:700, color: incompatible ? "#C0A0A0" : "#1A1A1A", margin:0, flex:1, lineHeight:1.3 }}>
           {getDisplayName(recipe)}
         </p>
         {incompatible && (
@@ -489,7 +524,8 @@ function RecipeCard({ recipe, getDisplayName, getDisplayIngredients, allergenNam
             background:"#FFEBEB", border:"1px solid #FFBBBB",
             borderRadius:20, padding:"3px 9px", flexShrink:0 }}>
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#CC3333" strokeWidth="2.5">
-              <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+              <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
             </svg>
             <span style={{ fontSize:11, fontWeight:700, color:"#CC3333" }}>Allergène</span>
           </div>
@@ -497,8 +533,7 @@ function RecipeCard({ recipe, getDisplayName, getDisplayIngredients, allergenNam
       </div>
 
       {ingredients.length > 0 && (
-        <p style={{ fontSize:12, color: incompatible ? "#C8AEAD" : "#999",
-          margin:"0 0 8px", lineHeight:1.5 }}>
+        <p style={{ fontSize:12, color: incompatible ? "#C8AEAD" : "#999", margin:"0 0 8px", lineHeight:1.5 }}>
           {expanded || ingredients.length <= SHOW_LIMIT
             ? ingredients.join(", ")
             : ingredients.slice(0, SHOW_LIMIT).join(", ") + "..."}
@@ -513,20 +548,14 @@ function RecipeCard({ recipe, getDisplayName, getDisplayIngredients, allergenNam
       {(recipe.is_vegan || recipe.is_vegetarian || recipe.meat_certification) && (
         <div style={{ display:"flex", gap:4, flexWrap:"wrap", marginBottom:8 }}>
           {recipe.is_vegan && (
-            <span style={{ fontSize:10, fontWeight:700, padding:"2px 8px", borderRadius:20,
-              background:"#F0FFF4", color:"#155724", border:"1px solid #C6F6D5" }}>Vegan</span>
+            <span style={{ fontSize:10, fontWeight:700, padding:"2px 8px", borderRadius:20, background:"#F0FFF4", color:"#155724", border:"1px solid #C6F6D5" }}>Vegan</span>
           )}
           {recipe.is_vegetarian && !recipe.is_vegan && (
-            <span style={{ fontSize:10, fontWeight:700, padding:"2px 8px", borderRadius:20,
-              background:"#F0FFF4", color:"#155724", border:"1px solid #C6F6D5" }}>Végétarien</span>
+            <span style={{ fontSize:10, fontWeight:700, padding:"2px 8px", borderRadius:20, background:"#F0FFF4", color:"#155724", border:"1px solid #C6F6D5" }}>Végétarien</span>
           )}
           {recipe.meat_certification && (
-            <span style={{ fontSize:10, fontWeight:700, padding:"2px 8px", borderRadius:20,
-              background:"#F7F7F5", color:"#555", border:"1px solid #E0E0E0" }}>
-              {recipe.meat_certification === "halal" ? "Halal"
-                : recipe.meat_certification === "casher" ? "Casher"
-                : recipe.meat_certification === "label_rouge" ? "Label Rouge"
-                : "Bio"}
+            <span style={{ fontSize:10, fontWeight:700, padding:"2px 8px", borderRadius:20, background:"#F7F7F5", color:"#555", border:"1px solid #E0E0E0" }}>
+              {recipe.meat_certification === "halal" ? "Halal" : recipe.meat_certification === "casher" ? "Casher" : recipe.meat_certification === "label_rouge" ? "Label Rouge" : "Bio"}
             </span>
           )}
         </div>

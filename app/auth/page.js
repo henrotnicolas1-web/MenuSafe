@@ -14,14 +14,15 @@ function Logo({ size = 36 }) {
 }
 
 export default function AuthPage() {
-  const [mode, setMode]           = useState("login");
-  const [email, setEmail]         = useState("");
-  const [password, setPassword]   = useState("");
-  const [name, setName]           = useState("");
-  const [restaurant, setRestaurant] = useState("");
-  const [loading, setLoading]     = useState(false);
-  const [error, setError]         = useState("");
-  const [success, setSuccess]     = useState("");
+  const [mode, setMode]               = useState("login");
+  const [email, setEmail]             = useState("");
+  const [password, setPassword]       = useState("");
+  const [name, setName]               = useState("");
+  const [restaurant, setRestaurant]   = useState("");
+  const [loading, setLoading]         = useState(false);
+  const [error, setError]             = useState("");
+  const [success, setSuccess]         = useState("");
+  const [cguAccepted, setCguAccepted] = useState(false);
   const router = useRouter();
   const supabase = createClient();
 
@@ -37,30 +38,18 @@ export default function AuthPage() {
         password,
         options: { data: { full_name: name, restaurant_name: restaurant } },
       });
-
       if (error) {
         setError(error.message);
       } else {
-        // Met à jour le nom de l'établissement créé par défaut
         if (data?.user && restaurant) {
-          await supabase
-            .from("establishments")
-            .update({ name: restaurant })
-            .eq("user_id", data.user.id);
-          
-          await supabase
-            .from("profiles")
-            .update({ full_name: name })
-            .eq("id", data.user.id);
+          await supabase.from("establishments").update({ name: restaurant }).eq("user_id", data.user.id);
+          await supabase.from("profiles").update({ full_name: name }).eq("id", data.user.id);
         }
-        // Enregistre l'acceptation des CGU
         if (data?.user?.id) {
           supabase.from("profiles")
             .upsert({ user_id: data.user.id, cgu_accepted_at: new Date().toISOString(), cgu_version: "1.0" })
             .then(() => {});
         }
-
-        // Email de bienvenue (non bloquant)
         fetch("/api/send-welcome", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -73,19 +62,15 @@ export default function AuthPage() {
       if (error) {
         setError("Email ou mot de passe incorrect.");
       } else {
-        // Vérifie si l'utilisateur a un abonnement actif
         const { data: sub } = await supabase
           .from("subscriptions")
           .select("status, plan, trial_ends_at")
           .eq("user_id", data.user.id)
           .single();
-        
         const now = new Date();
         const trialEndsAt = sub?.trial_ends_at ? new Date(sub.trial_ends_at) : null;
         const isTrialing = sub?.status === "trialing" && trialEndsAt && trialEndsAt > now;
         const isActive = sub?.status === "active";
-        
-        // Nouveau compte sans abonnement → upgrade
         if (!isTrialing && !isActive) {
           router.push("/upgrade");
         } else {
@@ -103,12 +88,9 @@ export default function AuthPage() {
           <Logo size={36} />
           <p style={s.logoName}>MenuSafe</p>
         </div>
-
         <h1 style={s.title}>{mode === "login" ? "Connexion" : "Créer un compte"}</h1>
         <p style={s.sub}>
-          {mode === "login"
-            ? "Accédez à votre espace MenuSafe"
-            : "7 jours gratuits · Sans carte bancaire"}
+          {mode === "login" ? "Accédez à votre espace MenuSafe" : "7 jours gratuits · Sans carte bancaire"}
         </p>
 
         <form onSubmit={handleSubmit} style={s.form}>
@@ -161,7 +143,8 @@ export default function AuthPage() {
             </div>
           )}
 
-          <button style={{ ...s.btn, opacity: mode === "signup" && !cguAccepted ? 0.5 : 1, cursor: mode === "signup" && !cguAccepted ? "not-allowed" : "pointer" }}
+          <button
+            style={{ ...s.btn, opacity: mode === "signup" && !cguAccepted ? 0.5 : 1, cursor: mode === "signup" && !cguAccepted ? "not-allowed" : "pointer" }}
             type="submit" disabled={loading || (mode === "signup" && !cguAccepted)}>
             {loading ? "Chargement..." : mode === "login" ? "Se connecter →" : "Créer mon compte →"}
           </button>
@@ -170,7 +153,7 @@ export default function AuthPage() {
         <p style={s.toggle}>
           {mode === "login" ? "Pas encore de compte ? " : "Déjà un compte ? "}
           <button style={s.toggleBtn}
-            onClick={() => { setMode(mode === "login" ? "signup" : "login"); setError(""); setSuccess(""); }}>
+            onClick={() => { setMode(mode === "login" ? "signup" : "login"); setError(""); setSuccess(""); setCguAccepted(false); }}>
             {mode === "login" ? "S'inscrire gratuitement" : "Se connecter"}
           </button>
         </p>

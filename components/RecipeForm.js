@@ -24,6 +24,16 @@ export default function RecipeForm({ onSave, initialData }) {
   const [meatCert, setMeatCert]       = useState(initialData?.meatCertification ?? "");
   const inputRef = useRef(null);
   const detectedAllergens = new Set(detectAllergens(ingredients));
+  // allergensOverride: null = use auto-detected, Set = user has manually edited
+  const [allergensOverride, setAllergensOverride] = useState(
+    initialData?.allergens ? new Set(initialData.allergens) : null
+  );
+  // Active allergens = override if set, else auto-detected
+  const activeAllergens = allergensOverride ?? detectedAllergens;
+
+  // When ingredients change, reset override to follow auto-detection
+  // (unless user explicitly wants to keep manual edits)
+  const [manualMode, setManualMode] = useState(!!initialData?.allergens);
 
   // Auto-détection régimes et viandes
   const MEAT_KW = ["bœuf","veau","agneau","porc","poulet","canard","dinde","jambon","lardons","bacon","saucisse","chorizo","merguez","foie","lapin","caille","pintade","gibier"];
@@ -60,7 +70,7 @@ export default function RecipeForm({ onSave, initialData }) {
       dishName: dishName.trim(),
       category,
       ingredients,
-      allergens: [...detectedAllergens],
+      allergens: [...activeAllergens],
       isVegan,
       isVegetarian,
       meatCertification: meatCert || null,
@@ -141,18 +151,47 @@ export default function RecipeForm({ onSave, initialData }) {
       {/* Allergènes */}
       <p style={styles.sectionLabel}>
         Allergènes détectés
-        {detectedAllergens.size > 0 && <span style={styles.countBadge}>{detectedAllergens.size}</span>}
+        {activeAllergens.size > 0 && <span style={styles.countBadge}>{activeAllergens.size}</span>}
       </p>
-      <div style={styles.allergenGrid}>
-        {ALLERGENS.map((a) => {
-          const active = detectedAllergens.has(a.id);
-          return (
-            <div key={a.id} style={{ ...styles.allergenPill, background: active ? a.color : "transparent", border: active ? `1px solid ${a.color}` : "1px solid #E5E5E5", opacity: active ? 1 : 0.35 }}>
-              <span style={{ fontSize: 18 }}><AllergenIcon id={a.id} size={14} color={a.text} /> </span>
-              <span style={{ fontSize: 11, fontWeight: 500, color: active ? a.text : "#999" }}>{a.label}</span>
-            </div>
-          );
-        })}
+      <div style={{ marginBottom: 6 }}>
+        <p style={{ fontSize: 11, color: "#888", margin: "0 0 8px" }}>
+          Cliquez pour ajouter ou retirer un allergène manuellement
+        </p>
+        <div style={styles.allergenGrid}>
+          {ALLERGENS.map((a) => {
+            const active = activeAllergens.has(a.id);
+            const autoDetected = detectedAllergens.has(a.id);
+            return (
+              <button key={a.id}
+                onClick={() => {
+                  const next = new Set(activeAllergens);
+                  if (active) next.delete(a.id); else next.add(a.id);
+                  setAllergensOverride(next);
+                  setManualMode(true);
+                }}
+                style={{ ...styles.allergenPill, background: active ? a.color : "transparent",
+                  border: active ? `1.5px solid ${a.text}40` : "1px solid #E5E5E5",
+                  opacity: active ? 1 : 0.4, cursor: "pointer",
+                  position: "relative",
+                }}>
+                <AllergenIcon id={a.id} size={14} color={active ? a.text : "#999"} />
+                <span style={{ fontSize: 11, fontWeight: 500, color: active ? a.text : "#999" }}>{a.label}</span>
+                {active && !autoDetected && (
+                  <span style={{ position: "absolute", top: -4, right: -4, width: 10, height: 10, borderRadius: "50%", background: "#856404", border: "1.5px solid white" }} title="Ajouté manuellement" />
+                )}
+                {!active && autoDetected && (
+                  <span style={{ position: "absolute", top: -4, right: -4, width: 10, height: 10, borderRadius: "50%", background: "#CC0000", border: "1.5px solid white" }} title="Retiré manuellement" />
+                )}
+              </button>
+            );
+          })}
+        </div>
+        {manualMode && (
+          <button onClick={() => { setAllergensOverride(null); setManualMode(false); }}
+            style={{ fontSize: 11, color: "#888", background: "none", border: "none", cursor: "pointer", textDecoration: "underline", marginTop: 4 }}>
+            Réinitialiser la détection automatique
+          </button>
+        )}
       </div>
 
       {/* ── Pastilles régime et certification ── */}
@@ -231,7 +270,7 @@ const styles = {
   sectionLabel: { fontSize: 13, fontWeight: 600, color: "#444", marginBottom: 10, display: "flex", alignItems: "center", gap: 8 },
   countBadge: { background: "#1A1A1A", color: "white", fontSize: 11, fontWeight: 600, padding: "2px 7px", borderRadius: 20 },
   allergenGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))", gap: 8, marginBottom: "1.5rem" },
-  allergenPill: { display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", borderRadius: 10, transition: "all 0.15s ease" },
+  allergenPill: { display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", borderRadius: 10, transition: "all 0.15s ease", background: "none", fontFamily: "inherit" },
   btnAdd: { padding: "10px 16px", fontSize: 13, fontWeight: 600, background: "#1A1A1A", color: "white", border: "none", borderRadius: 10, cursor: "pointer", whiteSpace: "nowrap" },
   btnSave: { width: "100%", padding: "12px", fontSize: 14, fontWeight: 600, background: "#1A1A1A", color: "white", border: "none", borderRadius: 10, cursor: "pointer" },
   toast: { marginTop: 10, padding: "10px 14px", background: "#F0FFF4", color: "#276749", border: "1px solid #C6F6D5", borderRadius: 10, fontSize: 13, textAlign: "center" },

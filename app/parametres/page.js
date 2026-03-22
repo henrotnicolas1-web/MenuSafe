@@ -20,6 +20,15 @@ export default function ParamatresPage() {
   const [loading, setLoading]         = useState(true);
   const [activeTab, setActiveTab]     = useState("compte");
 
+  // Apparence / Branding
+  const [brandColor, setBrandColor]   = useState("#1A1A1A");
+  const [brandLogo, setBrandLogo]     = useState(null);
+  const [logoFile, setLogoFile]       = useState(null);
+  const [logoPreview, setLogoPreview] = useState(null);
+  const [brandSaving, setBrandSaving] = useState(false);
+  const [brandSaved, setBrandSaved]   = useState(false);
+  const [brandEstId, setBrandEstId]   = useState(null);
+
   // Compte
   const [newEmail, setNewEmail]       = useState("");
   const [emailSent, setEmailSent]     = useState(false);
@@ -96,6 +105,44 @@ export default function ParamatresPage() {
     router.push("/");
   }
 
+  async function handleSaveBrand() {
+    if (!brandEstId) return;
+    const isPro = ["pro", "reseau"].includes(sub?.plan);
+    if (!isPro) { setError("La personnalisation est disponible à partir du plan Pro."); return; }
+    setBrandSaving(true); setBrandSaved(false);
+    try {
+      let logoUrl = brandLogo;
+      if (logoFile) {
+        const ext = logoFile.name.split(".").pop();
+        const path = `${brandEstId}/logo.${ext}`;
+        const { data: upData, error: upErr } = await supabase.storage
+          .from("establishment-logos")
+          .upload(path, logoFile, { upsert: true });
+        if (upErr) throw upErr;
+        const { data: urlData } = supabase.storage
+          .from("establishment-logos")
+          .getPublicUrl(path);
+        logoUrl = urlData.publicUrl;
+      }
+      const { error: updateErr } = await supabase
+        .from("establishments")
+        .update({ brand_color: brandColor, brand_logo_url: logoUrl })
+        .eq("id", brandEstId);
+      if (updateErr) throw updateErr;
+      setBrandLogo(logoUrl);
+      setLogoFile(null);
+      setBrandSaved(true);
+      setEsts(prev => prev.map(e => e.id === brandEstId
+        ? { ...e, brand_color: brandColor, brand_logo_url: logoUrl }
+        : e
+      ));
+      setTimeout(() => setBrandSaved(false), 3000);
+    } catch (err) {
+      setError(err.message);
+    }
+    setBrandSaving(false);
+  }
+
   if (loading) return (
     <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Inter, sans-serif" }}>
       <p style={{ color: "#999" }}>Chargement...</p>
@@ -106,6 +153,7 @@ export default function ParamatresPage() {
     { id: "compte", label: "Mon compte" },
     { id: "securite", label: "Sécurité" },
     { id: "etablissements", label: "Établissements" },
+    { id: "apparence", label: "Apparence" },
     { id: "abonnement", label: "Abonnement" },
   ];
 
@@ -241,11 +289,195 @@ export default function ParamatresPage() {
           </div>
         )}
 
+        {/* ── Apparence ── */}
+        {activeTab === "apparence" && (
+          <ApparenceTab
+            ests={establishments}
+            brandEstId={brandEstId}
+            setBrandEstId={(id) => {
+              setBrandEstId(id);
+              const est = establishments.find(e => e.id === id);
+              if (est) {
+                setBrandColor(est.brand_color || "#1A1A1A");
+                setBrandLogo(est.brand_logo_url || null);
+                setLogoPreview(est.brand_logo_url || null);
+              }
+            }}
+            brandColor={brandColor}
+            setBrandColor={setBrandColor}
+            logoPreview={logoPreview}
+            setLogoPreview={setLogoPreview}
+            setLogoFile={setLogoFile}
+            brandSaving={brandSaving}
+            brandSaved={brandSaved}
+            sub={sub}
+            onSave={handleSaveBrand}
+          />
+        )}
+
         {/* ── Abonnement ── */}
         {activeTab === "abonnement" && (
           <AbonnementTab user={user} sub={sub} router={router} />
         )}
       </main>
+    </div>
+  );
+}
+
+
+function ApparenceTab({ ests, brandEstId, setBrandEstId, brandColor, setBrandColor,
+  logoPreview, setLogoPreview, setLogoFile, brandSaving, brandSaved, sub, onSave }) {
+
+  const isPro = ["pro", "reseau"].includes(sub?.plan);
+  const PRESETS = [
+    "#1A1A1A", "#2D6A4F", "#1B4332", "#0077B6", "#023E8A",
+    "#7B2D8B", "#C62A2F", "#E07A00", "#5C4033", "#264653",
+  ];
+
+  return (
+    <div>
+      <p style={{ fontSize: 15, fontWeight: 700, color: "#1A1A1A", margin: "0 0 4px" }}>Apparence de votre carte</p>
+      <p style={{ fontSize: 13, color: "#888", margin: "0 0 24px", lineHeight: 1.6 }}>
+        Personnalisez l'apparence de votre carte interactive client avec votre logo et vos couleurs.
+      </p>
+
+      {!isPro && (
+        <div style={{ background: "#FFF8E6", border: "1px solid #FDE68A", borderRadius: 12, padding: "14px 16px", marginBottom: 20 }}>
+          <p style={{ fontSize: 13, fontWeight: 700, color: "#856404", margin: "0 0 4px" }}>Fonctionnalité Pro</p>
+          <p style={{ fontSize: 12, color: "#856404", margin: 0 }}>
+            La personnalisation de l'apparence est disponible à partir du plan Pro.{" "}
+            <a href="/upgrade" style={{ color: "#856404", fontWeight: 700 }}>Passer au Pro →</a>
+          </p>
+        </div>
+      )}
+
+      {/* Sélecteur d'établissement */}
+      {ests.length > 1 && (
+        <div style={{ marginBottom: 20 }}>
+          <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#888", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>
+            Établissement
+          </label>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {ests.map(est => (
+              <button key={est.id} onClick={() => setBrandEstId(est.id)}
+                style={{ fontSize: 13, fontWeight: 600, padding: "7px 14px", borderRadius: 9, cursor: "pointer",
+                  background: brandEstId === est.id ? "#1A1A1A" : "white",
+                  color: brandEstId === est.id ? "white" : "#555",
+                  border: brandEstId === est.id ? "1px solid #1A1A1A" : "1px solid #E0E0E0",
+                }}>
+                {est.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Logo */}
+      <div style={{ marginBottom: 24 }}>
+        <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#888", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>
+          Logo du restaurant
+        </label>
+        <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
+          <div style={{ width: 80, height: 80, borderRadius: 12, border: "1px solid #EBEBEB", background: "#F7F7F5", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", flexShrink: 0 }}>
+            {logoPreview
+              ? <img src={logoPreview} alt="Logo" style={{ width: "100%", height: "100%", objectFit: "contain", padding: 8 }} />
+              : <span style={{ fontSize: 24, color: "#DDD" }}>✦</span>
+            }
+          </div>
+          <div>
+            <label htmlFor="logo-upload" style={{
+              display: "inline-block", fontSize: 13, fontWeight: 600, padding: "8px 16px",
+              background: isPro ? "#1A1A1A" : "#F0F0F0", color: isPro ? "white" : "#AAA",
+              borderRadius: 9, cursor: isPro ? "pointer" : "not-allowed",
+            }}>
+              {logoPreview ? "Changer le logo" : "Uploader un logo"}
+            </label>
+            <input id="logo-upload" type="file" accept="image/*" disabled={!isPro}
+              style={{ display: "none" }}
+              onChange={(e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                setLogoFile(file);
+                const reader = new FileReader();
+                reader.onload = (ev) => setLogoPreview(ev.target.result);
+                reader.readAsDataURL(file);
+              }}
+            />
+            <p style={{ fontSize: 11, color: "#BBB", marginTop: 6 }}>PNG, JPG, SVG · Max 2MB · Fond transparent recommandé</p>
+            {logoPreview && (
+              <button onClick={() => { setLogoPreview(null); setLogoFile(null); }}
+                style={{ fontSize: 12, color: "#CC0000", background: "none", border: "none", cursor: "pointer", padding: 0, marginTop: 4 }}>
+                Supprimer le logo
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Couleur */}
+      <div style={{ marginBottom: 28 }}>
+        <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#888", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>
+          Couleur principale
+        </label>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
+          {PRESETS.map(c => (
+            <button key={c} onClick={() => isPro && setBrandColor(c)}
+              style={{ width: 32, height: 32, borderRadius: 8, background: c, cursor: isPro ? "pointer" : "not-allowed",
+                border: brandColor === c ? "3px solid #1A1A1A" : "2px solid transparent",
+                boxShadow: brandColor === c ? "0 0 0 1px #1A1A1A" : "none",
+                transition: "all 0.15s",
+              }} title={c} />
+          ))}
+          <div style={{ position: "relative" }}>
+            <button style={{ width: 32, height: 32, borderRadius: 8, background: PRESETS.includes(brandColor) ? "#F0F0F0" : brandColor, border: "1px dashed #CCC", cursor: isPro ? "pointer" : "not-allowed", fontSize: 16 }}
+              onClick={() => isPro && document.getElementById("brand-color-picker").click()}>
+              +
+            </button>
+            <input id="brand-color-picker" type="color" value={brandColor}
+              disabled={!isPro}
+              onChange={e => setBrandColor(e.target.value)}
+              style={{ position: "absolute", opacity: 0, width: 0, height: 0 }}
+            />
+          </div>
+        </div>
+        <p style={{ fontSize: 12, color: "#888", margin: 0 }}>
+          Couleur sélectionnée : <strong style={{ color: brandColor }}>{brandColor}</strong>
+        </p>
+      </div>
+
+      {/* Preview carte */}
+      <div style={{ marginBottom: 24 }}>
+        <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#888", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>
+          Aperçu de votre carte
+        </label>
+        <div style={{ background: "#F7F7F5", borderRadius: 16, padding: 16, border: "1px solid #EBEBEB", maxWidth: 320 }}>
+          <div style={{ background: brandColor, borderRadius: 12, padding: "12px 16px", display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+            {logoPreview
+              ? <img src={logoPreview} alt="Logo" style={{ width: 32, height: 32, borderRadius: 8, objectFit: "contain", background: "white", padding: 2 }} />
+              : <div style={{ width: 32, height: 32, borderRadius: 8, background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <span style={{ fontSize: 16, color: "white" }}>✦</span>
+                </div>
+            }
+            <div>
+              <p style={{ fontSize: 13, fontWeight: 800, color: "white", margin: 0 }}>Mon Restaurant</p>
+              <p style={{ fontSize: 10, color: "rgba(255,255,255,0.7)", margin: 0 }}>Carte interactive</p>
+            </div>
+          </div>
+          <div style={{ background: "white", borderRadius: 10, padding: "10px 12px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <span style={{ fontSize: 12, fontWeight: 600, color: "#1A1A1A" }}>Exemple de plat</span>
+            <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 20, background: brandColor + "20", color: brandColor, fontWeight: 700 }}>✓</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Save */}
+      <button onClick={onSave} disabled={brandSaving || !isPro}
+        style={{ fontSize: 14, fontWeight: 700, padding: "12px 24px", background: isPro ? "#1A1A1A" : "#E0E0E0", color: isPro ? "white" : "#AAA", border: "none", borderRadius: 10, cursor: isPro ? "pointer" : "not-allowed" }}>
+        {brandSaving ? "Sauvegarde..." : "Sauvegarder l'apparence"}
+      </button>
+      {brandSaved && (
+        <p style={{ fontSize: 13, color: "#155724", marginTop: 10 }}>✓ Apparence sauvegardée — visible immédiatement sur votre carte</p>
+      )}
     </div>
   );
 }
@@ -315,7 +547,6 @@ function AbonnementTab({ user, sub, router }) {
         </div>
       )}
 
-      {/* Actions principales */}
       <div style={{ marginTop: 20, display: "flex", gap: 10, flexWrap: "wrap" }}>
         <button onClick={() => router.push("/upgrade")} style={s.btnPrimary}>
           Changer de formule →
@@ -328,7 +559,6 @@ function AbonnementTab({ user, sub, router }) {
         )}
       </div>
 
-      {/* Annulation */}
       {(isActive || isTrialing) && !cancelDone && (
         <>
           <div style={s.divider} />

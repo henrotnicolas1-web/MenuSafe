@@ -231,9 +231,9 @@ export default function MenuPage() {
             ].map(({ key, label }) => (
               <button key={key} onClick={() => setDietFilter(key)}
                 style={{ fontSize: 11, fontWeight: 700, padding: "5px 12px", borderRadius: 20, cursor: "pointer", transition: "all 0.15s",
-                  background: dietFilter === key ? "#1A1A1A" : "white",
+                  background: dietFilter === key ? brandColor : "white",
                   color: dietFilter === key ? "white" : "#666",
-                  border: dietFilter === key ? "1.5px solid #1A1A1A" : "1.5px solid #E0E0E0",
+                  border: dietFilter === key ? `1.5px solid ${brandColor}` : "1.5px solid #E0E0E0",
                 }}>
                 {label}
               </button>

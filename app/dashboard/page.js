@@ -356,6 +356,11 @@ export default function Dashboard() {
               onGeneratePDF={generateAllergenPDF}
               menuUrl={menuUrl}
             />
+
+            {/* ── Analytics QR Code ── */}
+            <div style={{ marginTop: 24, background: "white", border: "1px solid #EBEBEB", borderRadius: 16, padding: "20px" }}>
+              <AnalyticsPanel estId={activeEst} isPro={isPro} />
+            </div>
           </div>
         )}
       </main>

@@ -108,6 +108,20 @@ export default function MenuPage() {
 
       setRecipes(recipesData ?? []);
       setLoading(false);
+
+      // ── Tracking scan QR code (silencieux, non bloquant) ──
+      if (menuData.establishments?.id) {
+        fetch("/api/track-scan", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            establishment_id: menuData.establishments.id,
+            menu_slug: slug,
+            lang: navigator?.language?.slice(0, 2) || "fr",
+            user_agent: navigator?.userAgent || "",
+          }),
+        }).catch(() => {});
+      }
     })();
   }, [slug]);
 
@@ -155,7 +169,7 @@ export default function MenuPage() {
     setActiveTab(cat);
     const el = categoryRefs.current[cat];
     if (el) {
-      const offset = 120; // header + tabs height
+      const offset = 120;
       const top = el.getBoundingClientRect().top + window.scrollY - offset;
       window.scrollTo({ top, behavior: "smooth" });
     }
@@ -167,7 +181,6 @@ export default function MenuPage() {
   const brandColor = establishment?.brand_color || "#1A1A1A";
   const brandLogo  = establishment?.brand_logo_url || null;
 
-  // Couleur de contraste auto pour texte sur brandColor
   function hexToLuma(hex) {
     const c = hex.replace("#", "");
     const r = parseInt(c.substr(0,2),16);
@@ -211,7 +224,6 @@ export default function MenuPage() {
 
       {/* ── HEADER STICKY ── */}
       <div style={{ position:"sticky", top:0, zIndex:100, background:brandColor, boxShadow:"0 2px 12px rgba(0,0,0,0.15)" }}>
-        {/* Ligne 1 : logo + nom + sélecteur langue */}
         <div style={{ padding:"14px 16px 10px", display:"flex", alignItems:"center", justifyContent:"space-between", gap:12 }}>
           <div style={{ display:"flex", alignItems:"center", gap:10, minWidth:0 }}>
             {brandLogo && (
@@ -225,7 +237,6 @@ export default function MenuPage() {
             </p>
           </div>
 
-          {/* Sélecteur langue — bouton + dropdown */}
           <div style={{ position:"relative", flexShrink:0 }}>
             <button
               onClick={() => setLangOpen(o => !o)}
@@ -262,8 +273,6 @@ export default function MenuPage() {
 
       {/* ── SECTION ALLERGÈNES ── */}
       <div style={{ background:"white", borderBottom:"1px solid #EBEBEB", padding:"16px 16px 12px" }}>
-
-        {/* Titre + clear */}
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:4 }}>
           <p style={{ fontSize:14, fontWeight:700, color:"#1A1A1A", margin:0 }}>{ui.allergTitle}</p>
           {selectedAllergens.size > 0 && (
@@ -276,7 +285,6 @@ export default function MenuPage() {
         </div>
         <p style={{ fontSize:12, color:"#AAA", margin:"0 0 12px" }}>{ui.allergSub}</p>
 
-        {/* Grille allergènes 7 colonnes compacte */}
         <div style={{ display:"grid", gridTemplateColumns:"repeat(7, 1fr)", gap:6 }}>
           {ALLERGENS.map((a) => {
             const active = selectedAllergens.has(a.id);
@@ -299,7 +307,6 @@ export default function MenuPage() {
           })}
         </div>
 
-        {/* Filtres régime — seulement si pertinent */}
         {recipes.some(r => r.is_vegetarian || r.is_vegan) && (
           <div style={{ display:"flex", gap:6, marginTop:12 }}>
             {[
@@ -367,8 +374,6 @@ export default function MenuPage() {
 
       {/* ── MENU ── */}
       <div style={{ padding:"12px 16px 48px" }}>
-
-        {/* Résumé filtres actifs */}
         {selectedAllergens.size > 0 && (
           <div style={{ background:"#FFF8E6", border:"1px solid #FDE68A", borderRadius:10,
             padding:"10px 14px", marginBottom:12, display:"flex", alignItems:"center", gap:8 }}>
@@ -389,14 +394,11 @@ export default function MenuPage() {
         {CATEGORY_ORDER.map((cat) => {
           const items = grouped[cat];
           if (!items?.length) return null;
-
-          // Sépare compatible / incompatible
           const compatible = items.filter(r => !isIncompatible(r));
           const incompatible = items.filter(r => isIncompatible(r));
 
           return (
             <div key={cat} ref={el => categoryRefs.current[cat] = el} style={{ marginBottom:28 }}>
-              {/* Header catégorie */}
               <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:12 }}>
                 <p style={{ fontSize:12, fontWeight:800, color:"#AAA", textTransform:"uppercase",
                   letterSpacing:"0.1em", margin:0 }}>
@@ -406,7 +408,6 @@ export default function MenuPage() {
                 <span style={{ fontSize:11, color:"#CCC", fontWeight:600 }}>{items.length}</span>
               </div>
 
-              {/* Plats compatibles */}
               {compatible.map(recipe => (
                 <RecipeCard key={recipe.id} recipe={recipe}
                   getDisplayName={getDisplayName}
@@ -418,7 +419,6 @@ export default function MenuPage() {
                 />
               ))}
 
-              {/* Séparateur incompatibles */}
               {incompatible.length > 0 && selectedAllergens.size > 0 && (
                 <div style={{ display:"flex", alignItems:"center", gap:8, margin:"10px 0 8px" }}>
                   <div style={{ flex:1, height:1, background:"#FFE4E4" }} />
@@ -429,7 +429,6 @@ export default function MenuPage() {
                 </div>
               )}
 
-              {/* Plats incompatibles */}
               {incompatible.map(recipe => (
                 <RecipeCard key={recipe.id} recipe={recipe}
                   getDisplayName={getDisplayName}
@@ -458,7 +457,6 @@ export default function MenuPage() {
         <p style={{ fontSize:10, color:"#CCC", margin:"4px 0 0" }}>Conforme règlement UE n°1169/2011 (INCO)</p>
       </div>
 
-      {/* Overlay fermeture dropdown langue */}
       {langOpen && (
         <div style={{ position:"fixed", inset:0, zIndex:99 }} onClick={() => setLangOpen(false)} />
       )}
@@ -466,7 +464,6 @@ export default function MenuPage() {
   );
 }
 
-// ── Composant card plat ────────────────────────────────────────────────────────
 function RecipeCard({ recipe, getDisplayName, getDisplayIngredients, allergenNames, selectedAllergens, incompatible, brandColor }) {
   const [expanded, setExpanded] = useState(false);
   const ingredients = getDisplayIngredients(recipe);
@@ -482,7 +479,6 @@ function RecipeCard({ recipe, getDisplayName, getDisplayIngredients, allergenNam
         cursor: ingredients.length > SHOW_LIMIT ? "pointer" : "default",
         transition:"all 0.15s" }}>
 
-      {/* Nom + badge warning */}
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:10, marginBottom:ingredients.length > 0 ? 5 : 0 }}>
         <p style={{ fontSize:15, fontWeight:700, color: incompatible ? "#C0A0A0" : "#1A1A1A",
           margin:0, flex:1, lineHeight:1.3 }}>
@@ -500,7 +496,6 @@ function RecipeCard({ recipe, getDisplayName, getDisplayIngredients, allergenNam
         )}
       </div>
 
-      {/* Ingrédients */}
       {ingredients.length > 0 && (
         <p style={{ fontSize:12, color: incompatible ? "#C8AEAD" : "#999",
           margin:"0 0 8px", lineHeight:1.5 }}>
@@ -515,7 +510,6 @@ function RecipeCard({ recipe, getDisplayName, getDisplayIngredients, allergenNam
         </p>
       )}
 
-      {/* Pastilles régime */}
       {(recipe.is_vegan || recipe.is_vegetarian || recipe.meat_certification) && (
         <div style={{ display:"flex", gap:4, flexWrap:"wrap", marginBottom:8 }}>
           {recipe.is_vegan && (
@@ -538,7 +532,6 @@ function RecipeCard({ recipe, getDisplayName, getDisplayIngredients, allergenNam
         </div>
       )}
 
-      {/* Pills allergènes */}
       {recipe.allergens?.length > 0 && (
         <div style={{ display:"flex", flexWrap:"wrap", gap:4 }}>
           {recipe.allergens.map((id) => {

@@ -434,12 +434,12 @@ export default function LoiIncoPage() {
                       Question {currentQ + 1} / {QUESTIONS.length}
                     </span>
                     <span style={{ fontSize: 12, color: "#BBB" }}>
-                      {Object.keys(formData).length + (dishesCount ? 1 : 0)}/{QUESTIONS.length} répondues
+                      {Object.keys(formData).length}/{QUESTIONS.length} répondues
                     </span>
                   </div>
                   <div style={{ background: "#F0F0F0", borderRadius: 4, height: 4, overflow: "hidden" }}>
                     <div style={{ height: "100%", background: "#1A1A1A", borderRadius: 4, transition: "width 0.3s ease",
-                      width: `${((Object.keys(formData).length + (dishesCount ? 1 : 0)) / QUESTIONS.length) * 100}%` }} />
+                      width: `${(Object.keys(formData).length / QUESTIONS.length) * 100}%` }} />
                   </div>
                 </div>
 
@@ -447,9 +447,7 @@ export default function LoiIncoPage() {
                 <div style={{ padding: "24px 24px 8px" }}>
                   {QUESTIONS.map((q, qi) => {
                     const isActive = qi === currentQ;
-                    const isDone = q.type === "number"
-                      ? (dishesCount.trim() !== "" && Number(dishesCount) > 0)
-                      : formData[q.key] !== undefined;
+                    const isDone = formData[q.key] !== undefined;
 
                     return (
                       <div key={q.key} style={{ marginBottom: 28, opacity: isActive ? 1 : qi < currentQ ? 0.45 : 0.35, transition: "opacity 0.25s", pointerEvents: isActive ? "auto" : qi < currentQ ? "auto" : "none" }}>

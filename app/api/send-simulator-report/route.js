@@ -157,7 +157,7 @@ function buildEmailHTML({ email, score, riskKey, dishesCount, expositionMax, non
       <td style="padding:11px 0;border-bottom:1px solid #F0F0F0;vertical-align:top;">
         <table cellpadding="0" cellspacing="0"><tr>
           <td style="padding-right:12px;vertical-align:top;">
-            <div style="width:24px;height:24px;border-radius:50%;background:${a.urgent ? risk.color : "#E8E8E8"};display:flex;align-items:center;justify-content:center;text-align:center;line-height:24px;font-size:11px;font-weight:800;color:${a.urgent ? "white" : "#888"};">${i + 1}</div>
+            <div style="width:24px;height:24px;border-radius:50%;background:${a.urgent ? risk.color : "#E8E8E8"};text-align:center;line-height:24px;font-size:11px;font-weight:800;color:${a.urgent ? "white" : "#888"};mso-line-height-rule:exactly;">${i + 1}</div>
           </td>
           <td>
             <div style="font-size:13px;font-weight:700;color:${a.urgent ? risk.color : "#1A1A1A"};margin-bottom:3px;">${a.title}</div>
@@ -341,7 +341,8 @@ export async function POST(request) {
     }
 
     const riskKey = getRiskKey(score);
-    const dishesCount = Number(formData.dishes_count) || 10;
+    // dishes_count est la valeur numérique de la tranche ("5", "15", "30", "60", "100")
+    const dishesCount = Number(formData.dishes_count) || 15;
     const nonConfRate = { digital: 0, pdf: 0.3, paper: 0.6, verbal: 1 }[formData.format] ?? 0.7;
     const nonConfPlats = Math.round(dishesCount * nonConfRate);
     const expositionMax = nonConfPlats * 1500;

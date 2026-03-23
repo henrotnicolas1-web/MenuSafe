@@ -45,11 +45,15 @@ const QUESTIONS = [
   },
   {
     key: "dishes_count",
-    label: "Combien de plats avez-vous exactement à votre carte ?",
-    sub: "Chaque plat non conforme est une infraction indépendante à 1 500€.",
-    type: "number",
-    placeholder: "Ex : 24",
-    options: [], // Saisie numérique — traitée séparément
+    label: "Combien de plats avez-vous à votre carte ?",
+    sub: "Estimez approximativement — chaque plat non conforme est une infraction à 1 500€.",
+    options: [
+      { label: "Moins de 10",  value: "5",   score: 5,  desc: "Petite carte", dishes: 5 },
+      { label: "10 à 20",      value: "15",  score: 10, desc: "Carte courte",  dishes: 15 },
+      { label: "20 à 40",      value: "30",  score: 18, desc: "Carte standard", dishes: 30 },
+      { label: "40 à 80",      value: "60",  score: 24, desc: "Grande carte",  dishes: 60 },
+      { label: "Plus de 80",   value: "100", score: 30, desc: "Très grande carte", dishes: 100 },
+    ],
   },
   {
     key: "updates",
@@ -180,7 +184,6 @@ export default function LoiIncoPage() {
 
   const [step, setStep]               = useState("quiz");
   const [formData, setFormData]       = useState({});
-  const [dishesCount, setDishesCount] = useState("");
   const [currentQ, setCurrentQ]       = useState(0);
   const [score, setScore]             = useState(0);
   const [email, setEmail]             = useState("");
@@ -191,13 +194,8 @@ export default function LoiIncoPage() {
   const resultRef = useRef(null);
 
   const currentQuestion = QUESTIONS[currentQ];
-  const isNumberQuestion = currentQuestion?.type === "number";
-  const currentAnswered = isNumberQuestion
-    ? dishesCount.trim() !== "" && !isNaN(Number(dishesCount)) && Number(dishesCount) > 0
-    : formData[currentQuestion?.key] !== undefined;
-  const allAnswered = QUESTIONS.every(q =>
-    q.type === "number" ? (dishesCount.trim() !== "" && Number(dishesCount) > 0) : formData[q.key] !== undefined
-  );
+  const currentAnswered = formData[currentQuestion?.key] !== undefined;
+  const allAnswered = QUESTIONS.every(q => formData[q.key] !== undefined);
 
   // ── Scoring croisé ────────────────────────────────────────────────────────
   function computeScore() {
@@ -205,28 +203,16 @@ export default function LoiIncoPage() {
     let multiplier = 1;
 
     QUESTIONS.forEach(q => {
-      if (q.type === "number") {
-        // Plus de plats = plus de risque, mais logarithmique
-        const n = Math.max(1, Number(dishesCount) || 10);
-        total += Math.min(30, Math.round(Math.log(n) * 5));
-        return;
-      }
       const opt = q.options.find(o => o.value === formData[q.key]);
       if (opt) total += opt.score;
     });
 
     // Croisements qui amplifient le risque
     if (formData.format === "verbal" && formData.updates === "often") multiplier *= 1.25;
-    if (formData.format === "verbal" || formData.format === "paper") {
-      if (formData.controls === "warning") multiplier *= 1.15;
-    }
+    if ((formData.format === "verbal" || formData.format === "paper") && formData.controls === "warning") multiplier *= 1.15;
     if (formData.team === "large" && formData.format !== "digital") multiplier *= 1.1;
 
-    const maxBase = QUESTIONS.reduce((acc, q) => {
-      if (q.type === "number") return acc + 30;
-      return acc + Math.max(...q.options.map(o => o.score));
-    }, 0);
-
+    const maxBase = QUESTIONS.reduce((acc, q) => acc + Math.max(...q.options.map(o => o.score)), 0);
     return Math.min(100, Math.round((total * multiplier / maxBase) * 100));
   }
 
@@ -249,7 +235,7 @@ export default function LoiIncoPage() {
       await fetch("/api/send-simulator-report", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, score, formData: { ...formData, dishes_count: dishesCount } }),
+        body: JSON.stringify({ email, score, formData }),
       });
       setEmailSent(true);
     } catch {}
@@ -257,14 +243,14 @@ export default function LoiIncoPage() {
   }
 
   function reset() {
-    setStep("quiz"); setFormData({}); setDishesCount(""); setScore(0);
+    setStep("quiz"); setFormData({}); setScore(0);
     setEmail(""); setEmailSent(false); setCurrentQ(0);
   }
 
   const risk = RISK_LEVELS.find(r => score >= r.min && score <= r.max) || RISK_LEVELS[0];
-  const dishCount = Math.max(1, Number(dishesCount) || 10);
-  // Exposition totale = nb plats non conformes estimés × 1500€
-  // On estime que 60-100% des plats sont non conformes selon le format
+  // Nombre de plats depuis l'option sélectionnée (champ dishes)
+  const dishCountOpt = QUESTIONS.find(q => q.key === "dishes_count")?.options.find(o => o.value === formData.dishes_count);
+  const dishCount = dishCountOpt?.dishes ?? 15;
   const nonConfRate = { digital: 0, pdf: 0.3, paper: 0.6, verbal: 1 }[formData.format] ?? 0.7;
   const expositionMax = Math.round(dishCount * nonConfRate) * 1500;
   const actions = getActions(risk.key, formData);
@@ -475,46 +461,34 @@ export default function LoiIncoPage() {
                         </div>
                         {isActive && <p style={{ fontSize: 12, color: "#AAA", margin: "0 0 12px", fontStyle: "italic" }}>{q.sub}</p>}
 
-                        {q.type === "number" ? (
-                          <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                            <input
-                              type="number" min="1" max="500"
-                              value={dishesCount}
-                              onChange={e => setDishesCount(e.target.value)}
-                              placeholder={q.placeholder}
-                              style={{ width: 120, padding: "10px 14px", fontSize: 16, fontWeight: 700, border: "2px solid #E0E0E0", borderRadius: 10, outline: "none", fontFamily: "inherit", textAlign: "center" }}
-                              onFocus={e => e.target.style.borderColor = "#1A1A1A"}
-                              onBlur={e => e.target.style.borderColor = "#E0E0E0"}
-                            />
-                            <span style={{ fontSize: 13, color: "#888" }}>plats à votre carte</span>
-                            {dishesCount && Number(dishesCount) > 0 && (
-                              <span style={{ fontSize: 12, color: "#CC0000", fontWeight: 600 }}>
-                                = {Number(dishesCount) * 1500 >= 10000
-                                  ? `jusqu'à ${(Number(dishesCount) * 1500).toLocaleString("fr-FR")}€ d'exposition max`
-                                  : `${Number(dishesCount)} × 1 500€ possibles`}
-                              </span>
-                            )}
-                          </div>
-                        ) : (
-                          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                            {q.options.map(opt => {
-                              const selected = formData[q.key] === opt.value;
-                              return (
-                                <button key={opt.value} onClick={() => selectOption(q.key, opt.value)}
-                                  style={{ padding: "9px 14px", borderRadius: 10, fontSize: 13,
-                                    fontWeight: selected ? 700 : 500, cursor: "pointer", transition: "all 0.15s",
-                                    border: selected ? "2px solid #1A1A1A" : "1.5px solid #E8E8E8",
-                                    background: selected ? "#1A1A1A" : "white",
-                                    color: selected ? "white" : "#555",
-                                    display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 1,
-                                    transform: selected ? "scale(1.02)" : "scale(1)" }}>
-                                  <span>{opt.label}</span>
-                                  {opt.desc && <span style={{ fontSize: 10, fontWeight: 400, opacity: 0.6, marginTop: 1 }}>{opt.desc}</span>}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        )}
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                          {q.options.map(opt => {
+                            const selected = formData[q.key] === opt.value;
+                            const expositionLabel = q.key === "dishes_count" && opt.dishes
+                              ? `jusqu'à ${(opt.dishes * 1500).toLocaleString("fr-FR")}€ max`
+                              : null;
+                            return (
+                              <button key={opt.value} onClick={() => selectOption(q.key, opt.value)}
+                                style={{ padding: "9px 14px", borderRadius: 10, fontSize: 13,
+                                  fontWeight: selected ? 700 : 500, cursor: "pointer", transition: "all 0.15s",
+                                  border: selected ? "2px solid #1A1A1A" : "1.5px solid #E8E8E8",
+                                  background: selected ? "#1A1A1A" : "white",
+                                  color: selected ? "white" : "#555",
+                                  display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 1,
+                                  transform: selected ? "scale(1.02)" : "scale(1)" }}>
+                                <span>{opt.label}</span>
+                                {expositionLabel && (
+                                  <span style={{ fontSize: 10, fontWeight: 600, color: selected ? "rgba(255,255,255,0.6)" : "#CC0000", marginTop: 1 }}>
+                                    {expositionLabel}
+                                  </span>
+                                )}
+                                {!expositionLabel && opt.desc && (
+                                  <span style={{ fontSize: 10, fontWeight: 400, opacity: 0.6, marginTop: 1 }}>{opt.desc}</span>
+                                )}
+                              </button>
+                            );
+                          })}
+                        </div>
                       </div>
                     );
                   })}

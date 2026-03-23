@@ -90,9 +90,23 @@ function ImportPageInner() {
       const fd = new FormData();
       fd.append("file", file);
       fd.append("options", JSON.stringify(importOptions));
-      const res = await fetch("/api/scan-menu", { method: "POST", body: fd });
+      const headers = {};
+      if (user?.id) headers["x-user-id"] = user.id;
+      const res = await fetch("/api/scan-menu", { method: "POST", body: fd, headers });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Erreur serveur");
+      if (!res.ok) {
+        if (data.quota_exceeded) {
+          setStep(STEPS.upload);
+          setError(data.error);
+          return;
+        }
+        if (data.upgrade) {
+          setStep(STEPS.upload);
+          setError(data.error);
+          return;
+        }
+        throw new Error(data.error || "Erreur serveur");
+      }
       if (!data.plats || data.plats.length === 0) {
         setError("Aucun plat détecté. Essayez avec une image plus nette.");
         setStep(STEPS.upload);
@@ -255,6 +269,25 @@ function ImportPageInner() {
 
             {file && (
               <div>
+                {/* Quota Solo */}
+                {sub?.plan === "solo" && (
+                  <div style={{ background: sub?.ai_imports_this_month >= 1 ? "#FFF0F0" : "#F0FFF4", border: `1px solid ${sub?.ai_imports_this_month >= 1 ? "#FFD0D0" : "#C6F6D5"}`, borderRadius: 12, padding: "12px 14px", marginBottom: 12 }}>
+                    {sub?.ai_imports_this_month >= 1 ? (
+                      <>
+                        <p style={{ fontSize: 13, fontWeight: 700, color: "#CC0000", margin: "0 0 4px" }}>Import IA mensuel utilisé</p>
+                        <p style={{ fontSize: 12, color: "#CC0000", margin: "0 0 8px", lineHeight: 1.5 }}>
+                          Vous avez utilisé votre import IA ce mois-ci. Revenez le mois prochain ou passez au plan Pro pour des imports illimités.
+                        </p>
+                        <a href="/upgrade" style={{ fontSize: 12, fontWeight: 700, color: "#CC0000", textDecoration: "underline" }}>Passer au Pro →</a>
+                      </>
+                    ) : (
+                      <p style={{ fontSize: 12, fontWeight: 600, color: "#155724", margin: 0 }}>
+                        ✓ 1 import IA disponible ce mois-ci (plan Solo)
+                      </p>
+                    )}
+                  </div>
+                )}
+
                 {/* Options d'analyse */}
                 <div style={{ background: "#F7F7F5", border: "1px solid #EBEBEB", borderRadius: 12, padding: "14px 16px", marginBottom: 12 }}>
                   <p style={{ fontSize: 11, fontWeight: 700, color: "#888", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 10px" }}>

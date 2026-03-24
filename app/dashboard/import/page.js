@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef, Suspense } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { createClient } from "@/lib/supabase";
 import { getPlan } from "@/lib/plans";
 import { detectAllergens, ALLERGENS, AllergenIcon } from "@/lib/allergens-db";
@@ -48,7 +48,7 @@ function ImportPageInner() {
   }
   const supabase = createClient();
 
-  useState(() => {
+  useEffect(() => {
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { router.push("/auth"); return; }

@@ -71,7 +71,7 @@ function ImportPageInner() {
   }, []);
 
   const plan = subscription?.plan ?? "free";
-  const hasAccess = plan === "pro" || plan === "reseau";
+  const hasAccess = plan === "solo" || plan === "pro" || plan === "reseau";
 
   function handleFile(f) {
     if (!f) return;
@@ -204,7 +204,7 @@ function ImportPageInner() {
           <div style={s.lockCard}>
             <p style={{ fontSize: 48, margin: "0 0 16px" }}>🔒</p>
             <p style={s.lockTitle}>Fonctionnalité Pro & Réseau</p>
-            <p style={s.lockSub}>L'import par photo est disponible à partir du plan <strong>Pro (59€/mois)</strong>.</p>
+            <p style={s.lockSub}>L'import par photo est disponible à partir du plan <strong>Solo (39€/mois)</strong> — 1 scan/mois inclus, ou <strong>Pro</strong> pour des scans illimités.</p>
             <div style={s.lockFeatures}>
               {["Photo, image ou PDF de carte","Traductions 8 langues en une analyse","Ingrédients lus ou suggérés par l'IA","Détection allergènes automatique","Validation plat par plat"].map((f, i) => (
                 <p key={i} style={s.lockFeature}><span style={{ color: "#4ADE80" }}>✓</span> {f}</p>
@@ -460,7 +460,7 @@ function ImportPageInner() {
                       if (!a) return null;
                       return (
                         <div key={id} style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12, fontWeight: 600, padding: "4px 6px 4px 10px", borderRadius: 20, background: a.color, color: a.text }}>
-                          <span>{a.icon} {a.label}</span>
+                          <span><AllergenIcon id={id} size={11} color={a.text} /> {a.label}</span>
                           <button onClick={() => setPlats((prev) => {
                             const updated = [...prev];
                             updated[current] = { ...updated[current], allergens: updated[current].allergens.filter((x) => x !== id) };

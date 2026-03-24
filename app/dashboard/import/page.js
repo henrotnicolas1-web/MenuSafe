@@ -106,6 +106,7 @@ function ImportPageInner() {
   }, []);
 
   const plan = subscription?.plan ?? "free";
+  const sub = subscription; // alias pour le JSX quota Solo
   const subStatus = subscription?.status ?? "";
   // hasAccess = plan payant OU trial actif
   const hasAccess = plan === "solo" || plan === "pro" || plan === "reseau"

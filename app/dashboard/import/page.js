@@ -106,15 +106,23 @@ function ImportPageInner() {
   }, []);
 
   const plan = subscription?.plan ?? "free";
-  const hasAccess = plan === "solo" || plan === "pro" || plan === "reseau";
+  const subStatus = subscription?.status ?? "";
+  // hasAccess = plan payant OU trial actif
+  const hasAccess = plan === "solo" || plan === "pro" || plan === "reseau"
+    || subStatus === "trialing";
 
   function handleFile(f) {
     if (!f) return;
     if (f.size > 20 * 1024 * 1024) { setError("Fichier trop lourd (max 20MB)."); return; }
     setError("");
     setFile(f);
-    if (f.type !== "application/pdf") setPreview(URL.createObjectURL(f));
-    else setPreview(null);
+    try {
+      const isImage = f.type.startsWith("image/") || f.type === "";
+      if (isImage) setPreview(URL.createObjectURL(f));
+      else setPreview(null);
+    } catch {
+      setPreview(null);
+    }
   }
 
   async function handleScan() {
@@ -138,15 +146,19 @@ function ImportPageInner() {
         setStep(STEPS.upload);
         return;
       }
-      const enriched = data.plats.map((plat) => ({
-        ...plat,
-        allergens: [...detectAllergens(plat.ingredients)],
-        category: plat.categorie || "plat",
-        isVegetarian: plat.isVegetarian ?? false,
-        isVegan: plat.isVegan ?? false,
-        meatCertification: null,
-        _hasMeat: plat.hasMeat ?? false,
-      }));
+      const enriched = data.plats.map((plat) => {
+        const ingredients = Array.isArray(plat.ingredients) ? plat.ingredients : [];
+        return {
+          ...plat,
+          ingredients,
+          allergens: [...detectAllergens(ingredients)],
+          category: plat.categorie || plat.category || "plat",
+          isVegetarian: plat.isVegetarian ?? false,
+          isVegan: plat.isVegan ?? false,
+          meatCertification: null,
+          _hasMeat: plat.hasMeat ?? false,
+        };
+      });
       setPlats(enriched);
       setScanStats(data.stats ?? null);
       setScanNote(data.note ?? "");

@@ -166,8 +166,33 @@ Si aucun plat détectable : {"plats":[],"stats":{"total":0,"depuis_carte":0,"sug
 
     const data = await response.json();
     const text = data.content?.[0]?.text ?? "";
-    const clean = text.replace(/```json|```/g, "").trim();
-    const result = JSON.parse(clean);
+
+    // Extraction robuste — cherche le bloc JSON même si du texte l'entoure
+    let clean = text.replace(/```json|```/g, "").trim();
+    const jsonMatch = clean.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      return NextResponse.json(
+        { error: "L'IA n'a pas retourné un format JSON valide. Essayez avec une image plus nette." },
+        { status: 500 }
+      );
+    }
+    clean = jsonMatch[0];
+
+    let result;
+    try {
+      result = JSON.parse(clean);
+    } catch {
+      return NextResponse.json(
+        { error: "Impossible de lire la réponse de l'IA. Essayez avec une image plus nette ou mieux éclairée." },
+        { status: 500 }
+      );
+    }
+
+    // Garantir que plats est toujours un array
+    if (!result.plats || !Array.isArray(result.plats)) {
+      result.plats = [];
+    }
+
     return NextResponse.json(result);
 
   } catch (err) {

@@ -142,7 +142,7 @@ const LANDING_PLANS = [
     id: "solo", name: "Solo", badge: null, desc: "Pour 1 établissement",
     note: null,
     monthly: 29, yearly: 290,
-    features: ["Jusqu'à 3 recettes (gratuit)", "50 recettes max", "PDF conformes INCO", "QR code carte multilingue", "Filtrage allergènes client", "1 import IA / mois", "4 langues (FR, EN, ES, DE)", "1 établissement"],
+    features: ["50 recettes max", "PDF conformes INCO", "QR code carte multilingue", "Filtrage allergènes client", "1 import IA / mois", "4 langues (FR, EN, ES, DE)", "1 établissement"],
     missing: ["Analytics clients", "8 langues", "Branding personnalisé"],
   },
   {
@@ -305,8 +305,8 @@ export default function Home() {
               <a href="#features" style={s.navLink}>Fonctionnalités</a>
               <a href="#pricing" style={s.navLink}>Tarifs</a>
               <div style={{ position: "relative" }}
-                onMouseEnter={e => e.currentTarget.querySelector(".dd").style.display = "block"}
-                onMouseLeave={e => e.currentTarget.querySelector(".dd").style.display = "none"}>
+                onMouseEnter={e => { if (window._ddClose) clearTimeout(window._ddClose); e.currentTarget.querySelector(".dd").style.display = "block"; }}
+                onMouseLeave={e => { const dd = e.currentTarget.querySelector(".dd"); window._ddClose = setTimeout(() => { dd.style.display = "none"; }, 300); }}>
                 <button style={{ ...s.navLink, background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 4, padding: 0, fontSize: 13 }}>
                   Ressources
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M6 9l6 6 6-6"/></svg>

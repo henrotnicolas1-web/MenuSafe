@@ -3,8 +3,11 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useWindowSize } from "@/lib/useWindowSize";
 import DemoSection from "@/components/DemoSection";
-import Navbar from "@/components/Navbar";
-import { Search, Smartphone, FileText, Camera, Building2, RefreshCw, Shield, AlertTriangle, Check } from "lucide-react";
+import {
+  Search, Smartphone, FileText, Camera,
+  Building2, RefreshCw, BarChart2, Leaf,
+  ShieldCheck, Globe
+} from "lucide-react";
 
 function Logo({ size = 28, light = false }) {
   return (
@@ -17,12 +20,12 @@ function Logo({ size = 28, light = false }) {
 }
 
 function MenuMockup({ small = false }) {
-  const w = small ? 280 : 360;
+  const w = small ? 240 : 300;
   return (
     <div style={{ background: "#1A1A1A", borderRadius: 24, padding: 3, maxWidth: w, margin: "0 auto", boxShadow: "0 24px 48px rgba(0,0,0,0.15)" }}>
       <div style={{ background: "white", borderRadius: 22, overflow: "hidden" }}>
         <div style={{ background: "#1A1A1A", padding: "10px 14px 8px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <p style={{ fontSize: small ? 12 : 14, fontWeight: 800, color: "white", margin: 0 }}>Le Bistrot du Coin</p>
+          <p style={{ fontSize: small ? 11 : 13, fontWeight: 800, color: "white", margin: 0 }}>Le Bistrot du Coin</p>
           <div style={{ display: "flex", gap: 3 }}>
             {[{c:"FR",b:"#003189"},{c:"EN",b:"#C8102E"},{c:"ES",b:"#AA151B"},{c:"DE",b:"#000"}].map((f, i) => (
               <span key={i} style={{ fontSize: 9, fontWeight: 800, color: "white", background: i === 0 ? f.b : "rgba(255,255,255,0.15)", padding: "2px 4px", borderRadius: 4, opacity: i === 0 ? 1 : 0.6 }}>{f.c}</span>
@@ -44,14 +47,17 @@ function MenuMockup({ small = false }) {
         <div style={{ padding: "8px 12px" }}>
           <p style={{ fontSize: 9, fontWeight: 700, color: "#999", textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 5px" }}>Plats</p>
           {[
-            { name: "Blanquette de veau", ok: true, allergens: ["Lait"] },
-            { name: "Sole meunière", ok: false, allergens: ["Gluten", "Poissons"] },
-            { name: "Magret de canard", ok: true, allergens: [] },
+            { name: "Blanquette de veau", ok: true, vegan: false },
+            { name: "Sole meunière", ok: false },
+            { name: "Buddha Bowl", ok: true, vegan: true },
           ].map((plat, i) => (
             <div key={i} style={{ padding: "6px 8px", borderRadius: 8, marginBottom: 4, background: plat.ok ? "white" : "#F9F9F9", border: `1px solid ${plat.ok ? "#EBEBEB" : "#F0F0F0"}`, opacity: plat.ok ? 1 : 0.55 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <p style={{ fontSize: small ? 10 : 11, fontWeight: 600, color: plat.ok ? "#1A1A1A" : "#999", margin: 0 }}>{plat.name}</p>
-                {!plat.ok && <span style={{ fontSize: 8, background: "#FFD0D0", color: "#CC0000", padding: "2px 5px", borderRadius: 10, fontWeight: 700 }}>✗</span>}
+                <div style={{ display: "flex", gap: 3, alignItems: "center" }}>
+                  {plat.vegan && <span style={{ fontSize: 8, background: "#F0FFF4", color: "#155724", padding: "1px 5px", borderRadius: 8, fontWeight: 700 }}>Vegan</span>}
+                  {!plat.ok && <span style={{ fontSize: 8, background: "#FFF3CD", color: "#856404", padding: "1px 5px", borderRadius: 8, fontWeight: 600 }}>⚠</span>}
+                </div>
               </div>
             </div>
           ))}
@@ -62,32 +68,67 @@ function MenuMockup({ small = false }) {
   );
 }
 
+const FEATURES = [
+  {
+    Icon: Search,
+    title: "Détection allergènes en temps réel",
+    desc: "Base de 900+ ingrédients. Tapez un ingrédient, les 14 allergènes légaux s'affichent instantanément. Autocomplétion intelligente.",
+    color: "#F0F7FF", iconColor: "#2563EB",
+  },
+  {
+    Icon: Smartphone,
+    title: "Carte interactive multilingue",
+    desc: "Un QR code par table. Vos clients scannent, choisissent leur langue (8 disponibles) et cochent leurs allergies. Les plats incompatibles sont grisés.",
+    color: "#F0FFF4", iconColor: "#16A34A",
+  },
+  {
+    Icon: FileText,
+    title: "PDF carte complète",
+    desc: "Document A4 avec tous vos plats par catégorie et leurs allergènes. Conforme INCO. À plastifier et afficher dans votre établissement.",
+    color: "#FFF7F0", iconColor: "#EA580C",
+  },
+  {
+    Icon: Camera,
+    title: "Import IA depuis une photo",
+    desc: "Photographiez votre carte. L'IA extrait les plats, génère les traductions en 8 langues et détecte les allergènes en une seule analyse.",
+    color: "#FDF4FF", iconColor: "#9333EA",
+  },
+  {
+    Icon: Leaf,
+    title: "Labels vegan & végétarien",
+    desc: "L'IA détecte automatiquement les plats végétariens et vegan. Labels affichés sur la carte client. Certification viande (Halal, Casher, Label Rouge, Bio) disponible.",
+    color: "#F0FFF4", iconColor: "#16A34A",
+  },
+  {
+    Icon: BarChart2,
+    title: "Analytics clients",
+    desc: "Suivez les scans de votre QR code, les allergènes les plus cochés par vos clients, les langues utilisées et les horaires de fréquentation.",
+    color: "#F0F7FF", iconColor: "#2563EB",
+  },
+  {
+    Icon: Building2,
+    title: "Multi-établissements",
+    desc: "Gérez plusieurs adresses depuis un seul compte avec navigation par onglets. Chaque établissement a son propre QR code, sa propre carte et ses propres analytics.",
+    color: "#FFF7F0", iconColor: "#EA580C",
+  },
+  {
+    Icon: RefreshCw,
+    title: "Mise à jour instantanée",
+    desc: "Modifiez une recette et la carte interactive se met à jour immédiatement. Le QR code ne change jamais — imprimez-le une seule fois.",
+    color: "#F0FFF4", iconColor: "#16A34A",
+  },
+];
 
 function FeatureGrid({ isMobile }) {
-  const features = [
-    { Icon: Search,    title: "Détection allergènes en temps réel",  desc: "Base de 900+ ingrédients. Tapez un ingrédient, les 14 allergènes légaux s'affichent instantanément. Autocomplétion intelligente.", color: "#F7F7F5", iconColor: "#1A1A1A", href: "/loi-inco" },
-    { Icon: Smartphone, title: "Carte interactive multilingue",          desc: "Un QR code par table. Vos clients scannent, choisissent leur langue (8 disponibles) et cochent leurs allergies. Les plats incompatibles s'affichent grisés.", color: "#F7F7F5", iconColor: "#1A1A1A", href: null },
-    { Icon: FileText,   title: "PDF conforme INCO en 1 clic",            desc: "Document A4 paysage avec tous vos plats par catégorie, allergènes inclus. Prêt à imprimer et plastifier pour vos tables.", color: "#F7F7F5", iconColor: "#1A1A1A", href: null },
-    { Icon: Camera,     title: "Import IA depuis une photo",             desc: "Photographiez votre carte. L'IA extrait les plats, génère les traductions en 8 langues et détecte les allergènes en une seule analyse.", color: "#F7F7F5", iconColor: "#1A1A1A", href: "/blog/import-ia-menu-restaurant-allergenes" },
-    { Icon: Building2,  title: "Multi-établissements",                   desc: "Gérez plusieurs adresses depuis un seul compte avec navigation par onglets. Chaque établissement a son propre QR code et sa propre carte.", color: "#F7F7F5", iconColor: "#1A1A1A", href: "/metiers" },
-    { Icon: RefreshCw,  title: "Mise à jour en temps réel",              desc: "Modifiez une recette et la carte interactive se met à jour immédiatement. Le QR code ne change jamais — imprimez-le une seule fois.", color: "#F7F7F5", iconColor: "#1A1A1A", href: null },
-  ];
-
   return (
     <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fit, minmax(280px, 1fr))", gap: isMobile ? 12 : 20 }}>
-      {features.map(({ Icon, title, desc, color, iconColor, href }, i) => (
-        <div key={i} onClick={() => href && (window.location.href = href)}
-          style={{ background: "white", border: "1px solid #EBEBEB", borderRadius: 16, padding: isMobile ? "16px" : "24px", display: isMobile ? "flex" : "block", gap: 14, alignItems: "flex-start", cursor: href ? "pointer" : "default", transition: "border-color 0.15s, box-shadow 0.15s" }}
-          onMouseEnter={e => { if (href) { e.currentTarget.style.borderColor = "#1A1A1A"; e.currentTarget.style.boxShadow = "0 4px 20px rgba(0,0,0,0.08)"; }}}
-          onMouseLeave={e => { e.currentTarget.style.borderColor = "#EBEBEB"; e.currentTarget.style.boxShadow = "none"; }}>
+      {FEATURES.map(({ Icon, title, desc, color, iconColor }, i) => (
+        <div key={i} style={{ background: "white", border: "1px solid #EBEBEB", borderRadius: 16, padding: isMobile ? "16px" : "24px", display: isMobile ? "flex" : "block", gap: 14, alignItems: "flex-start" }}>
           <div style={{ width: 44, height: 44, borderRadius: 12, background: color, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginBottom: isMobile ? 0 : 16 }}>
             <Icon size={22} color={iconColor} strokeWidth={1.75} />
           </div>
-          <div style={{ flex: 1 }}>
-            <p style={{ fontSize: 14, fontWeight: 700, color: "#1A1A1A", margin: "0 0 6px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              {title}
-              {href && <span style={{ fontSize: 11, color: "#BBB" }}>→</span>}
-            </p>
+          <div>
+            <p style={{ fontSize: 14, fontWeight: 700, color: "#1A1A1A", margin: "0 0 6px" }}>{title}</p>
             <p style={{ fontSize: 13, color: "#666", lineHeight: 1.65, margin: 0 }}>{desc}</p>
           </div>
         </div>
@@ -96,27 +137,26 @@ function FeatureGrid({ isMobile }) {
   );
 }
 
-
 const LANDING_PLANS = [
   {
     id: "solo", name: "Solo", badge: null, desc: "Pour 1 établissement",
-    note: "Saisie manuelle des recettes",
+    note: null,
     monthly: 29, yearly: 290,
-    features: ["Jusqu'à 3 recettes (gratuit)", "50 recettes max", "PDF conformes INCO", "QR code carte (en français)", "Filtrage allergènes client", "1 établissement", "Support email"],
-    missing: ["Import IA depuis photo", "Carte multilingue 8 langues"],
+    features: ["Jusqu'à 3 recettes (gratuit)", "50 recettes max", "PDF conformes INCO", "QR code carte multilingue", "Filtrage allergènes client", "1 import IA / mois", "4 langues (FR, EN, ES, DE)", "1 établissement"],
+    missing: ["Analytics clients", "8 langues", "Branding personnalisé"],
   },
   {
     id: "pro", name: "Pro", badge: "Plus populaire", desc: "Jusqu'à 3 établissements",
     note: null,
     monthly: 59, yearly: 590,
-    features: ["Recettes illimitées", "3 établissements", "Import IA depuis photo", "Carte multilingue 8 langues", "PDF carte complète", "Gestion équipe (3 membres)", "Export CSV", "Support prioritaire"],
+    features: ["Recettes illimitées", "3 établissements", "Import IA illimité", "Carte multilingue 8 langues", "PDF carte complète", "Analytics clients (scans, langues, allergènes)", "Labels vegan / végétarien / Halal", "Branding personnalisé (logo + couleurs)", "Gestion équipe (3 membres)", "Export CSV", "Support prioritaire"],
     missing: [],
   },
   {
     id: "reseau", name: "Réseau", badge: null, desc: "4+ établissements / franchises",
     note: null,
     monthly: 149, yearly: 1490,
-    features: ["Tout Pro inclus", "Établissements illimités", "Membres illimités", "Accès API", "Account manager dédié", "Contrat annuel possible"],
+    features: ["Tout Pro inclus", "4 établissements inclus", "+15€ / établissement supplémentaire", "Membres illimités", "Accès API", "Account manager dédié", "Contrat annuel possible"],
     missing: [],
   },
 ];
@@ -125,26 +165,19 @@ function LandingPricing({ isMobile, goAuth }) {
   const [billing, setBilling] = useState("monthly");
   return (
     <div>
-      {/* Toggle */}
       <div style={{ display: "flex", justifyContent: "center", marginBottom: 32 }}>
         <div style={{ display: "inline-flex", background: "#F0F0F0", borderRadius: 12, padding: 4, gap: 4 }}>
           <button onClick={() => setBilling("monthly")}
-            style={{ padding: "8px 20px", fontSize: 13, fontWeight: 600, borderRadius: 9, border: "none", cursor: "pointer",
-              background: billing === "monthly" ? "#1A1A1A" : "transparent",
-              color: billing === "monthly" ? "white" : "#555" }}>
+            style={{ padding: "8px 20px", fontSize: 13, fontWeight: 600, borderRadius: 9, border: "none", cursor: "pointer", background: billing === "monthly" ? "#1A1A1A" : "transparent", color: billing === "monthly" ? "white" : "#555" }}>
             Mensuel
           </button>
           <button onClick={() => setBilling("yearly")}
-            style={{ padding: "8px 20px", fontSize: 13, fontWeight: 600, borderRadius: 9, border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 7,
-              background: billing === "yearly" ? "#1A1A1A" : "transparent",
-              color: billing === "yearly" ? "white" : "#555" }}>
+            style={{ padding: "8px 20px", fontSize: 13, fontWeight: 600, borderRadius: 9, border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 7, background: billing === "yearly" ? "#1A1A1A" : "transparent", color: billing === "yearly" ? "white" : "#555" }}>
             Annuel
             <span style={{ fontSize: 11, fontWeight: 700, background: "#D4EDDA", color: "#155724", padding: "2px 7px", borderRadius: 20 }}>−17%</span>
           </button>
         </div>
       </div>
-
-      {/* Cards — grid avec hauteur égale par row */}
       <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)", gap: isMobile ? 14 : 20, maxWidth: 960, margin: "0 auto", alignItems: "stretch" }}>
         {LANDING_PLANS.map((plan) => {
           const price = billing === "yearly" ? plan.yearly : plan.monthly;
@@ -156,16 +189,11 @@ function LandingPricing({ isMobile, goAuth }) {
                   {plan.badge}
                 </div>
               )}
-              {/* Header — hauteur fixe */}
               <div style={{ marginBottom: 14 }}>
                 <p style={{ fontSize: 18, fontWeight: 800, color: "#1A1A1A", margin: "0 0 2px" }}>{plan.name}</p>
                 <p style={{ fontSize: 12, color: "#999", margin: "0 0 4px" }}>{plan.desc}</p>
-                {plan.note
-                  ? <p style={{ fontSize: 11, color: "#BBB", margin: 0, fontStyle: "italic" }}>{plan.note}</p>
-                  : <p style={{ fontSize: 11, margin: 0 }}>&nbsp;</p>
-                }
+                {plan.note ? <p style={{ fontSize: 11, color: "#4ADE80", margin: 0, fontWeight: 600 }}>{plan.note}</p> : <p style={{ fontSize: 11, margin: 0 }}>&nbsp;</p>}
               </div>
-              {/* Prix — hauteur fixe */}
               <div style={{ marginBottom: 18 }}>
                 {billing === "yearly" ? (
                   <>
@@ -191,7 +219,6 @@ function LandingPricing({ isMobile, goAuth }) {
                   </>
                 )}
               </div>
-              {/* Features — flex:1 pour pousser le bouton en bas */}
               <ul style={{ listStyle: "none", padding: 0, margin: "0 0 20px", flex: 1 }}>
                 {plan.features.map((f, j) => (
                   <li key={j} style={{ fontSize: 13, color: "#444", padding: "4px 0", display: "flex", gap: 8, alignItems: "flex-start" }}>
@@ -204,17 +231,11 @@ function LandingPricing({ isMobile, goAuth }) {
                   </li>
                 ))}
               </ul>
-              {/* Bouton — toujours en bas */}
               <button onClick={goAuth}
-                style={{ width: "100%", padding: "12px", fontSize: 14, fontWeight: 700,
-                  background: plan.badge ? "#1A1A1A" : "white",
-                  color: plan.badge ? "white" : "#1A1A1A",
-                  border: "1.5px solid #1A1A1A", borderRadius: 10, cursor: "pointer" }}>
+                style={{ width: "100%", padding: "12px", fontSize: 14, fontWeight: 700, background: plan.badge ? "#1A1A1A" : "white", color: plan.badge ? "white" : "#1A1A1A", border: "1.5px solid #1A1A1A", borderRadius: 10, cursor: "pointer" }}>
                 Commencer l'essai gratuit
               </button>
-              <p style={{ fontSize: 11, color: "#BBB", textAlign: "center", margin: "8px 0 0" }}>
-                Sans frais pendant 7 jours
-              </p>
+              <p style={{ fontSize: 11, color: "#BBB", textAlign: "center", margin: "8px 0 0" }}>Sans frais pendant 7 jours</p>
             </div>
           );
         })}
@@ -226,27 +247,106 @@ function LandingPricing({ isMobile, goAuth }) {
 export default function Home() {
   const router = useRouter();
   const { isMobile, isTablet } = useWindowSize();
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const isSmall = isMobile || isTablet;
+
   const goAuth = () => router.push("/auth");
   const goDashboard = () => router.push("/dashboard");
 
   return (
     <div style={{ fontFamily: "'Inter', -apple-system, sans-serif", background: "white" }}>
 
-      <Navbar />
+      {/* Drawer mobile */}
+      {drawerOpen && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 200 }}>
+          <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.4)" }} onClick={() => setDrawerOpen(false)} />
+          <div style={{ position: "absolute", top: 0, right: 0, bottom: 0, width: 280, background: "white", padding: "24px", display: "flex", flexDirection: "column", gap: 0 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 32 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <Logo size={24} />
+                <span style={{ fontSize: 16, fontWeight: 800, color: "#1A1A1A", letterSpacing: "-0.02em" }}>MenuSafe</span>
+              </div>
+              <button onClick={() => setDrawerOpen(false)} style={{ background: "none", border: "none", fontSize: 22, cursor: "pointer", color: "#888", padding: 0 }}>✕</button>
+            </div>
+            {[
+              { label: "Fonctionnalités", href: "#features" },
+              { label: "Tarifs", href: "#pricing" },
+              { label: "Loi INCO", href: "/loi-inco" },
+              { label: "Comparatif", href: "/comparatif" },
+              { label: "Votre métier", href: "/metiers" },
+              { label: "Intégrations", href: "/partenaires" },
+            ].map((item) => (
+              <a key={item.label} href={item.href} onClick={() => setDrawerOpen(false)}
+                style={{ fontSize: 16, fontWeight: 600, color: "#1A1A1A", textDecoration: "none", padding: "14px 0", borderBottom: "1px solid #F0F0F0" }}>
+                {item.label}
+              </a>
+            ))}
+            <div style={{ marginTop: 24, display: "flex", flexDirection: "column", gap: 10 }}>
+              <button style={{ padding: "12px", fontSize: 14, fontWeight: 600, background: "white", color: "#1A1A1A", border: "1px solid #E0E0E0", borderRadius: 10, cursor: "pointer" }} onClick={() => { setDrawerOpen(false); goDashboard(); }}>Se connecter</button>
+              <button style={{ padding: "12px", fontSize: 14, fontWeight: 700, background: "#1A1A1A", color: "white", border: "none", borderRadius: 10, cursor: "pointer" }} onClick={() => { setDrawerOpen(false); goAuth(); }}>Essayer gratuitement →</button>
+            </div>
+          </div>
+        </div>
+      )}
 
-      {/* ── Hero ── */}
+      {/* Navbar */}
+      <nav style={s.nav}>
+        <div style={{ ...s.navInner, maxWidth: 1100 }}>
+          <div style={s.logo} onClick={() => router.push("/")}>
+            <Logo size={26} />
+            <p style={s.logoName}>MenuSafe</p>
+          </div>
+          {isMobile ? (
+            <button onClick={() => setDrawerOpen(true)} style={{ background: "none", border: "1px solid #E0E0E0", borderRadius: 8, padding: "6px 10px", cursor: "pointer", fontSize: 18, color: "#1A1A1A" }}>
+              ☰
+            </button>
+          ) : (
+            <div style={s.navRight}>
+              <a href="#features" style={s.navLink}>Fonctionnalités</a>
+              <a href="#pricing" style={s.navLink}>Tarifs</a>
+              <div style={{ position: "relative" }}
+                onMouseEnter={e => e.currentTarget.querySelector(".dd").style.display = "block"}
+                onMouseLeave={e => e.currentTarget.querySelector(".dd").style.display = "none"}>
+                <button style={{ ...s.navLink, background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 4, padding: 0, fontSize: 13 }}>
+                  Ressources
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M6 9l6 6 6-6"/></svg>
+                </button>
+                <div className="dd" style={{ display: "none", position: "absolute", top: "calc(100% + 8px)", left: "50%", transform: "translateX(-50%)", background: "white", border: "1px solid #EBEBEB", borderRadius: 12, padding: "8px", minWidth: 220, boxShadow: "0 8px 32px rgba(0,0,0,0.10)", zIndex: 200 }}>
+                  {[
+                    { label: "Loi INCO & Réglementation", href: "/loi-inco", sub: "Guide + simulateur d'amende" },
+                    { label: "Comparatif", href: "/comparatif", sub: "MenuSafe vs classeur papier" },
+                    { label: "Votre métier", href: "/metiers", sub: "Restaurant, boulangerie, hôtel…" },
+                    { label: "Intégrations", href: "/partenaires", sub: "Caisses, CSV, API" },
+                  ].map((item) => (
+                    <a key={item.href} href={item.href}
+                      style={{ display: "block", padding: "10px 12px", borderRadius: 8, textDecoration: "none" }}
+                      onMouseEnter={e => e.currentTarget.style.background = "#F7F7F5"}
+                      onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: "#1A1A1A" }}>{item.label}</div>
+                      <div style={{ fontSize: 11, color: "#999", marginTop: 1 }}>{item.sub}</div>
+                    </a>
+                  ))}
+                </div>
+              </div>
+              <button style={s.btnSecondary} onClick={goDashboard}>Se connecter</button>
+              <button style={s.btnPrimary} onClick={goAuth}>Essayer gratuitement →</button>
+            </div>
+          )}
+        </div>
+      </nav>
+
+      {/* Hero */}
       <section style={{ ...s.hero, padding: isMobile ? "48px 20px 40px" : "72px 20px 80px" }}>
         <div style={{ maxWidth: 1100, margin: "0 auto", display: "grid", gridTemplateColumns: isSmall ? "1fr" : "1fr 1fr", gap: isSmall ? 40 : 56, alignItems: "center" }}>
           <div>
             <div style={s.heroBadge}>✓ Conforme loi INCO · 14 allergènes légaux</div>
-            <h1 style={{ ...s.h1, fontSize: isMobile ? 30 : 40 }}>
-              Vos fiches allergènes,<br />
-              votre carte interactive,<br />
+            <h1 style={{ ...s.h1, fontSize: isMobile ? 30 : 42 }}>
+              Gérez vos allergènes,<br />
+              enchantez vos clients,<br />
               <span style={{ color: "#1A1A1A" }}>en 5 minutes.</span>
             </h1>
             <p style={{ ...s.heroSub, fontSize: isMobile ? 15 : 16 }}>
-              Obligation légale depuis 2014, encore ignorée par <strong>75% des restaurants</strong>. MenuSafe prend en charge vos 14 allergènes, génère vos documents conformes INCO et crée votre carte interactive multilingue — le tout en moins de 5 minutes.
+              Obligation légale depuis 2014, encore violée par <strong>75% des restaurants</strong>. MenuSafe gère vos allergènes, détecte le vegan/végétarien, génère vos PDF conformes et crée votre carte interactive multilingue.
             </p>
             <div style={{ marginBottom: isMobile ? 28 : 36 }}>
               <button style={{ ...s.ctaPrimary, width: isMobile ? "100%" : "auto", textAlign: "center" }} onClick={goAuth}>
@@ -257,8 +357,8 @@ export default function Home() {
             <div style={{ ...s.heroStats, gap: isMobile ? 16 : 28 }}>
               {[
                 { n: "1 500€", l: "Amende par infraction" },
-                { n: "75%", l: "Non conformes" },
-                { n: "8", l: "Langues" },
+                { n: "8", l: "Langues disponibles" },
+                { n: "900+", l: "Ingrédients détectés" },
               ].map((st, i) => (
                 <div key={i} style={s.heroStat}>
                   <span style={{ ...s.heroStatN, fontSize: isMobile ? 20 : 24 }}>{st.n}</span>
@@ -267,7 +367,6 @@ export default function Home() {
               ))}
             </div>
           </div>
-          {/* Mockup visible sur desktop, réduit sur tablet, caché sur mobile pour alléger */}
           {!isMobile && (
             <div style={{ display: "flex", justifyContent: "center" }}>
               <MenuMockup small={isTablet} />
@@ -276,7 +375,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── Features ── */}
+      {/* Features */}
       <section id="features" style={{ ...s.section, padding: isMobile ? "48px 20px" : "80px 20px" }}>
         <div style={s.sectionInner}>
           <p style={s.eyebrow}>Fonctionnalités</p>
@@ -285,10 +384,73 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── Demo ── */}
+      {/* Demo */}
       <DemoSection />
 
-      {/* ── Carte interactive — fond blanc ── */}
+      {/* Analytics — nouvelle section */}
+      <section style={{ ...s.section, background: "#F7F7F5", padding: isMobile ? "48px 20px" : "80px 20px" }}>
+        <div style={{ maxWidth: 1100, margin: "0 auto", display: "grid", gridTemplateColumns: isSmall ? "1fr" : "1fr 1fr", gap: isSmall ? 32 : 60, alignItems: "center" }}>
+          <div>
+            <p style={{ ...s.eyebrow, textAlign: "left" }}>Nouveau · Plans Pro & Réseau</p>
+            <h2 style={{ fontSize: isMobile ? 24 : 30, fontWeight: 800, color: "#1A1A1A", margin: "0 0 14px", letterSpacing: "-0.02em", lineHeight: 1.2 }}>
+              Connaissez les allergènes<br />de vos clients
+            </h2>
+            <p style={{ fontSize: isMobile ? 14 : 15, color: "#555", lineHeight: 1.7, marginBottom: 20 }}>
+              Chaque scan de QR code génère des données anonymisées. Découvrez quels allergènes sont les plus fréquents, quelles langues utilisent vos clients et à quelles heures ils consultent votre carte.
+            </p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {[
+                { icon: <BarChart2 size={16} color="#2563EB" />, text: "Allergènes les plus cochés par vos clients" },
+                { icon: <Globe size={16} color="#2563EB" />, text: "Langues utilisées — adaptez votre service" },
+                { icon: <Smartphone size={16} color="#2563EB" />, text: "Scans par jour, semaine, mois" },
+                { icon: <ShieldCheck size={16} color="#2563EB" />, text: "Export PDF du rapport analytics" },
+              ].map((item, i) => (
+                <div key={i} style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                  <div style={{ width: 32, height: 32, borderRadius: 8, background: "#F0F7FF", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    {item.icon}
+                  </div>
+                  <p style={{ fontSize: 14, color: "#444", margin: 0 }}>{item.text}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+          {/* Mockup analytics */}
+          <div style={{ background: "white", border: "1px solid #EBEBEB", borderRadius: 16, padding: "20px" }}>
+            <p style={{ fontSize: 11, fontWeight: 700, color: "#888", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 16px" }}>Analytics — Ce mois-ci</p>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 16 }}>
+              {[
+                { val: "247", label: "Scans QR", color: "#1A1A1A" },
+                { val: "8", label: "Langues", color: "#1A1A1A" },
+                { val: "EN 34%", label: "Langue #1", color: "#2563EB" },
+                { val: "Gluten", label: "Allergène #1", color: "#856404" },
+              ].map((st, i) => (
+                <div key={i} style={{ background: "#F7F7F5", borderRadius: 10, padding: "12px" }}>
+                  <p style={{ fontSize: 18, fontWeight: 800, color: st.color, margin: "0 0 2px", letterSpacing: "-0.02em" }}>{st.val}</p>
+                  <p style={{ fontSize: 11, color: "#888", margin: 0 }}>{st.label}</p>
+                </div>
+              ))}
+            </div>
+            <p style={{ fontSize: 11, fontWeight: 700, color: "#888", textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 8px" }}>Top allergènes clients</p>
+            {[
+              { label: "Gluten", pct: 68, color: "#FFF3CD", text: "#856404" },
+              { label: "Lait", pct: 52, color: "#E8F4FF", text: "#084298" },
+              { label: "Œufs", pct: 31, color: "#FFF9C4", text: "#7A6800" },
+            ].map((a, i) => (
+              <div key={i} style={{ marginBottom: 8 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 3 }}>
+                  <span style={{ fontSize: 12, fontWeight: 600, color: "#444" }}>{a.label}</span>
+                  <span style={{ fontSize: 12, color: "#888" }}>{a.pct}%</span>
+                </div>
+                <div style={{ background: "#F0F0F0", borderRadius: 4, height: 6, overflow: "hidden" }}>
+                  <div style={{ height: 6, width: `${a.pct}%`, background: a.text, borderRadius: 4, opacity: 0.6 }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Carte interactive */}
       <section style={{ ...s.section, background: "white", padding: isMobile ? "48px 20px" : "80px 20px" }}>
         <div style={{ maxWidth: 1100, margin: "0 auto", display: "grid", gridTemplateColumns: isSmall ? "1fr" : "1fr 1fr", gap: isSmall ? 32 : 60, alignItems: "center" }}>
           <div>
@@ -297,19 +459,19 @@ export default function Home() {
               La carte interactive<br />que vos clients adorent
             </h2>
             <p style={{ fontSize: isMobile ? 14 : 15, color: "#555", lineHeight: 1.7, marginBottom: 20 }}>
-              Un QR code posé sur chaque table, imprimé une seule fois. Le client scanne depuis son téléphone — sans application — sélectionne sa langue parmi 8 options et coche ses allergies. Les plats incompatibles s'affichent immédiatement grisés.
+              Un seul QR code sur chaque table. Le client scanne, sélectionne sa langue et coche ses allergies. Les plats incompatibles s'affichent grisés. Les labels vegan et végétarien sont visibles en un coup d'œil.
             </p>
             <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 24 }}>
               {[
-                "8 langues — traductions stockées, changement instantané",
-                "Filtrage allergènes en temps réel par le client",
-                "Mise à jour automatique à chaque modification de recette",
-                "100% mobile — aucune application à télécharger",
-                "QR code permanent — imprimez-le une seule fois",
-              ].map((text, i) => (
-                <div key={i} style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
-                  <span style={{ color: "#155724", fontWeight: 800, flexShrink: 0, marginTop: 2 }}>✓</span>
-                  <p style={{ fontSize: 13, color: "#444", margin: 0, lineHeight: 1.5 }}>{text}</p>
+                ["8 langues", "traductions stockées, changement instantané"],
+                ["Filtrage allergènes", "en temps réel"],
+                ["Labels vegan / végétarien", "affichés sur chaque plat"],
+                ["Mise à jour automatique", "quand vous modifiez vos recettes"],
+                ["QR code permanent", "imprimez-le une seule fois"],
+              ].map(([bold, rest], i) => (
+                <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+                  <span style={{ color: "#4ADE80", fontWeight: 700, flexShrink: 0 }}>✓</span>
+                  <p style={{ fontSize: 13, color: "#444", margin: 0, lineHeight: 1.5 }}><strong>{bold}</strong> — {rest}</p>
                 </div>
               ))}
             </div>
@@ -325,10 +487,9 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── Import IA ── */}
+      {/* Import IA */}
       <section style={{ ...s.section, background: "#F7F7F5", padding: isMobile ? "48px 20px" : "80px 20px" }}>
         <div style={{ maxWidth: 900, margin: "0 auto", display: "grid", gridTemplateColumns: isSmall ? "1fr" : "1fr 1fr", gap: isSmall ? 32 : 48, alignItems: "center" }}>
-          {/* Mockup import — en premier sur mobile pour l'impact visuel */}
           <div style={{ background: "white", borderRadius: 16, padding: isMobile ? 16 : 24, border: "1px solid #EBEBEB", order: isMobile ? -1 : 0 }}>
             <p style={{ fontSize: 11, fontWeight: 700, color: "#888", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 12px" }}>Import IA en action</p>
             <div style={{ background: "#F7F7F5", borderRadius: 10, padding: "10px 14px", marginBottom: 8, border: "1px dashed #DDD" }}>
@@ -337,17 +498,21 @@ export default function Home() {
             </div>
             {[
               { name: "Sole meunière", source: "carte", allergens: ["Poissons", "Gluten", "Lait"] },
-              { name: "Blanquette de veau", source: "ia", allergens: ["Lait"] },
+              { name: "Buddha Bowl", source: "ia", allergens: [], vegan: true },
             ].map((p, i) => (
               <div key={i} style={{ background: p.source === "ia" ? "#FDFAFF" : "white", border: `1px solid ${p.source === "ia" ? "#E8D5FF" : "#EBEBEB"}`, borderRadius: 10, padding: "10px 12px", marginBottom: 8 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 5 }}>
                   <p style={{ fontSize: 12, fontWeight: 600, color: "#1A1A1A", margin: 0 }}>{p.name}</p>
-                  <span style={{ fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 20, background: p.source === "ia" ? "#F0E6FF" : "#E6F1FB", color: p.source === "ia" ? "#5A2D8E" : "#084298" }}>
-                    {p.source === "ia" ? "IA" : "Carte"}
-                  </span>
+                  <div style={{ display: "flex", gap: 4 }}>
+                    {p.vegan && <span style={{ fontSize: 9, fontWeight: 700, background: "#F0FFF4", color: "#155724", padding: "1px 6px", borderRadius: 10 }}>Vegan</span>}
+                    <span style={{ fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 20, background: p.source === "ia" ? "#F0E6FF" : "#E6F1FB", color: p.source === "ia" ? "#5A2D8E" : "#084298" }}>
+                      {p.source === "ia" ? "IA" : "Carte"}
+                    </span>
+                  </div>
                 </div>
                 <div style={{ display: "flex", gap: 3, flexWrap: "wrap", marginBottom: 6 }}>
                   {p.allergens.map((a, j) => (<span key={j} style={{ fontSize: 9, background: "#FFF3CD", color: "#856404", padding: "2px 5px", borderRadius: 10 }}>{a}</span>))}
+                  {p.allergens.length === 0 && <span style={{ fontSize: 9, background: "#F0FFF4", color: "#155724", padding: "2px 5px", borderRadius: 10 }}>Aucun allergène</span>}
                 </div>
                 <div style={{ display: "flex", gap: 5 }}>
                   <div style={{ flex: 2, padding: "5px", fontSize: 11, fontWeight: 700, background: "#1A1A1A", color: "white", borderRadius: 7, textAlign: "center" }}>✓ Valider</div>
@@ -360,9 +525,9 @@ export default function Home() {
             <p style={{ ...s.eyebrow, textAlign: "left" }}>Import IA · Pro & Réseau</p>
             <h2 style={{ fontSize: isMobile ? 24 : 28, fontWeight: 800, color: "#1A1A1A", margin: "0 0 14px", letterSpacing: "-0.02em" }}>Toute votre carte<br />en une photo</h2>
             <p style={{ fontSize: isMobile ? 14 : 15, color: "#555", lineHeight: 1.7, marginBottom: 16 }}>
-              Photographiez votre carte ou uploadez un PDF. L'IA lit tous vos plats, génère les traductions en 8 langues et détecte les allergènes en une seule analyse.
+              Photographiez votre carte ou uploadez un PDF. L'IA lit tous vos plats, génère les traductions en 8 langues, détecte les allergènes et identifie automatiquement les plats vegan et végétariens.
             </p>
-            {["Photo, image ou PDF", "Ingrédients lus directement", "Recette traditionnelle si absents", "Traductions 8 langues stockées", "Détection allergènes automatique", "Validation plat par plat"].map((f, i) => (
+            {["Photo, image ou PDF", "Ingrédients lus directement", "Labels vegan / végétarien détectés", "Traductions 8 langues stockées", "Détection allergènes automatique", "Validation plat par plat"].map((f, i) => (
               <div key={i} style={{ display: "flex", gap: 8, marginBottom: 6 }}>
                 <span style={{ color: "#38A169", fontWeight: 700, flexShrink: 0 }}>✓</span>
                 <p style={{ fontSize: 13, color: "#444", margin: 0 }}>{f}</p>
@@ -375,60 +540,47 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── Risque ── */}
+      {/* Risque */}
       <section style={{ ...s.section, padding: isMobile ? "48px 20px" : "80px 20px" }}>
         <div style={s.sectionInner}>
-          <p style={s.eyebrow}>La réalité du terrain</p>
-          <h2 style={{ ...s.h2, fontSize: isMobile ? 24 : 32 }}>Non-conformité ou tranquillité — le choix est simple</h2>
-          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: isMobile ? 12 : 20, maxWidth: 760, margin: "0 auto" }}>
-
-            {/* Card SANS */}
-            <div style={{ background: "#FFF8F8", border: "1px solid #FFD0D0", borderRadius: 16, padding: isMobile ? "20px" : "28px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
-                <div style={{ width: 36, height: 36, borderRadius: 10, background: "#FFD0D0", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                  <AlertTriangle size={18} color="#CC0000" />
-                </div>
-                <p style={{ fontSize: 14, fontWeight: 800, color: "#CC0000", margin: 0 }}>Sans MenuSafe</p>
+          <p style={s.eyebrow}>Le risque réel</p>
+          <h2 style={{ ...s.h2, fontSize: isMobile ? 24 : 32 }}>Une amende qui se justifie en 3 secondes</h2>
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fit, minmax(280px, 1fr))", gap: isMobile ? 12 : 20, maxWidth: 760, margin: "0 auto" }}>
+            {[
+              { title: "Sans MenuSafe", bordered: false, items: [
+                ["✗", "#E53E3E", "Amende DGCCRF : jusqu'à 1 500€"],
+                ["✗", "#E53E3E", "Publication sur Alim'Confiance (Google)"],
+                ["✗", "#E53E3E", "Fermeture temporaire en récidive"],
+                ["✗", "#E53E3E", "Classeur papier toujours périmé"],
+                ["✗", "#E53E3E", "3-4h/mois de mise à jour manuelle"],
+              ]},
+              { title: "Avec MenuSafe", bordered: true, items: [
+                ["✓", "#38A169", "Conformité garantie en 5 minutes"],
+                ["✓", "#38A169", "PDF légal en 1 clic"],
+                ["✓", "#38A169", "Carte interactive multilingue"],
+                ["✓", "#38A169", "Analytics clients inclus"],
+                ["✓", "#38A169", "À partir de 0,97€/jour"],
+              ]},
+            ].map((card, i) => (
+              <div key={i} style={{ background: "white", border: card.bordered ? "2px solid #1A1A1A" : "1px solid #E8E8E8", borderRadius: 16, padding: isMobile ? "20px" : "28px" }}>
+                <p style={{ fontSize: 15, fontWeight: 700, color: "#1A1A1A", marginBottom: 14 }}>{card.title}</p>
+                {card.items.map(([sym, color, text], j) => (
+                  <div key={j} style={{ fontSize: 13, color: "#444", padding: "6px 0", borderBottom: "1px solid #F5F5F5", display: "flex", gap: 8 }}>
+                    <span style={{ color, fontWeight: 700, flexShrink: 0 }}>{sym}</span>{text}
+                  </div>
+                ))}
               </div>
-              {[
-                "Amende DGCCRF jusqu'à 1 500€ par infraction",
-                "Publication sur Alim'Confiance — visible sur Google",
-                "Fermeture temporaire en cas de récidive",
-                "Classeur papier qui se périme à chaque modification",
-                "3 à 5 heures par mois de mise à jour manuelle",
-              ].map((text, j) => (
-                <div key={j} style={{ fontSize: 13, color: "#444", padding: "8px 0", borderBottom: j < 4 ? "1px solid #FFE8E8" : "none", display: "flex", gap: 8, alignItems: "flex-start" }}>
-                  <span style={{ color: "#CC0000", fontWeight: 800, flexShrink: 0, marginTop: 1 }}>✗</span>{text}
-                </div>
-              ))}
-            </div>
-
-            {/* Card AVEC */}
-            <div style={{ background: "white", border: "2px solid #1A1A1A", borderRadius: 16, padding: isMobile ? "20px" : "28px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
-                <div style={{ width: 36, height: 36, borderRadius: 10, background: "#D4EDDA", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                  <Check size={18} color="#155724" />
-                </div>
-                <p style={{ fontSize: 14, fontWeight: 800, color: "#155724", margin: 0 }}>Avec MenuSafe</p>
-              </div>
-              {[
-                "Conformité INCO garantie dès la première recette",
-                "PDF légal généré en 1 clic, toujours à jour",
-                "Carte interactive multilingue (8 langues) via QR code",
-                "QR code permanent — une impression, pour toujours",
-                "À partir de 0,97€/jour · Moins cher qu'une heure de mise à jour",
-              ].map((text, j) => (
-                <div key={j} style={{ fontSize: 13, color: "#444", padding: "8px 0", borderBottom: j < 4 ? "1px solid #F0F0F0" : "none", display: "flex", gap: 8, alignItems: "flex-start" }}>
-                  <span style={{ color: "#155724", fontWeight: 800, flexShrink: 0, marginTop: 1 }}>✓</span>{text}
-                </div>
-              ))}
-            </div>
-
+            ))}
+          </div>
+          <div style={{ textAlign: "center", marginTop: 24 }}>
+            <a href="/loi-inco" style={{ fontSize: 13, color: "#2563EB", fontWeight: 600, textDecoration: "none" }}>
+              Calculer mon risque personnalisé →
+            </a>
           </div>
         </div>
       </section>
 
-      {/* ── Témoignages ── */}
+      {/* Témoignages */}
       <section style={{ ...s.section, background: "#F7F7F5", padding: isMobile ? "48px 20px" : "80px 20px" }}>
         <div style={s.sectionInner}>
           <p style={s.eyebrow}>Témoignages</p>
@@ -439,7 +591,6 @@ export default function Home() {
               { name: "Karim B.", role: "Food truck · Paris", quote: "Mon menu change chaque semaine. J'ai photographié ma carte, l'IA a tout importé en 10 minutes. Mes clients étrangers adorent choisir leur langue.", stars: 5 },
               { name: "Marie-Claire D.", role: "Boulangerie · Bordeaux", quote: "Simple, rapide, efficace. Le PDF carte complète est vraiment professionnel — je l'ai plastifié et affiché derrière la caisse.", stars: 5 },
             ].map((t, i) => (
-              // Sur mobile on cache le 3e témoignage pour alléger
               <div key={i} style={{ background: "white", borderRadius: 14, padding: isMobile ? "18px" : "24px", border: "1px solid #EBEBEB", display: isMobile && i === 2 ? "none" : "block" }}>
                 <p style={{ color: "#F6C000", fontSize: 15, margin: "0 0 10px" }}>{"★".repeat(t.stars)}</p>
                 <p style={{ fontSize: 13, color: "#333", lineHeight: 1.6, margin: "0 0 14px", fontStyle: "italic" }}>"{t.quote}"</p>
@@ -456,7 +607,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── Pricing ── */}
+      {/* Pricing */}
       <section id="pricing" style={{ ...s.section, padding: isMobile ? "48px 20px" : "80px 20px" }}>
         <div style={s.sectionInner}>
           <p style={s.eyebrow}>Tarifs</p>
@@ -468,18 +619,17 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── FAQ ── */}
-      <section style={{ ...s.section, background: "#F7F7F5", padding: isMobile ? "48px 20px" : "80px 20px" }}>
+      {/* FAQ */}
+      <section id="faq" style={{ ...s.section, background: "#F7F7F5", padding: isMobile ? "48px 20px" : "80px 20px" }}>
         <div style={{ maxWidth: 720, margin: "0 auto" }}>
           <p style={s.eyebrow}>FAQ</p>
           <h2 style={{ ...s.h2, fontSize: isMobile ? 24 : 32 }}>Questions fréquentes</h2>
           {[
             { q: "Est-ce vraiment obligatoire ?", a: "Oui. Le règlement UE n°1169/2011 (INCO), entré en vigueur en France en décembre 2014, oblige tous les établissements de restauration commerciale à déclarer les 14 allergènes majeurs. L'absence d'information est passible d'une amende allant jusqu'à 1 500€ par infraction." },
-            { q: "La carte multilingue fonctionne dans quelles langues ?", a: "Français, anglais, espagnol, allemand, italien, néerlandais, japonais et mandarin (8 langues). Les traductions sont générées lors de l'import IA (plans Pro et Réseau) et stockées définitivement — le changement de langue est instantané, sans aucun appel API supplémentaire." },
-            { q: "Que se passe-t-il si je change une recette ?", a: "La carte interactive se met à jour instantanément. Le QR code que vous avez imprimé ne change jamais — vous n'avez rien à réimprimer." },
-            { q: "Comment fonctionne l'import par photo ?", a: "Vous photographiez votre carte ou uploadez un PDF. L'IA lit les plats, génère les traductions en 8 langues et détecte les allergènes en une seule analyse (60 à 90 secondes). Vous validez chaque plat avant l'import. Disponible en plans Pro et Réseau." },
-            { q: "Puis-je gérer plusieurs restaurants ?", a: "Oui. Le plan Pro permet jusqu'à 3 établissements, le plan Réseau est illimité. Chaque établissement a sa propre carte et son propre QR code." },
-            { q: "Puis-je changer de formule ?", a: "Oui, à tout moment depuis votre espace client. Le changement est immédiat. En cas de passage à un plan inférieur, votre accès reste actif jusqu'à la fin de la période en cours." },
+            { q: "Qu'est-ce que les analytics clients ?", a: "Chaque fois qu'un client scanne votre QR code, MenuSafe enregistre (de façon anonyme) la langue choisie et les allergènes cochés. Vous accédez à un tableau de bord qui vous montre les allergènes les plus fréquents, les langues utilisées et les horaires de fréquentation. Disponible en plans Pro et Réseau." },
+            { q: "Comment fonctionne la détection vegan/végétarien ?", a: "Lors de l'import IA ou de la saisie manuelle, MenuSafe analyse les ingrédients de chaque plat et propose automatiquement les labels végétarien et vegan. Vous validez ou ajustez avant publication. Ces labels sont ensuite visibles sur la carte interactive client." },
+            { q: "La carte multilingue fonctionne dans quelles langues ?", a: "Français, anglais, espagnol, allemand, italien, néerlandais, japonais et mandarin (8 langues). Les traductions sont générées lors de l'import IA et stockées définitivement — le changement de langue est instantané, sans aucun appel API supplémentaire." },
+            { q: "Comment fonctionne l'import par photo ?", a: "Vous photographiez votre carte ou uploadez un PDF. L'IA lit les plats, génère les traductions en 8 langues, détecte les allergènes et identifie les plats vegan/végétariens en une seule analyse (60 à 90 secondes). Disponible en plans Pro et Réseau." },
             { q: "Puis-je essayer avant de payer ?", a: "Oui, 7 jours d'essai complet sans carte bancaire. Si vous n'êtes pas convaincu, vous ne payez rien." },
           ].map((faq, i) => (
             <div key={i} style={{ borderBottom: "1px solid #EBEBEB", padding: "20px 0" }}>
@@ -490,7 +640,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── CTA final ── */}
+      {/* CTA final */}
       <section style={{ background: "#0F0F0F", padding: isMobile ? "56px 20px" : "80px 20px" }}>
         <div style={{ textAlign: "center", maxWidth: 560, margin: "0 auto" }}>
           <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}>
@@ -500,7 +650,7 @@ export default function Home() {
             Prêt à être en conformité ?
           </h2>
           <p style={{ fontSize: isMobile ? 14 : 15, color: "rgba(255,255,255,0.55)", marginBottom: 28, lineHeight: 1.7 }}>
-            Rejoignez les restaurateurs qui dorment tranquilles. PDF conformes, carte interactive multilingue, import IA — tout en un.
+            Rejoignez les restaurateurs qui dorment tranquilles. PDF conformes, carte interactive multilingue, analytics clients, détection vegan — tout en un.
           </p>
           <button style={{ fontSize: isMobile ? 15 : 16, fontWeight: 700, padding: isMobile ? "14px 24px" : "16px 32px", background: "white", color: "#0F0F0F", border: "none", borderRadius: 12, cursor: "pointer", width: isMobile ? "100%" : "auto" }} onClick={goAuth}>
             Créer mon compte gratuitement →
@@ -509,12 +659,10 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── Footer ── */}
+      {/* Footer */}
       <footer style={{ background: "#080808", padding: "48px 20px 28px" }}>
         <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-          {/* Footer top — colonnes */}
           <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "2fr 1fr 1fr 1fr", gap: isMobile ? 32 : 48, marginBottom: 40 }}>
-            {/* Colonne marque */}
             <div>
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
                 <Logo size={20} light />
@@ -523,67 +671,34 @@ export default function Home() {
               <p style={{ fontSize: 12, color: "rgba(255,255,255,0.4)", lineHeight: 1.7, margin: "0 0 16px", maxWidth: 220 }}>
                 La solution allergènes pour les professionnels de la restauration. Conforme règlement INCO UE n°1169/2011.
               </p>
-              <a href="mailto:contact@menusafe.fr" style={{ fontSize: 12, color: "rgba(255,255,255,0.4)", textDecoration: "none" }}>
-                contact@menusafe.fr
-              </a>
+              <a href="mailto:contact@menusafe.fr" style={{ fontSize: 12, color: "rgba(255,255,255,0.4)", textDecoration: "none" }}>contact@menusafe.fr</a>
             </div>
-            {/* Produit */}
             <div>
               <p style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.3)", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 14px" }}>Produit</p>
-              {[
-                { label: "Fonctionnalités", href: "/#features" },
-                { label: "Tarifs", href: "/#pricing" },
-                { label: "Blog", href: "/blog" },
-                { label: "FAQ", href: "/#faq" },
-                { label: "Se connecter", href: "/auth" },
-              ].map((l, i) => (
-                <a key={i} href={l.href} style={{ display: "block", fontSize: 13, color: "rgba(255,255,255,0.5)", textDecoration: "none", marginBottom: 8 }}
-                  onMouseEnter={e => e.target.style.color="white"}
-                  onMouseLeave={e => e.target.style.color="rgba(255,255,255,0.5)"}>
-                  {l.label}
-                </a>
+              {[{ label: "Fonctionnalités", href: "/#features" }, { label: "Tarifs", href: "/#pricing" }, { label: "FAQ", href: "/#faq" }, { label: "Se connecter", href: "/auth" }].map((l, i) => (
+                <a key={i} href={l.href} style={{ display: "block", fontSize: 13, color: "rgba(255,255,255,0.5)", textDecoration: "none", marginBottom: 8 }}>{l.label}</a>
               ))}
             </div>
-            {/* Légal */}
+            <div>
+              <p style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.3)", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 14px" }}>Ressources</p>
+              {[{ label: "Loi INCO & Réglementation", href: "/loi-inco" }, { label: "Comparatif", href: "/comparatif" }, { label: "Votre métier", href: "/metiers" }, { label: "Intégrations", href: "/partenaires" }].map((l, i) => (
+                <a key={i} href={l.href} style={{ display: "block", fontSize: 13, color: "rgba(255,255,255,0.5)", textDecoration: "none", marginBottom: 8 }}>{l.label}</a>
+              ))}
+            </div>
             <div>
               <p style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.3)", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 14px" }}>Légal</p>
-              {[
-                { label: "Conditions générales", href: "/cgu" },
-                { label: "Politique de confidentialité", href: "/confidentialite" },
-                { label: "Mentions légales", href: "/mentions-legales" },
-                { label: "Gestion des cookies", href: "/cookies" },
-              ].map((l, i) => (
-                <a key={i} href={l.href} style={{ display: "block", fontSize: 13, color: "rgba(255,255,255,0.5)", textDecoration: "none", marginBottom: 8 }}
-                  onMouseEnter={e => e.target.style.color="white"}
-                  onMouseLeave={e => e.target.style.color="rgba(255,255,255,0.5)"}>
-                  {l.label}
-                </a>
+              {[{ label: "Conditions générales", href: "/cgu" }, { label: "Confidentialité", href: "/confidentialite" }, { label: "Mentions légales", href: "/mentions-legales" }].map((l, i) => (
+                <a key={i} href={l.href} style={{ display: "block", fontSize: 13, color: "rgba(255,255,255,0.5)", textDecoration: "none", marginBottom: 8 }}>{l.label}</a>
               ))}
-            </div>
-            {/* Contact */}
-            <div>
-              <p style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.3)", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 14px" }}>Contact</p>
-              {[
-                { label: "Formulaire de contact", href: "/support" },
-                { label: "Email direct", href: "mailto:contact@menusafe.fr" },
-                { label: "Mon compte", href: "/parametres" },
-              ].map((l, i) => (
-                <a key={i} href={l.href} style={{ display: "block", fontSize: 13, color: "rgba(255,255,255,0.5)", textDecoration: "none", marginBottom: 8 }}
-                  onMouseEnter={e => e.target.style.color="white"}
-                  onMouseLeave={e => e.target.style.color="rgba(255,255,255,0.5)"}>
-                  {l.label}
-                </a>
+              <p style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.3)", textTransform: "uppercase", letterSpacing: "0.08em", margin: "20px 0 14px" }}>Contact</p>
+              {[{ label: "Formulaire de contact", href: "/support" }, { label: "Mon compte", href: "/parametres" }].map((l, i) => (
+                <a key={i} href={l.href} style={{ display: "block", fontSize: 13, color: "rgba(255,255,255,0.5)", textDecoration: "none", marginBottom: 8 }}>{l.label}</a>
               ))}
             </div>
           </div>
-          {/* Footer bottom */}
           <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: 20, display: "flex", flexDirection: isMobile ? "column" : "row", justifyContent: "space-between", alignItems: isMobile ? "flex-start" : "center", gap: 8 }}>
-            <p style={{ fontSize: 11, color: "rgba(255,255,255,0.2)", margin: 0 }}>
-              © 2026 MenuSafe · Tous droits réservés
-            </p>
-            <p style={{ fontSize: 11, color: "rgba(255,255,255,0.2)", margin: 0 }}>
-              Conforme règlement INCO UE n°1169/2011 · Paiement sécurisé par Stripe
-            </p>
+            <p style={{ fontSize: 11, color: "rgba(255,255,255,0.2)", margin: 0 }}>© 2026 MenuSafe · Tous droits réservés</p>
+            <p style={{ fontSize: 11, color: "rgba(255,255,255,0.2)", margin: 0 }}>Conforme règlement INCO UE n°1169/2011 · Paiement sécurisé par Stripe</p>
           </div>
         </div>
       </footer>

@@ -291,7 +291,9 @@ export default function Dashboard() {
 
       {/* ── Navbar ── */}
       <nav style={s.nav}>
-        <div style={{ ...s.navInner, flexWrap: isMobile ? "wrap" : "nowrap", gap: isMobile ? 8 : 12 }}>
+        <div style={{ ...s.navInner, flexWrap: isMobile ? "wrap" : "nowrap", gap: isMobile ? 6 : 12 }}>
+
+          {/* Ligne 1 mobile : Logo + actions droite */}
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: isMobile ? "100%" : "auto" }}>
             <div style={s.logo} onClick={() => router.push("/")} role="button">
               <Logo size={26} />
@@ -300,8 +302,12 @@ export default function Dashboard() {
             {isMobile && (
               <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
                 <div style={s.planBadge}>{planInfo.name}</div>
-                <button style={s.btnLogout} onClick={async () => { await supabase.auth.signOut(); router.push("/"); }}>
-                  Déco
+                <button style={s.btnSettings} onClick={() => router.push("/parametres")} title="Paramètres">
+                  <Settings size={15} color="#555" />
+                </button>
+                <button style={{ ...s.btnLogout, fontSize: 11, padding: "5px 10px" }}
+                  onClick={async () => { await supabase.auth.signOut(); router.push("/"); }}>
+                  Déconnexion
                 </button>
               </div>
             )}

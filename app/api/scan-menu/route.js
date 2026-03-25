@@ -48,9 +48,36 @@ export async function POST(request) {
     const options = optionsRaw ? JSON.parse(optionsRaw) : { detectVegan: false, detectCertif: false };
 
     const bytes = await file.arrayBuffer();
-    const base64 = Buffer.from(bytes).toString("base64");
     const mimeType = file.type || "image/jpeg";
     const isPDF = mimeType === "application/pdf";
+
+    // Compression si image > 4MB (limite API Anthropic = 5MB)
+    let finalBytes = bytes;
+    const SIZE_LIMIT = 4 * 1024 * 1024; // 4MB marge de sécurité
+
+    if (!isPDF && bytes.byteLength > SIZE_LIMIT) {
+      try {
+        const sharp = (await import("sharp")).default;
+        const compressed = await sharp(Buffer.from(bytes))
+          .resize(2048, 2048, { fit: "inside", withoutEnlargement: true })
+          .jpeg({ quality: 82 })
+          .toBuffer();
+        finalBytes = compressed.buffer.slice(
+          compressed.byteOffset,
+          compressed.byteOffset + compressed.byteLength
+        );
+      } catch {
+        // sharp pas disponible — tenter sans compression
+        if (bytes.byteLength > 5 * 1024 * 1024) {
+          return NextResponse.json(
+            { error: "Image trop lourde (max 5MB). Compressez-la avant de l'uploader." },
+            { status: 400 }
+          );
+        }
+      }
+    }
+
+    const base64 = Buffer.from(finalBytes).toString("base64");
 
     const optionsInstructions = [];
     if (options.detectVegan) {

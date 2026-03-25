@@ -126,13 +126,45 @@ function ImportPageInner() {
     }
   }
 
+  // Compression canvas côté client — réduit à < 4MB avant envoi API
+  async function compressIfNeeded(f) {
+    const LIMIT = 4 * 1024 * 1024; // 4MB
+    if (f.type === "application/pdf" || f.size <= LIMIT) return f;
+    return new Promise((resolve) => {
+      const img = new Image();
+      const url = URL.createObjectURL(f);
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        let { width, height } = img;
+        const MAX = 2048;
+        if (width > MAX || height > MAX) {
+          const ratio = Math.min(MAX / width, MAX / height);
+          width = Math.round(width * ratio);
+          height = Math.round(height * ratio);
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        canvas.getContext("2d").drawImage(img, 0, 0, width, height);
+        canvas.toBlob(
+          (blob) => resolve(blob ?? f),
+          "image/jpeg",
+          0.82
+        );
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); resolve(f); };
+      img.src = url;
+    });
+  }
+
   async function handleScan() {
     if (!file) return;
     setStep(STEPS.scanning);
     setError("");
     try {
+      const fileToSend = await compressIfNeeded(file);
       const fd = new FormData();
-      fd.append("file", file);
+      fd.append("file", fileToSend, file.name || "carte.jpg");
       fd.append("options", JSON.stringify(importOptions));
       const headers = {};
       if (user?.id) headers["x-user-id"] = user.id;
